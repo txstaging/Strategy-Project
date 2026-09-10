@@ -1,0 +1,391 @@
+<app-objectives-stage-add
+[isOpen]="showObjectiveAddAndUpdateModal"
+(closeModal)="showObjectiveAddAndUpdateModal = false"
+[title]="'اضافة معلومات الهدف'"
+[detailsData]="detailsData()"
+(closeModal)="handleClose()"
+[mode]="createAndEditModalMode"
+(refreshObjectives)="loadObjectives()"
+/>
+
+@if (showObjectiveDetailsModal && detailsData() && detailsData().id) {
+  <app-objectives-stage-details
+    [isOpen]="showObjectiveDetailsModal"
+    (closeModal)="closeDetailsModal()"
+    (itemActionTaken)="onItemActionTaken()"
+    [data]="detailsData()"
+    [isAdmin]="isAdmin"
+    [canTakeActionOnItem]="canTakeActionOnItem"
+  />
+}
+
+
+
+@if (ObjectivesList().length === 0 && totalPages === 0 && !isAdmin) {
+  <app-objectives-stage-empty (openModal)="openCreateModal()" />
+} @else {
+  <div class="container mt-4 p-0">
+    <div class="table-wrapper">
+      @if (planGoalStatus() !== ApprovalStatusEnum.ApprovedByHighManagement && canAddItems()) {
+        <div class="d-flex justify-content-end mt-3 mb-4">
+          <button
+            type="button"
+            class="btn btn-success"
+            (click)="openCreateModal()"
+          >
+            + اضافة
+          </button>
+        </div>
+      }
+
+      @if (ObjectivesList().length === 0) {
+        <div class="text-center py-5">
+          <img src="/assets/folder.svg" alt="" class="mb-3" style="width: 100px; opacity: 0.5;" />
+          <h5 class="text-muted">لا توجد أهداف</h5>
+          <p class="text-muted">لم يتم إضافة أي أهداف بعد</p>
+          @if (canAddItems()) {
+            <button
+              type="button"
+              class="btn btn-success mt-3"
+              (click)="openCreateModal()"
+            >
+              + إضافة هدف جديد
+            </button>
+          }
+        </div>
+      } @else {
+        <!-- Filters -->
+         
+
+  <div>
+    <h2>الأهداف</h2>
+    <p style="color: #5e5e5e">وصف أهداف الخطة الاستراتيجية</p>
+  </div>
+
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label for="statusFilter" class="form-label">تصفية حسب الحالة</label>
+            <select
+              id="statusFilter"
+              class="form-select"
+              [(ngModel)]="filterStatus"
+              (change)="onStatusFilterChange(filterStatus)"
+            >
+              <option value="">جميع الحالات</option>
+              @for (status of availableStatuses(); track status) {
+                <option [value]="status">{{ getStatusDisplayName(status) }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label for="unitFilter" class="form-label">تصفية حسب الوحدة</label>
+            <select
+              id="unitFilter"
+              class="form-select"
+              [(ngModel)]="filterUnit"
+              (change)="onUnitFilterChange(filterUnit)"
+            >
+              <option value="">جميع الوحدات</option>
+              @for (unit of availableUnits(); track unit) {
+                <option [value]="unit">{{ unit }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-4 d-flex align-items-end">
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              (click)="clearFilters()"
+            >
+              <i class="bi bi-x-circle"></i> مسح الفلاتر
+            </button>
+          </div>
+        </div>
+
+        <!-- Results Count -->
+        <div class="mb-2" >
+          <small class="text-muted">
+            عرض {{ filteredObjectivesList().length }} من أصل {{ ObjectivesList().length }} هدف
+            @if (filterStatus || filterUnit) {
+              <span class="text-primary">(مفلتر)</span>
+            }
+          </small>
+        </div>
+
+        <table id="pdfContent"
+          class="table table-bordered text-center"
+          style="position: relative"
+        >
+          <thead
+            style="background-color: #f0f3f5; color: #9faab0; font-size: 15px"
+          >
+            <tr>
+              <th>اسم الهدف</th>
+              <th>الفرع</th>
+              <th>التاريخ</th>
+              <th>حالة العناصر</th>
+              <th>التفاصيل</th>
+              @if (!isObjectivesApproved) {
+                <th>الإجراءات</th>
+              } @else {
+                <th>الحالة</th>
+              }
+            </tr>
+          </thead>
+          <tbody style="background-color: #fff; vertical-align: middle">
+            @for (objective of filteredObjectivesList(); track objective.id || $index) {
+              <tr>
+                <td>{{ objective.name?.value || objective.name || 'غير محدد' }}</td>
+                <td>{{ objective.unitName || 'غير محدد' }}</td>
+                <td>{{ objective.date || 'غير محدد' }}</td>
+                <td>
+                  @if (objective.status === 'SavedAsDraft') {
+                    <app-status-action [status]="'SavedAsDraft'"></app-status-action>
+                  } @else {
+                    <!-- Status indicators for individual items -->
+                    <div class="d-flex flex-column gap-1" style="font-size: 12px;">
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold" style="width: 50px;">الاسم:</span>
+                        <div style="transform: scale(0.8); transform-origin: right;">
+                          <app-status-action [status]="objective.name?.status || 'Pending'"></app-status-action>
+                        </div>
+                      </div>
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold" style="width: 50px;">الوصف:</span>
+                        <div style="transform: scale(0.8); transform-origin: right;">
+                          <app-status-action [status]="objective.descripition?.status || 'Pending'"></app-status-action>
+                        </div>
+                      </div>
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold" style="width: 50px;">المؤشر:</span>
+                        <div style="transform: scale(0.8); transform-origin: right;">
+                          <app-status-action [status]="objective.indicator?.status || 'Pending'"></app-status-action>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </td>
+                <td>
+                  <button
+                    style="
+                      background-color: #f0f0f0;
+                      border-radius: 50px;
+                      padding-inline: 25px;
+                      padding-block: 10px;
+                      border: none;
+                      cursor: pointer;
+                    "
+                    (click)="
+                      onSelectedOption({
+                        id: objective?.id,
+                        type: 'view',
+                      })
+                    "
+                  >
+                    عرض الهدف <i class="bi bi-eye-fill text-success"></i>
+                  </button>
+                </td>
+                <td>
+                  <div class="d-flex justify-content-center">
+                    @if (isAdmin) {
+                      @if (canTakeAction(objective['status'])) {
+                        @if (canApproveGoal(objective)) {
+                          <button
+                            class="btn btn-success btn-sm"
+                            (click)="handleAccept(objective.id)"
+                            title="موافقة على الهدف"
+                          >
+                            <i class="bi bi-check-lg"></i> موافقة
+                          </button>
+                        } @else {
+                          <div class="text-center">
+                            <button
+                              class="btn btn-warning btn-sm"
+                              disabled
+                              [title]="getGoalApprovalValidationMessage(objective) || ''"
+                            >
+                              <i class="bi bi-exclamation-triangle"></i> غير مكتمل
+                            </button>
+                            <small class="text-muted d-block mt-1" style="font-size: 10px;">
+                              {{ getGoalApprovalValidationMessage(objective) }}
+                            </small>
+                          </div>
+                        }
+                      } @else {
+                        <app-status-action
+                          [status]="objective.status"
+                          [comment]="objective.comment"
+                        ></app-status-action>
+                      }
+                    } @else {
+                      <app-popup
+                        [itemId]="objective?.id"
+                        [item]="objective"
+                        [pageName]="'Goals'"
+                        [customCanEdit]="canEditGoal(objective)"
+                        [customCanDelete]="canDeleteGoal(objective)"
+                        (optionSelected)="onSelectedOption($event)"
+                        [position]="{ top: '-60px', left: '0px' }"
+                      ></app-popup>
+
+                      <!-- Show edit hint for returned items -->
+                      @if (isReturnedObjective(objective)) {
+                        <div class="mt-1">
+                          <small class="text-warning">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                          </small>
+                        </div>
+                      }
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <app-pagination
+          [currentPage]="currentPage"
+          [totalPages]="totalPages"
+          (pageChange)="onPageChange($event)"
+        >
+        </app-pagination>
+
+        <!-- Current Stage Hint -->
+        <div class="mt-3 p-2 bg-light rounded text-center">
+          <small class="text-muted">
+            <i class="bi bi-info-circle"></i> {{ getCurrentStageHint() }}
+          </small>
+        </div>
+      }
+    </div>
+
+    <!-- Status Messages -->
+    @if (!showObjectivesSubmissionBtn && !showObjectivesResubmitBtn && buttonDisabledReason && objectivesStatusService.isObjectivesDataLoaded()) {
+      <div class="stage-status-message mt-3">
+        @if (isObjectivesApproved) {
+          <div class="alert alert-success text-end mb-2">
+            <i class="bi bi-check-circle-fill me-2"></i> {{ buttonDisabledReason }}
+          </div>
+        } @else {
+          <div class="alert alert-info text-end mb-2">
+            <i class="bi bi-info-circle-fill me-2"></i> {{ buttonDisabledReason }}
+          </div>
+        }
+      </div>
+    }
+
+    <div class="d-flex justify-content-end mt-4 gap-3">
+      <!-- Show submission button if user can approve the stage (first time) -->
+      @if (showObjectivesSubmissionBtn && objectivesStatusService.isObjectivesDataLoaded()) {
+        <button
+          type="button"
+          class="btn btn-primary px-4 py-2"
+          (click)="approveObjective()"
+        >
+          {{ approveButtonText }}
+        </button>
+      }
+
+      <!-- Show resubmit button if new objectives were added after approval -->
+      @if (showObjectivesResubmitBtn && objectivesStatusService.isObjectivesDataLoaded()) {
+        <button
+          type="button"
+          class="btn btn-warning px-4 py-2"
+          (click)="approveObjective()"
+        >
+          <i class="bi bi-arrow-repeat me-1"></i>
+          {{ resubmitButtonText }}
+        </button>
+      }
+
+      <!-- Next stage button if already approved -->
+      @if (isObjectivesApproved && isInitiativesStageActive) {
+        <button
+          class="btn btn-success px-3 py-2"
+          [routerLink]="['/plans', planId, 'initiatives']"
+          routerLink="direction-stage"
+        >
+          الي المبادرات<i class="bi bi-arrow-left"></i>
+        </button>
+      }
+    </div>
+  </div>
+}
+
+<app-comment-modal
+  [isOpen]="showCommentModal"
+  (closed)="showCommentModal = false"
+  (submitted)="handleRestore($event)"
+  [reasonModalType]="reasonModalType"
+>
+</app-comment-modal>
+
+<div
+  class="modal fade"
+  id="restoreModal"
+  tabindex="-1"
+  aria-labelledby="restoreModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog" style="margin-top: 15%">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="restoreModalLabel">سبب الاسترجاع</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+          style="position: absolute; left: 10px; top: 15px; font-size: 12px"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="mb-3">
+            <p>سبب الاسترجاع</p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+@if (isSuccessPopupVisible) {
+  <div
+    class="popup-overlay"
+    (click)="closeSuccessPopup()"
+    tabindex="0"
+    (keydown.enter)="closeSuccessPopup()"
+  >
+    <div
+      class="container2"
+      (click)="$event.stopPropagation()"
+      style="padding: 5rem 2rem"
+      tabindex="0"
+      (keydown.enter)="$event.stopPropagation()"
+    >
+      <div class="text-center">
+        <div class="icons mb-4">
+          <span class="text-success"><i class="bi bi-check-lg"></i></span>
+        </div>
+        <div class="mb-4">
+          <span class="status-approved">تم التأكيد بنجاح !</span>
+        </div>
+        <div>
+          <button
+            (click)="closeSuccessPopup()"
+            class="btn btn-primary w-25 mt-4"
+          >
+            تأكيد
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+<button  (click)="generatePDF()"   class="pdf btn btn-success">Export Form To PDF</button> 
+@if(isAdmin==false)
+{
+  <button  (click)="Approve()"   class="pdf btn btn-success">أرسال الى مدير الوحدة</button> 
+}

@@ -1,0 +1,377 @@
+<div class="d-flex justify-content-between align-items-center mt-4">
+  <div>
+    <h2>{{ t('initiatives_title', 'المبادرات') }}</h2>
+    <p style="color: #5e5e5e">{{ t('initiatives_description', 'وصف مبادرات اهداف الخطة الاستراتيجية') }}</p>
+  </div>
+</div>
+
+<app-objectives-form
+  [planId]="planId"
+  (objectiveSelected)="handleObjectiveSelection($event)"
+  [goalId]="goalId()"
+></app-objectives-form>
+
+<!-- Add Initiative Button -->
+@if (canAddItems() && !isInitiativesApproved) {
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div></div>
+    @if (!buttonState().isValidGoal) {
+      <div class="text-center">
+        <button class="btn btn-secondary" disabled>
+          <i class="bi bi-plus-circle"></i> أضف مبادرة
+        </button>
+        <small class="d-block text-muted mt-1">
+          يرجى اختيار هدف أولاً من القائمة أعلاه
+        </small>
+      </div>
+    } @else {
+      <button class="btn btn-primary" (click)="openAddModal()">
+        <i class="bi bi-plus-circle"></i> أضف مبادرة جديدة
+      </button>
+    }
+  </div>
+} @else if (canAddItems() && isInitiativesApproved) {
+  <!-- Show message when stage is finalized -->
+  <div class="d-flex justify-content-center mb-4">
+    <div class="alert alert-info d-flex align-items-center" style="max-width: 500px;">
+      <i class="bi bi-info-circle me-2"></i>
+      <div>
+        <small class="fw-bold">تم اعتماد مرحلة المبادرات</small>
+        <div class="mt-1">
+          <small class="text-muted">لا يمكن إضافة أو تعديل المبادرات بعد اعتماد المرحلة</small>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Filters -->
+@if (initiatives().length > 0) {
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <label for="searchInput" class="form-label">البحث</label>
+          <div dir="ltr" class="input-group">
+
+            <input
+              id="searchInput"
+              type="text"
+              class="form-control"
+              [(ngModel)]="searchTerm"
+              (input)="onSearchChange()"
+              placeholder="ابحث في المبادرات..."
+            />
+            <span class="input-group-text ">
+              <i class="bi bi-search"></i>
+            </span>
+            @if (searchTerm) {
+              <button
+                class="btn btn-outline-secondary"
+                type="button"
+                (click)="clearSearch()"
+                title="مسح البحث"
+              >
+                <i class="bi bi-x"></i>
+              </button>
+            }
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <label for="statusFilter" class="form-label">تصفية حسب الحالة</label>
+          <select
+            id="statusFilter"
+            class="form-select"
+            [(ngModel)]="filterStatus"
+            (change)="onStatusFilterChange(filterStatus)"
+          >
+            <option value="">جميع الحالات</option>
+            @for (status of availableStatuses(); track status) {
+              <option [value]="status">{{ getStatusDisplayName(status) }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-3 mb-3">
+          <label for="unitFilter" class="form-label">تصفية حسب الوحدة</label>
+          <select
+            id="unitFilter"
+            class="form-select"
+            [(ngModel)]="filterUnit"
+            (change)="onUnitFilterChange(filterUnit)"
+          >
+            <option value="">جميع الوحدات</option>
+            @for (unit of availableUnits(); track unit) {
+              <option [value]="unit">{{ unit }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end mb-3">
+          <button class="btn btn-outline-secondary me-2" (click)="clearFilters()">
+            <i class="bi bi-funnel"></i> مسح جميع المرشحات
+          </button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12 d-flex justify-content-end">
+          <small class="text-muted">
+            عرض {{ filteredInitiatives().length }} من {{ initiatives().length }} مبادرة
+            @if (searchTerm || filterStatus || filterUnit) {
+              (مع المرشحات المطبقة)
+            }
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Initiatives Table -->
+@if (initiatives().length > 0) {
+  <div class="card" id="pdfContent">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-light">
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">اسم المبادرة</th>
+              <th scope="col">الهدف</th>
+              <th scope="col">الوزن</th>
+              <th scope="col">الحالة</th>
+              <th scope="col">الوحدة</th>
+              <th scope="col">الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (initiative of filteredInitiatives(); track initiative.id; let i = $index) {
+              <tr>
+                <td>{{ i + 1 }}</td>
+                <td>
+                  <div class="fw-medium">{{ initiative.name?.value || initiative.name }}</div>
+                </td>
+                <td>
+                  <small class="text-muted">{{ initiative?.goalName || 'غير محدد' }}</small>
+                </td>
+                <td>
+                  <span class="badge bg-info">{{ initiative.initiativeWeight || 'غير محدد' }}</span>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="getStatusBadgeClass(initiative.status)">
+                    {{ getStatusDisplayName(initiative.status) }}
+                  </span>
+                </td>
+                <td>
+                  <small>{{ initiative.unitName || 'غير محدد' }}</small>
+                </td>
+                <td>
+                  <div class="d-flex justify-content-center">
+                    @if (isAdmin) {
+                      <!-- Admin actions will be added later -->
+                      <button
+                        type="button"
+                        class="btn btn-outline-primary btn-sm"
+                        (click)="viewInitiative(initiative)"
+                        title="عرض التفاصيل"
+                      >
+                        <i class="bi bi-eye"></i> عرض
+                      </button>
+                    } @else {
+                      <app-popup
+                        [itemId]="initiative.id"
+                        [item]="initiative"
+                        [pageName]="'Goals'"
+                        [customCanEdit]="canEditInitiative(initiative)"
+                        [customCanDelete]="canDeleteInitiative(initiative)"
+                        (optionSelected)="onSelectedOption($event)"
+                        [position]="{ top: '-60px', left: '0px' }"
+                      ></app-popup>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="text-center py-5">
+    <i class="bi bi-inbox" style="font-size: 3rem; color: #6c757d;"></i>
+    <h5 class="mt-3 text-muted">لا توجد مبادرات</h5>
+    <p class="text-muted">ابدأ بإضافة مبادرة جديدة</p>
+  </div>
+}
+
+<!-- Add/Edit Initiative Modal -->
+@if (showFormModal()) {
+  <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="btn-close" (click)="closeModal()" aria-label="Close"></button>
+          <h5 class="modal-title">
+            @if (isEditing()) {
+              تعديل المبادرة
+            } @else {
+              إضافة مبادرة جديدة
+            }
+          </h5>
+        </div>
+        <div class="modal-body">
+          <app-initiatives-item-form
+            [planId]="planId"
+            [goalId]="goalId()"
+            [isModal]="true"
+            [isEdit]="isEditing()"
+            [initiativeId]="editingInitiativeId()"
+            (isSubmit)="handleFormSubmit($event)"
+            (closeModalEvent)="closeModal()"
+          >
+          </app-initiatives-item-form>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- View Initiative Modal -->
+@if (viewingInitiative()) {
+  <app-initiatives-item-view-modal
+    [isOpen]="true"
+    [initiative]="viewingInitiative()"
+    (closed)="closeViewModal()"
+    (dataUpdated)="onInitiativeDataUpdated()"
+    [isAdmin]="isAdmin"
+    [isInitiativesApproved]="isInitiativesApproved"
+  >
+  </app-initiatives-item-view-modal>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteModal) {
+  <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(2px);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <button type="button" class="btn-close btn-close-white" (click)="cancelDelete()" aria-label="Close"></button>
+          <h5 class="modal-title">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            تأكيد الحذف
+          </h5>
+        </div>
+        <div class="modal-body">
+          <div class="text-center py-3">
+            <i class="bi bi-trash3-fill text-danger" style="font-size: 3rem;"></i>
+            <h6 class="mt-3">هل أنت متأكد من حذف هذه المبادرة؟</h6>
+            @if (deletingInitiative) {
+              <p class="text-muted mt-2">
+                <strong>{{ deletingInitiative.name?.value || deletingInitiative.name }}</strong>
+              </p>
+            }
+            <div class="alert alert-warning mt-3">
+              <small>
+                <i class="bi bi-info-circle me-1"></i>
+                تحذير: هذا الإجراء لا يمكن التراجع عنه
+              </small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cancelDelete()">
+            إلغاء
+          </button>
+          <button type="button" class="btn btn-danger" (click)="confirmDelete()">
+            <i class="bi bi-trash3"></i>
+            حذف المبادرة
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Status Messages -->
+@if (!showInitiativeSubmissionBtn && initiativesStatusService.getButtonDisabledReason() && initiativesStatusService.isInitiativesDataLoaded()) {
+  <div class="stage-status-message mt-3">
+    @if (isInitiativesApproved) {
+      <div class="alert alert-success text-end mb-2">
+        <i class="bi bi-check-circle-fill me-2"></i> {{ initiativesStatusService.getButtonDisabledReason() }}
+      </div>
+    } @else {
+      <div class="alert alert-info text-end mb-2">
+        <i class="bi bi-info-circle-fill me-2"></i> {{ initiativesStatusService.getButtonDisabledReason() }}
+      </div>
+    }
+  </div>
+}
+
+<div class="d-flex justify-content-end mt-4 gap-3 mb-5 pb-5">
+  <!-- Show submission button if user can approve the stage (first time) -->
+  @if (showInitiativeSubmissionBtn && initiativesStatusService.isInitiativesDataLoaded()) {
+    <button
+      class="btn btn-primary"
+      (click)="handleApproveInitiativesStep()"
+      style="width: auto; min-width: 8rem"
+    >
+      {{ getSubmissionButtonText() }}
+    </button>
+  }
+
+  <!-- Show resubmit button if new initiatives were added after approval -->
+  @if (initiativesStatusService.canShowResubmitButton() && initiativesStatusService.isInitiativesDataLoaded()) {
+    <button
+      type="button"
+      class="btn btn-warning px-4 py-2"
+      (click)="handleApproveInitiativesStep()"
+    >
+      <i class="bi bi-arrow-repeat me-1"></i>
+      إعادة إرسال المرحلة
+    </button>
+  }
+
+  <!-- Next stage button if already approved -->
+  @if (isInitiativesApproved && isProjectsStageActive) {
+    <button
+      class="btn btn-success"
+      [routerLink]="['/plans', planId, 'projects']"
+      routerLinkActive="active"
+    >
+      الي المشاريع<i class="bi bi-arrow-left"></i>
+    </button>
+  }
+</div>
+
+<!-- Current Stage Hint -->
+@if (initiatives().length > 0) {
+  <div class="mt-3 p-2 bg-light rounded text-center">
+    <small class="text-muted">
+      <i class="bi bi-info-circle"></i> {{ getCurrentStageHint() }}
+    </small>
+  </div>
+}
+
+<!-- Success Popup -->
+@if (isSuccessPopupVisible) {
+  <div class="modal show d-block d-flex justify-content-center align-items-center" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.7); z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="min-width: 500px;">
+        <div class="modal-body text-center">
+          <div class="mb-3">
+            <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+          </div>
+          <h5>تم إرسال المرحلة بنجاح</h5>
+          <p class="text-muted">تم إرسال مرحلة المبادرات للمرحلة التالية</p>
+          <button class="btn btn-primary" (click)="closeSuccessPopup()">
+            تأكيد
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+<button  (click)="generatePDF()"   class="pdf btn btn-success">Export Form To PDF</button> 
+@if(isAdmin==false)
+{
+  <button  (click)="Approve()"   class="pdf btn btn-success">أرسال الى مدير الوحدة</button> 
+}

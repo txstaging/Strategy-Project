@@ -1,0 +1,64 @@
+.modal_dialog--content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.form-container {
+  width: 800px;
+  height: 600px;
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow-y: auto;
+}
+
+.form-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #198754;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.btn-submit {
+  background-color: #198754;
+  color: #fff;
+  font-weight: bold;
+}
+
+.btn-submit:hover {
+  background-color: #146c43;
+  color: #fff;
+}
+
+.close-btn {
+  position: absolute;
+  top: 20px;
+  left: 15px;
+  font-size: 1.25rem;
+  background: none;
+  border: none;
+  color: #6c757d;
+}
+
+.close-btn:hover {
+  color: #000;
+}
+
+.objective-details span {
+  background-color: green;
+  color: #fff;
+  padding: 7px 12px 7px 12px;
+  border-radius: 20px;
+  margin-left: 10px;
+}
+
+.objective-details p {
+  color: #828282;
+  font-size: 15px;
+}

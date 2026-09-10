@@ -1,0 +1,1 @@
+export type AnalysisTypes = 'Strength' | 'Risk' | 'Opportunity' | 'Threat';

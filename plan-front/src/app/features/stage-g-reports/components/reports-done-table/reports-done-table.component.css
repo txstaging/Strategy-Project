@@ -1,0 +1,448 @@
+body {
+  background-color: #f8f9fa;
+  font-family: 'Rubik', sans-serif;
+}
+
+.header {
+  height: 400px;
+  color: white;
+  padding: 2rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-bottom-left-radius: 40px;
+  border-bottom-right-radius: 40px;
+}
+.progress-bar-filll {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.progress-low {
+  background-color: #dc3545; /* red */
+}
+
+.progress-medium {
+  background-color: #ffc107; /* yellow */
+}
+
+.progress-high {
+  background-color: #28a745; /* green */
+}
+
+.sidebar {
+  background-color: #fff;
+  border-right: 1px solid #fff;
+  border-radius: 15px;
+  height: 300px;
+  padding: 1.5rem;
+}
+
+.sidebar a {
+  display: block;
+  padding: 10px 15px;
+  color: #000;
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.sidebar a.active {
+  color: #00a05a;
+}
+
+.nav-link {
+  color: #000;
+  font-weight: 700;
+}
+
+.nav-link.active {
+  color: #00a05a;
+  border-bottom: 2px solid #00a05a;
+}
+
+.section-header {
+  background-color: #e9ecef;
+  font-weight: bold;
+  text-align: center;
+  padding: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+th,
+td {
+  padding: 12px;
+  border: 1px solid #ddd;
+  text-align: right;
+}
+
+th {
+  background-color: #28a745;
+  color: white;
+  font-weight: bold;
+  text-align: right;
+}
+
+tr {
+  background-color: #f0f0f0;
+}
+
+.expandable-header {
+  cursor: pointer;
+  background-color: #f0f0f0;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.expandable-header:hover {
+  background-color: #e0e0e0;
+}
+
+.unit-header {
+  background-color: #e9ecef !important;
+  font-weight: bold;
+}
+
+.unit-header:hover {
+  background-color: #dee2e6 !important;
+}
+
+.section-header {
+  background-color: #f8f9fa !important;
+  font-weight: 600;
+}
+
+.section-header:hover {
+  background-color: #e9ecef !important;
+}
+
+.expandable-header .icon {
+  float: right;
+  font-size: 18px;
+  margin-left: 10px;
+  transition: transform 0.3s ease;
+  color: #666;
+}
+
+.collapsible-content {
+  display: none;
+}
+
+.nested-header {
+  cursor: pointer;
+  background-color: #f9f9f9;
+  font-weight: bold;
+}
+
+.nested-header .icon {
+  float: right;
+  font-size: 16px;
+  color: #888;
+  margin-left: 10px;
+}
+
+.progress-bar-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-bar {
+  width: 100px;
+  height: 8px;
+  background-color: #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #28a745;
+}
+
+:host {
+  display: block;
+}
+
+.nav-link {
+  color: #000;
+  font-weight: 700;
+}
+
+.nav-link.active {
+  color: #00a05a;
+  border-bottom: 2px solid #00a05a;
+}
+
+/* Enhanced styles for hierarchical display */
+.unit-row {
+  background-color: #e3e3e3 !important;
+  font-weight: bold;
+}
+
+.goal-row {
+  background-color: #f8f9fa !important;
+  border-left: 4px solid #28a745;
+}
+
+.initiative-row {
+  background-color: #f0f0f0 !important;
+  border-left: 4px solid #007bff;
+}
+
+.project-row {
+  background-color: #ffffff !important;
+  border-left: 4px solid #ffc107;
+}
+
+.project-row:hover {
+  background-color: #f8f9fa !important;
+}
+
+/* Icon animations */
+.icon {
+  transition: transform 0.2s ease;
+  font-weight: bold;
+  color: #666;
+}
+
+/* Project details styling */
+.project-details {
+  padding-left: 50px;
+}
+
+.project-name {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.project-meta {
+  font-size: 0.85em;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Action icons styling */
+.action-icons i {
+  color: #666;
+  transition: color 0.2s ease;
+}
+
+.action-icons i:hover {
+  color: #28a745;
+}
+
+/* Floating Add Button */
+.floating-add-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 1000;
+}
+
+.floating-add-btn button {
+  width: 60px;
+  height: 60px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.floating-add-btn button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Chevron icons */
+.bi-chevron-down,
+.bi-chevron-up {
+  transition: transform 0.3s ease;
+  color: #666;
+}
+
+/* Section icons */
+.bi-bullseye {
+  color: #28a745;
+}
+
+.bi-lightbulb {
+  color: #ffc107;
+}
+
+.bi-folder {
+  color: #007bff;
+}
+
+/* Tooltip styling */
+[title] {
+  position: relative;
+}
+
+/* Button styling improvements */
+.btn-outline-secondary {
+  border-color: #6c757d;
+  color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn-outline-primary {
+  border-color: #007bff;
+  color: #007bff;
+}
+
+.btn-outline-primary:hover {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+/* Download button */
+.btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+}
+
+/* Mobile: shrink the per-row tap options (edit/save/cancel/attach + approve/reject/return). */
+@media (max-width: 768px) {
+  /* Tighten gap between buttons in each project row's action cluster. */
+  .d-flex.gap-2 {
+    gap: 0.25rem !important;
+  }
+
+  /* Smaller bootstrap small-sized buttons inside the table. */
+  table .btn.btn-sm {
+    padding: 0.15rem 0.35rem;
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+
+  table .btn.btn-sm i {
+    font-size: 0.85rem;
+  }
+
+  /* Shrink the inline percentage edit input. */
+  table input[type='number'].form-control-sm {
+    width: 60px !important;
+    padding: 0.15rem 0.35rem;
+    font-size: 0.8rem;
+  }
+
+  /* Shrink the attach-file pseudo-button label. */
+  table label.btn.btn-sm {
+    padding: 0.15rem 0.35rem;
+    font-size: 0.7rem;
+  }
+
+  /* Shrink the SVG icons in app-admin-actions (approve/reject/return). */
+  ::ng-deep app-admin-actions svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  /* Tighten the vertical separators between the three SVG icons. */
+  ::ng-deep app-admin-actions > div > div {
+    width: 14px !important;
+  }
+
+  /* Project meta line wraps cleanly on narrow screens. */
+  td small.text-muted {
+    font-size: 0.7rem;
+  }
+}
+
+/* Even tighter on very small phones. */
+@media (max-width: 400px) {
+  table .btn.btn-sm,
+  table label.btn.btn-sm {
+    padding: 0.1rem 0.25rem;
+    font-size: 0.7rem;
+  }
+
+  ::ng-deep app-admin-actions svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .d-print-none {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    font-size: 12px !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  th, td {
+    border: 1px solid #000 !important;
+    padding: 5px !important;
+    font-size: 11px !important;
+  }
+
+  th {
+    background-color: #f0f0f0 !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .progress-bar {
+    border: 1px solid #000 !important;
+    background-color: #fff !important;
+  }
+
+  .progress-bar-fill {
+    background-color: #000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ensure all expanded content is visible when printing */
+  .collapsible-content {
+    display: table-row-group !important;
+  }
+
+  /* Page breaks */
+  tr {
+    page-break-inside: avoid;
+  }
+
+  table {
+    page-break-after: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  .floating-add-btn {
+    display: none !important;
+  }
+}

@@ -1,0 +1,51 @@
+<div
+  class="d-flex justify-content-between"
+  style="border-bottom: 1px solid #e8ecee; padding-bottom: 20px"
+>
+  <div class="d-flex align-items-center gap-5">
+    <h6 class="text-success">
+      المشروع : <span class="ms-3 text-muted">{{ getProjectDisplayValue(project.name) }}</span>
+    </h6>
+  </div>
+
+  <div class="d-flex gap-3 align-items-center">
+    @if (canEditBasedOnStatus()) {
+      <span class="edit" (click)="openEditModal()" tabindex="0">
+        <i class="bi bi-pen"></i> تعديل
+      </span>
+    }
+
+    <!-- Always show status, no admin actions in table -->
+    <app-status-action
+      [status]="project?.status"
+      [comment]="project?.comment"
+    >
+    </app-status-action>
+
+    <div class="actions" (click)="openViewModal()" tabindex="0">
+      <span> عرض المشروع <i class="bi bi-eye-fill text-success"></i> </span>
+    </div>
+  </div>
+</div>
+
+@if (showViewModal && detailedProject) {
+  <app-project-view-modal
+    [isOpen]="true"
+    [project]="detailedProject"
+    [planId]="planId"
+    [isAdmin]="false"
+    [isProjectsApproved]="false"
+    (closed)="showViewModal = false; detailedProject = null"
+    (dataUpdated)="dataRefreshNeeded.emit()">
+  </app-project-view-modal>
+}
+
+
+@if (showEditModal && detailedProjectForEdit) {
+  <app-project-edit-modal
+    (closeModal)="showEditModal = false; detailedProjectForEdit = null"
+    (projectUpdated)="onProjectUpdated()"
+    [planId]="planId"
+    [projectDetails]="detailedProjectForEdit"
+  />
+}

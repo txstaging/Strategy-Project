@@ -1,0 +1,154 @@
+/* Header section with green background */
+.header {
+  background-color: #1d5245;
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  position: relative;
+  /* overflow: hidden; */
+  background-image: url('/assets/Background.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  border-bottom-left-radius: 40px;
+  border-bottom-right-radius: 40px;
+}
+
+.section-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #fff;
+  text-align: right;
+  margin: 0;
+}
+
+/* Breadcrumb styling */
+.breadcrumb-container {
+  direction: rtl;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  float: right;
+  padding-left: 0.5rem;
+  padding-right: 0;
+  color: #6c757d;
+  content: "/";
+}
+
+.breadcrumb-item {
+  color: #6c757d;
+}
+
+.breadcrumb-item a {
+  color: #00A05A;
+}
+
+/* Logo styling */
+.logo-container {
+  padding: 2rem;
+}
+
+.about-logo {
+  max-width: 250px;
+  margin: 0 auto;
+}
+
+/* Content sections */
+.about-section, .faq-section {
+  direction: rtl;
+  padding: 1rem 0;
+}
+
+.section-heading {
+  color: #1d5245;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: right;
+  border-bottom: 2px solid #00A05A;
+  padding-bottom: 0.5rem;
+  width: fit-content;
+}
+
+.history-content {
+  text-align: justify;
+  line-height: 1.8;
+}
+
+p {
+  margin-bottom: 1.5rem;
+  color: #333;
+  line-height: 1.8;
+}
+
+/* FAQ Styling */
+.accordion {
+  direction: rtl;
+  text-align: right;
+}
+
+.accordion-item {
+  border: 1px solid rgba(0, 160, 90, 0.1);
+  margin-bottom: 0.75rem;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.accordion-button {
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  color: #1d5245;
+  background-color: #f9f9f9;
+  text-align: right;
+}
+
+.accordion-button:not(.collapsed) {
+  color: #00A05A;
+  background-color: rgba(0, 160, 90, 0.1);
+  box-shadow: none;
+}
+
+.accordion-button:focus {
+  box-shadow: none;
+  border-color: rgba(0, 160, 90, 0.25);
+}
+
+.accordion-button::after {
+  margin-right: auto;
+  margin-left: unset;
+}
+
+.accordion-body {
+  padding: 1.5rem;
+  color: #333;
+  line-height: 1.8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .about-logo {
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .section-heading {
+    font-size: 1.3rem;
+  }
+
+  .about-logo {
+    max-width: 150px;
+  }
+
+  .accordion-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  .accordion-body {
+    padding: 1rem;
+    font-size: 0.9rem;
+  }
+}

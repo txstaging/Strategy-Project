@@ -1,0 +1,18 @@
+<div style="position: relative">
+  <label for="branch">تصفية الفرع</label>
+  <img src="assets/images/v6-icon (1).png" alt="" class="icon1" />
+  <select
+    name="branch"
+    id="branch"
+    class="w-100"
+    [(ngModel)]="selectedBranch"
+    (change)="onBranchChange()"
+  >
+    <option value="">اختر الفرع</option>
+    @for (branch of branches; track branch.id) {
+      <option [value]="branch.id">
+        {{ branch.name }}
+      </option>
+    }
+  </select>
+</div>

@@ -1,0 +1,123 @@
+@import '@ng-select/ng-select/themes/default.theme.css';
+/* @import 'ngx-toastr/toastr-bs4-alert';
+
+
+*/
+
+@import 'ngx-owl-carousel-o/lib/styles/scss/owl.carousel';
+@import 'ngx-owl-carousel-o/lib/styles/scss/owl.theme.default';
+
+@import 'ngx-toastr/toastr';
+/* @import 'ngx-toastr/toastr-bs5-alert'; */
+
+/* You can add global styles to this file, and also import other style files */
+th {
+  background-color: #f0f3f5;
+  color: #9faab0 !important;
+  vertical-align: middle;
+}
+.pdf{
+ 
+  color: white;
+  margin-top: 30px;
+  border: 33px;
+  border-radius: 5px;
+  font-size: 20px;
+}
+
+/* Global scrollbar styling */
+*::-webkit-scrollbar {
+  width: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #198754;
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #146c43;
+}
+
+.ng-select.ng-select-multiple
+  .ng-select-container
+  .ng-value-container
+  .ng-value
+  .left {
+  border: unset !important;
+}
+.ng-select.ng-select-multiple
+  .ng-select-container
+  .ng-value-container
+  .ng-value {
+  background-color: #146c43 !important;
+  color: #fff !important;
+  border-radius: 15px;
+  font-size: 13px;
+  direction: ltr;
+}
+.ng-dropdown-panel .ng-dropdown-panel-items .ng-option.ng-option-selected,
+.ng-dropdown-panel
+  .ng-dropdown-panel-items
+  .ng-option.ng-option-selected.ng-option-marked,
+.ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.status-approved {
+  color: green;
+}
+
+.status-pending {
+  color: red;
+}
+
+.status-waiting {
+  color: orange;
+}
+
+.actions {
+  background-color: #f0f0f0;
+  padding: 7px 20px;
+  border: 1px solid #e8ecee;
+  border-radius: 50px;
+  cursor: pointer;
+}
+
+.edit {
+  background-color: #e1eeff;
+  color: #458be7;
+  padding: 7px 20px;
+  border: 1px solid #e8ecee;
+  border-radius: 50px;
+  cursor: pointer;
+}
+
+
+.table-wrapper {
+  overflow-y: visible  ;
+}
+
+.btn {
+  margin-inline: 5px !important;
+}
+
+* {
+  /* font-family: "Cairo", sans-serif !important; */
+  font-family: "Noto Naskh Arabic", serif !important;
+
+}
+
+.form-select {
+  background-position: left .75rem center
+}
+
+.form-control.is-invalid, .was-validated .form-control:invalid {
+  background-position: left calc(.375em + .1875rem) center;
+}

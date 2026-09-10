@@ -1,0 +1,164 @@
+<!-- eslint-disable @angular-eslint/template/interactive-supports-focus -->
+
+<div class="popup-overlay" (click)="closePopup()">
+  <div class="form-container" (click)="$event.stopPropagation()">
+    <button (click)="closePopup()" class="close-btn">&times;</button>
+
+    <div class="text-center">
+      <img src="./../../../../assets/v7-icon.png" alt="" />
+      <div class="form-title">
+        {{
+          mode === 'create'
+            ? 'اضافة معلومات'
+            : mode === 'edit'
+              ? 'تعديل معلومات'
+              : 'معلومات'
+        }}
+        {{ title }}
+      </div>
+    </div>
+    <form
+      *ngIf="mode !== 'view'"
+      [formGroup]="threatForm"
+      (ngSubmit)="onSubmit()"
+    >
+      <div class="mb-3">
+        <div class="d-flex justify-content-between">
+          <label for="title" class="form-label">النقطة</label>
+
+          @if (
+            threatForm.get('name')?.invalid && threatForm.get('name')?.touched
+          ) {
+            <small class="text-danger"> برجاء ادخال النقطة </small>
+          }
+        </div>
+        <input
+          [class.is-invalid]="
+            threatForm.get('name')?.invalid && threatForm.get('name')?.touched
+          "
+          type="text"
+          class="form-control"
+          id="title"
+          placeholder="النقطة"
+          formControlName="name"
+        />
+      </div>
+      <div class="mb-3">
+        <div class="d-flex justify-content-between">
+          <label for="procedures" class="form-label"
+            >الاجراءات المتخذ حيالها</label
+          >
+          @if (
+            threatForm.get('procedures')?.invalid &&
+            threatForm.get('procedures')?.touched
+          ) {
+            <small class="text-danger">
+              برجاء ادخال الاجراءات المتخذ حيالها
+            </small>
+          }
+        </div>
+        <textarea
+          class="form-control"
+          [class.is-invalid]="
+            threatForm.get('procedures')?.invalid &&
+            threatForm.get('procedures')?.touched
+          "
+          placeholder="الاجراءات المتخذ حيالها"
+          formControlName="procedures"
+        ></textarea>
+      </div>
+
+      <div class="row">
+        <div class="mb-3 col-6">
+          <div class="d-flex justify-content-between">
+            <label for="impact" class="form-label">درجة التأثير (10-0)</label>
+            @if (threatForm.get('impact')?.touched && threatForm.get('impact')?.invalid) {
+              @if (threatForm.get('impact')?.errors?.['required']) {
+                <small class="text-danger">برجاء ادخال الدرجة</small>
+              } @else if (threatForm.get('impact')?.errors?.['min'] || threatForm.get('impact')?.errors?.['max']) {
+                <small class="text-danger">يجب أن تكون الدرجة بين 0 و 10</small>
+              }
+            }
+          </div>
+          <input
+            type="number"
+            min="0"
+            max="10"
+            [class.is-invalid]="
+              threatForm.get('impact')?.invalid &&
+              threatForm.get('impact')?.touched
+            "
+            class="form-control"
+            formControlName="impact"
+            id="impact"
+            placeholder="ادخل الدرجة من 0 الى 10"
+          />
+        </div>
+        <div class="mb-3 col-6">
+          <div class="d-flex justify-content-between">
+            <label for="degreeOfCertainty" class="form-label">درجة التأكد (10-0)</label>
+            @if (threatForm.get('degreeOfCertainty')?.touched && threatForm.get('degreeOfCertainty')?.invalid) {
+              @if (threatForm.get('degreeOfCertainty')?.errors?.['required']) {
+                <small class="text-danger">برجاء ادخال الدرجة</small>
+              } @else if (threatForm.get('degreeOfCertainty')?.errors?.['min'] || threatForm.get('degreeOfCertainty')?.errors?.['max']) {
+                <small class="text-danger">يجب أن تكون الدرجة بين 0 و 10</small>
+              }
+            }
+          </div>
+          <input
+            type="number"
+            min="0"
+            max="10"
+            [class.is-invalid]="
+              threatForm.get('degreeOfCertainty')?.invalid &&
+              threatForm.get('degreeOfCertainty')?.touched
+            "
+            class="form-control"
+            id="degreeOfCertainty"
+            placeholder="ادخل الدرجة من 0 الى 10"
+            formControlName="degreeOfCertainty"
+          />
+        </div>
+      </div>
+      <div class="text-center">
+        <button type="submit" class="btn btn-success">
+          {{ mode === 'create' ? 'تأكيد' : 'تأكيد التعديل' }}
+        </button>
+      </div>
+    </form>
+    <div *ngIf="mode === 'view'" style="width: 45vw">
+      <div class="mb-3">
+        <label for="name" class="form-label">النقطة</label>
+        <p>{{ threatForm.get('name')?.value }}</p>
+      </div>
+      <div class="mb-3">
+        <label for="procedures" class="form-label"
+          >الاجراءات المتخذ حيالها</label
+        >
+        <p id="procedures">{{ threatForm.get('procedures')?.value }}</p>
+      </div>
+      <div class="row">
+        <div class="mb-3 col-3">
+          <label for="impact" class="form-label">درجة التأثير (10-0)</label>
+          <p>{{ threatForm.get('impact')?.value }}</p>
+        </div>
+        <div class="mb-3 col-6">
+          <label for="degreeOfCertainty" class="form-label"
+            >درجة التأكد (10-0)</label
+          >
+          <p>{{ threatForm.get('degreeOfCertainty')?.value }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+  <app-save-popup
+  [title]="'تأكيد العملية'"
+  [isOpen]="showModal"
+  (close)="showModal = false"
+>
+  <p>هل أنت متأكد من تنفيذ العملية؟</p>
+</app-save-popup>
+
+</div>

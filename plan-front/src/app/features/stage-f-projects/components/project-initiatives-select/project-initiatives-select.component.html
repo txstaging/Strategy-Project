@@ -1,0 +1,34 @@
+<select
+  class="form-select"
+  [(ngModel)]="selectedInitiativeValue"
+  (ngModelChange)="onInitiativeChange()"
+>
+  <option value="">اختر المبادرة</option>
+  <option
+    *ngFor="let initiative of initiatives"
+    [value]="initiative.id"
+  >
+    {{ initiative.name }}
+  </option>
+</select>
+
+<div
+  *ngIf="selectedInitiativeId()"
+>
+  <button
+    type="button"
+    class="btn btn-info btn-sm mt-2"
+    (click)="openInitiativeDetails(selectedInitiativeId())"
+  >
+    <i class="bi bi-eye"></i>
+    عرض تفاصيل المبادرة
+  </button>
+</div>
+
+<!-- Project Initiative View Modal -->
+<app-project-initiatives-view
+  [isOpen]="!!selectedInitiativeId()"
+  [initiativeId]="selectedInitiativeId()"
+  [planId]="planId"
+  (closed)="closeInitiativeModal()"
+></app-project-initiatives-view>

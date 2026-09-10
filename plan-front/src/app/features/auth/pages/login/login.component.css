@@ -1,0 +1,23 @@
+.login-container {
+  min-height: 100vh;
+}
+:host {
+  direction: rtl;
+}
+.side-panel {
+  background-color: #123730 !important;
+  background: url('/assets/Mask group.png') no-repeat center/cover;
+  color: #fff;
+  padding: 30px;
+  border-top-left-radius: 60px;
+  border-bottom-left-radius: 60px;
+}
+
+.side-panel img {
+  max-width: 80px;
+  margin-bottom: 20px;
+}
+.button {
+  background-color: #00a05a;
+  color: white;
+}

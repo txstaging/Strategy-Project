@@ -1,0 +1,406 @@
+<div
+  class="popup-overlay h-100 d-flex justify-content-center align-items-center"
+  [class.show]="isOpen"
+  [style.display]="isOpen ? 'block' : 'none'"
+  tabindex="-1"
+  style="background-color: rgba(0, 0, 0, 0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1050;"
+>
+  <div class="modal-dialog modal-xl" style="max-width: 90%; margin: 2rem auto;">
+    <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);">
+      <!-- Modal Header -->
+      <div class="modal-header bg-secondary text-white p-2" style="border-radius: 15px 15px 0 0;">
+        <button
+          type="button"
+          class="btn-close btn-close-white"
+          (click)="closeModal()"
+          aria-label="Close"
+          style="order: -1; margin-left: 0; margin-right: auto;"
+        ></button>
+        <h4 class="modal-title fw-bold" style="margin-right: 0; margin-left: auto;">
+          <i class="bi bi-eye me-2"></i>
+          تفاصيل المشروع: {{ project?.name?.value || 'غير محدد' }}
+        </h4>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body p-4 bg-white" style="max-height: 70vh; overflow-y: auto; min-width: 800px;">
+
+        <!-- Project Basic Info -->
+        <div class="card mb-4 border-0 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 text-primary">
+              <i class="bi bi-info-circle me-2"></i>
+              معلومات المشروع الأساسية
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <!-- Project Name -->
+              <div class="col-md-6 mb-3">
+                <span class="fw-bold text-success">اسم المشروع:</span>
+                <p class="mt-1 p-2 bg-light rounded">{{ project?.name?.value || 'غير محدد' }}</p>
+                @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.name?.status)) {
+                  <div class="mt-2">
+                    <app-admin-actions
+                      [item]="project?.name?.id"
+                      (accept)="handleAcceptItem($event)"
+                      (reject)="handleRejectItem($event)"
+                      (return)="handleReturnItem($event)"
+                    >
+                    </app-admin-actions>
+                  </div>
+                } @else if (project?.name?.status) {
+                  <div class="mt-2">
+                    <app-status-action
+                      [status]="project?.name?.status"
+                      [comment]="project?.name?.comment"
+                    >
+                    </app-status-action>
+                  </div>
+                }
+              </div>
+
+              <!-- Project Code -->
+              <div class="col-md-6 mb-3">
+                <span class="fw-bold text-success">رمز المشروع:</span>
+                <p class="mt-1 p-2 bg-light rounded">{{ project?.code || 'غير محدد' }}</p>
+              </div>
+
+              <!-- Project Priority -->
+              <div class="col-md-6 mb-3">
+                <span class="fw-bold text-success">أولوية المشروع:</span>
+                <p class="mt-1 p-2 bg-light rounded">{{ project?.priority?.value || 'غير محدد' }}</p>
+                @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.priority?.status)) {
+                  <div class="mt-2">
+                    <app-admin-actions
+                      [item]="project?.priority?.id"
+                      (accept)="handleAcceptItem($event)"
+                      (reject)="handleRejectItem($event)"
+                      (return)="handleReturnItem($event)"
+                    >
+                    </app-admin-actions>
+                  </div>
+                } @else if (project?.priority?.status) {
+                  <div class="mt-2">
+                    <app-status-action
+                      [status]="project?.priority?.status"
+                      [comment]="project?.priority?.comment"
+                    >
+                    </app-status-action>
+                  </div>
+                }
+              </div>
+
+              <!-- Project Duration -->
+              <div class="col-md-6 mb-3">
+                <span class="fw-bold text-success">مدة المشروع:</span>
+                <p class="mt-1 p-2 bg-light rounded">{{ project?.duration?.value || 'غير محدد' }}</p>
+                @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.duration?.status)) {
+                  <div class="mt-2">
+                    <app-admin-actions
+                      [item]="project?.duration?.id"
+                      (accept)="handleAcceptItem($event)"
+                      (reject)="handleRejectItem($event)"
+                      (return)="handleReturnItem($event)"
+                    >
+                    </app-admin-actions>
+                  </div>
+                } @else if (project?.duration?.status) {
+                  <div class="mt-2">
+                    <app-status-action
+                      [status]="project?.duration?.status"
+                      [comment]="project?.duration?.comment"
+                    >
+                    </app-status-action>
+                  </div>
+                }
+              </div>
+
+              <!-- Beneficiaries -->
+              <div class="col-md-6 mb-3">
+                <span class="fw-bold text-success">المستفيدون:</span>
+                <p class="mt-1 p-2 bg-light rounded">{{ project?.beneficiaries?.value || 'غير محدد' }}</p>
+                @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.beneficiaries?.status)) {
+                  <div class="mt-2">
+                    <app-admin-actions
+                      [item]="project?.beneficiaries?.id"
+                      (accept)="handleAcceptItem($event)"
+                      (reject)="handleRejectItem($event)"
+                      (return)="handleReturnItem($event)"
+                    >
+                    </app-admin-actions>
+                  </div>
+                } @else if (project?.beneficiaries?.status) {
+                  <div class="mt-2">
+                    <app-status-action
+                      [status]="project?.beneficiaries?.status"
+                      [comment]="project?.beneficiaries?.comment"
+                    >
+                    </app-status-action>
+                  </div>
+                }
+              </div>
+
+              <!-- Supervising Authority -->
+              <div class="col-md-6 mb-3">
+                <span class="fw-bold text-success">الجهة المشرفة:</span>
+                <p class="mt-1 p-2 bg-light rounded">{{ project?.supervisingAuthority?.value || 'غير محدد' }}</p>
+                @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.supervisingAuthority?.status)) {
+                  <div class="mt-2">
+                    <app-admin-actions
+                      [item]="project?.supervisingAuthority?.id"
+                      (accept)="handleAcceptItem($event)"
+                      (reject)="handleRejectItem($event)"
+                      (return)="handleReturnItem($event)"
+                    >
+                    </app-admin-actions>
+                  </div>
+                } @else if (project?.supervisingAuthority?.status) {
+                  <div class="mt-2">
+                    <app-status-action
+                      [status]="project?.supervisingAuthority?.status"
+                      [comment]="project?.supervisingAuthority?.comment"
+                    >
+                    </app-status-action>
+                  </div>
+                }
+              </div>
+
+              <!-- Project Weight -->
+              <div class="col-md-6 mb-3">
+                <span class="fw-bold text-success">وزن المشروع:</span>
+                <p class="mt-1 p-2 bg-light rounded">{{ project?.weight?.value || 'غير محدد' }}</p>
+                @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.weight?.status)) {
+                  <div class="mt-2">
+                    <app-admin-actions
+                      [item]="project?.weight?.id"
+                      (accept)="handleAcceptItem($event)"
+                      (reject)="handleRejectItem($event)"
+                      (return)="handleReturnItem($event)"
+                    >
+                    </app-admin-actions>
+                  </div>
+                } @else if (project?.weight?.status) {
+                  <div class="mt-2">
+                    <app-status-action
+                      [status]="project?.weight?.status"
+                      [comment]="project?.weight?.comment"
+                    >
+                    </app-status-action>
+                  </div>
+                }
+              </div>
+
+              <!-- Project Dates -->
+              <div class="col-md-6 mb-3">
+                <span class="fw-bold text-success">تاريخ البداية:</span>
+                <p class="mt-1 p-2 bg-light rounded">{{ project?.startDateItem?.value || project?.startDate || 'غير محدد' }}</p>
+                @if (project?.startDateItem) {
+                  @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.startDateItem?.status)) {
+                    <div class="mt-2">
+                      <app-admin-actions
+                        [item]="project?.startDateItem?.id"
+                        (accept)="handleAcceptItem($event)"
+                        (reject)="handleRejectItem($event)"
+                        (return)="handleReturnItem($event)"
+                      >
+                      </app-admin-actions>
+                    </div>
+                  } @else if (project?.startDateItem?.status) {
+                    <div class="mt-2">
+                      <app-status-action
+                        [status]="project?.startDateItem?.status"
+                        [comment]="project?.startDateItem?.comment"
+                      >
+                      </app-status-action>
+                    </div>
+                  }
+                }
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <span class="fw-bold text-success">تاريخ النهاية:</span>
+                <p class="mt-1 p-2 bg-light rounded">{{ project?.endDateItem?.value || project?.endDate || 'غير محدد' }}</p>
+                @if (project?.endDateItem) {
+                  @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.endDateItem?.status)) {
+                    <div class="mt-2">
+                      <app-admin-actions
+                        [item]="project?.endDateItem?.id"
+                        (accept)="handleAcceptItem($event)"
+                        (reject)="handleRejectItem($event)"
+                        (return)="handleReturnItem($event)"
+                      >
+                      </app-admin-actions>
+                    </div>
+                  } @else if (project?.endDateItem?.status) {
+                    <div class="mt-2">
+                      <app-status-action
+                        [status]="project?.endDateItem?.status"
+                        [comment]="project?.endDateItem?.comment"
+                      >
+                      </app-status-action>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Related Information -->
+        @if (project?.planInitiative || project?.planGoals) {
+          <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-header bg-light">
+              <h5 class="mb-0 text-primary">
+                <i class="bi bi-link-45deg me-2"></i>
+                معلومات مترابطة
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                @if (project?.planGoals) {
+                  <div class="col-md-6 mb-3">
+                    <span class="fw-bold text-success">الهدف المرتبط:</span>
+                    <p class="mt-1 p-2 bg-light rounded">{{ project?.planGoals?.name || 'غير محدد' }}</p>
+                    @if (project?.planGoals?.description) {
+                      <small class="text-muted">{{ project?.planGoals?.description }}</small>
+                    }
+                  </div>
+                }
+                @if (project?.planInitiative) {
+                  <div class="col-md-6 mb-3">
+                    <span class="fw-bold text-success">المبادرة المرتبطة:</span>
+                    <p class="mt-1 p-2 bg-light rounded">{{ project?.planInitiative?.value || 'غير محدد' }}</p>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Project Overall Status Action -->
+        <div class="row mt-3">
+          <div class="col-12">
+            <div class="border rounded p-3" style="background-color: #f8f9fa;">
+              <h6 class="fw-bold text-primary mb-2">
+                <i class="bi bi-clipboard-check me-2"></i>
+                حالة المشروع العامة
+              </h6>
+              <p class="mb-2">الحالة الحالية: <span class="badge bg-secondary">{{ getStatusInArabic(project?.status) }}</span></p>
+
+              @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.status) && areAllIndividualElementsActedUpon()) {
+                <!-- Button for project overall status -->
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm me-2"
+                  (click)="handleApproveProjectOverall()"
+                >
+                  <i class="bi bi-check-circle me-1"></i>
+                  موافقة المشروع عموماً
+                </button>
+              } @else if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.status) && !areAllIndividualElementsActedUpon()) {
+                <!-- Descriptive message about pending elements -->
+                <div class="alert alert-info d-flex align-items-center" style="margin-bottom: 0;">
+                  <i class="bi bi-info-circle me-2"></i>
+                  <div>
+                    <small class="fw-bold">يجب التصرف في النقاط التالية أولاً:</small>
+                    <ul class="mb-0 mt-1" style="font-size: 0.875rem;">
+                      @for (pendingItem of getPendingElementsMessages(); track pendingItem) {
+                        <li>{{ pendingItem }}</li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              } @else if (project?.status) {
+                <app-status-action
+                  [status]="project?.status"
+                  [comment]="project?.comment"
+                >
+                </app-status-action>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer p-3" style="border-radius: 0 0 15px 15px;">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">
+          <i class="bi bi-x-circle me-1"></i>
+          إغلاق
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reason Modal for Reject/Return -->
+@if (showReasonModal) {
+  <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.7); z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header" [ngClass]="{
+          'bg-danger text-white': reasonModalType === 'reject',
+          'bg-warning text-white': reasonModalType === 'return'
+        }">
+          <button type="button" class="btn-close btn-close-white" (click)="closeReasonModal()" aria-label="Close" style="order: -1; margin-left: 0; margin-right: auto;"></button>
+          <h5 class="modal-title" style="margin-right: 0; margin-left: auto;">
+            @if (reasonModalType === 'reject') {
+              <i class="bi bi-x-circle me-2"></i>
+              رفض العنصر
+            } @else {
+              <i class="bi bi-arrow-return-left me-2"></i>
+              إرجاع العنصر
+            }
+          </h5>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="reasonComment" class="form-label fw-bold">
+              @if (reasonModalType === 'reject') {
+                سبب الرفض:
+              } @else {
+                سبب الإرجاع:
+              }
+            </label>
+            <textarea
+              id="reasonComment"
+              class="form-control"
+              rows="4"
+              [(ngModel)]="reasonComment"
+              placeholder="اكتب السبب هنا..."
+              style="resize: none;"
+            ></textarea>
+          </div>
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-1"></i>
+            <small>يرجى كتابة سبب واضح ومفصل</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeReasonModal()">
+            إلغاء
+          </button>
+          <button
+            type="button"
+            class="btn"
+            [ngClass]="{
+              'btn-danger': reasonModalType === 'reject',
+              'btn-warning': reasonModalType === 'return'
+            }"
+            (click)="submitReasonAction()"
+            [disabled]="!reasonComment.trim()"
+          >
+            @if (reasonModalType === 'reject') {
+              <i class="bi bi-x-circle me-1"></i>
+              تأكيد الرفض
+            } @else {
+              <i class="bi bi-arrow-return-left me-1"></i>
+              تأكيد الإرجاع
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,145 @@
+<!-- Print Button -->
+<div class="d-flex justify-content-end mb-3">
+  <button class="btn btn-success d-print-none" (click)="printTable()">
+    <i class="bi bi-download"></i> تحميل الملف
+  </button>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th rowspan="2" style="color: white !important">اسم الوحدة</th>
+      <th rowspan="2" style="color: white !important">نسبة الإنجاز</th>
+      <th colspan="2" style="color: white !important">الفترة الزمنية</th>
+    </tr>
+    <tr>
+      <th style="color: white !important">من</th>
+      <th style="color: white !important">إلى</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Loop through Units -->
+    @for (unit of reportsData; track unit.unitId) {
+      <tr class="expandable-header unit-row" (click)="toggleExpand(unit)">
+        <td>
+          <span class="arrow-icon" [class.expanded]="unit.expanded">▼</span>
+          <span class="unit-text">{{ unit.unitName }}</span>
+        </td>
+        <td>
+          <div class="progress-bar-container">
+            <div class="progress-bar">
+              <div
+                class="progress-bar-fill"
+                [style.width]="unit.unitPercentage + '%'"
+              ></div>
+            </div>
+            <span>{{ unit.unitPercentage }}%</span>
+          </div>
+        </td>
+        <td></td>
+        <td></td>
+      </tr>
+
+      @if (unit.expanded) {
+        <!-- Loop through Goals -->
+        @for (goal of unit.goals; track goal.goalId) {
+          <tr
+            class="expandable-header goal-row"
+            (click)="toggleExpand(goal)"
+          >
+            <td>
+              <span class="arrow-icon" [class.expanded]="goal.expanded"
+                >▼</span
+              >
+              <span class="goal-text">{{ goal.goalName }}</span>
+            </td>
+            <td>
+              <div class="progress-bar-container">
+                <div class="progress-bar">
+                  <div
+                    class="progress-bar-filll"
+                    [style.width]="goal.goalPercentage + '%'"
+                                 [ngClass]="{
+  'progress-low': goal.timeLine == 1,
+  'progress-high': goal.timeLine ==null
+}"
+                  ></div>
+                </div>
+                <span>{{ goal.goalPercentage }}%</span>
+              </div>
+            </td>
+            <td></td>
+            <td></td>
+          </tr>
+
+          @if (goal.expanded) {
+            <!-- Loop through Initiatives -->
+            @for (initiative of goal.initiatives; track initiative.initiativeId) {
+              <tr
+                class="expandable-header initiative-row"
+                (click)="toggleExpand(initiative)"
+              >
+                <td>
+                  <span
+                    class="arrow-icon"
+                    [class.expanded]="initiative.expanded"
+                    >▼</span
+                  >
+                  <span class="initiative-text">{{
+                    initiative.initiativeName
+                  }}</span>
+                </td>
+                <td>
+                  <div class="progress-bar-container">
+                    <div class="progress-bar">
+                      <div
+                        class="progress-bar-filll"
+                        [style.width]="
+                          initiative.initiativePercentage + '%'
+                        "
+                                     [ngClass]="{
+  'progress-low': initiative.timeLine == 1,
+  'progress-high': initiative.timeLine ==null
+}"
+                      ></div>
+                    </div>
+                    <span>{{ initiative.initiativePercentage }}%</span>
+                  </div>
+                </td>
+                <td></td>
+                <td></td>
+              </tr>
+
+              @if (initiative.expanded) {
+                <!-- Loop through Projects -->
+                @for (project of initiative.projects; track project.projectId) {
+                  <tr class="project-row">
+                    <td>{{ project.projectName }}</td>
+                    <td>
+                      <div class="progress-bar-container">
+                        <div class="progress-bar">
+                          <div
+                            class="progress-bar-filll"
+                            [style.width]="project.percentage + '%'"
+                      [ngClass]="{
+  'progress-low': project.timeLine == 1,
+  'progress-high': project.timeLine ==null
+}"
+
+                          ></div>
+                        </div>
+                        <span>{{ project.percentage }}%</span>
+                      </div>
+                    </td>
+                    <td class="text-center">{{ project.startDate }}</td>
+                    <td class="text-center">{{ project.endDate }}</td>
+                  </tr>
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  </tbody>
+</table>

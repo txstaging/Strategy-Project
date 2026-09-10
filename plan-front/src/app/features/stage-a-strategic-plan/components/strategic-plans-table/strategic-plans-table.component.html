@@ -1,0 +1,103 @@
+<div class="container mt-4 p-0" style="position: relative">
+  <div class="table-wrapper" style="position: relative">
+    <table class="table table-bordered text-center">
+      <thead class="q" style="font-size: 15px">
+        <tr>
+          <th style="width: 35vw">اسم الخطة</th>
+          @if (isAdmin) {
+            <th>الفرع</th>
+          }
+          <th>التاريخ</th>
+          <th style="width: 10%">الإجراءات</th>
+          <th>pdf الخطة</th>
+        </tr>
+      </thead>
+      <tbody style="background-color: #fff; vertical-align: middle">
+        @for (plan of currentStrategicPlan; track plan.id) {
+          <tr>
+            <td class="plan-name-cell">
+              <div
+                class="d-flex justify-content-between align-items-center w-100"
+              >
+                <span class="plan-name">{{ plan?.name }}</span>
+                <button
+                  class="btn btn-success ms-3"
+                  (click)="onNavigateToInProgressStage(plan?.id)"
+                >
+                  {{ getStageButtonText(plan?.id) }} <i class="bi bi-arrow-left ms-1"></i>
+                </button>
+              </div>
+            </td>
+            @if (isAdmin) {
+              <td>{{ plan?.unit.name }}</td>
+            }
+            <td>{{ plan?.date | date }}</td>
+            <td class="action-cell">
+              <div class="action-wrapper">
+                <i
+                  class="bi bi-three-dots-vertical action-dots"
+                  (click)="toggleRowActionPopup(plan?.id)"
+                  (keydown.enter)="toggleRowActionPopup(plan?.id)"
+                  tabindex="0"
+                ></i>
+                @if (isRowPopupVisible(plan?.id)) {
+                  <div class="actions-box">
+                    <div
+                      class="action-item"
+                      (click)="showViewForm(plan)"
+                      (keydown.enter)="showViewForm(plan)"
+                      tabindex="0"
+                    >
+                      <i class="bi bi-eye text-success me-2"></i>
+                      <span class="text-success">استعراض</span>
+                    </div>
+                    <div
+                      class="action-item"
+                      (click)="showEditForm(plan)"
+                      (keydown.enter)="showEditForm(plan)"
+                      tabindex="0"
+                    >
+                      <i class="bi bi-pencil-square me-2"></i>
+                      <span>تعديل</span>
+                    </div>
+                    <div class="action-item text-danger">
+                      <i class="bi bi-trash me-2"></i>
+                      <span>حذف</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </td>
+            <td><button (click)="pdf(plan?.id)">تحميل الخطة</button></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div
+  style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+    display: none;
+  "
+  [style.display]="activePopupId !== null ? 'block' : 'none'"
+  (click)="closeAllPopups()"
+  (keydown.enter)="closeAllPopups()"
+  tabindex="0"
+  role="button"
+></div>
+
+<app-strategic-plans-form
+  [isVisible]="isFormVisible"
+  [editData]="planToEdit"
+  [isView]="isViewOpen"
+  (closeModal)="handleFormClose()"
+  (formSubmit)="handleFormSubmit()"
+>
+</app-strategic-plans-form>

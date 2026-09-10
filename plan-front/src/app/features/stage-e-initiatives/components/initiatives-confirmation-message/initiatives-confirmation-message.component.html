@@ -1,0 +1,17 @@
+<div class="modal" [class.show]="isOpen" [style.display]="isOpen ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog" style="margin-top: 15%;">
+    <div class="modal-content">
+      <div class="modal-body text-center">
+        <div class="icons mb-4">
+          <span class="text-success"><i class="bi bi-check-lg"></i></span>
+        </div>
+        <div class="mb-4">
+          <span class="status-approved">تم الحفظ</span>
+        </div>
+        <div>
+          <button class="btn btn-primary w-25 mt-4" (click)="closeModal()">تأكيد</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

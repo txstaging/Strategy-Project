@@ -1,0 +1,238 @@
+<!-- Header Section with Green Background -->
+<app-pages-header [headerTitle]="t('vision_manage_title', 'إدارة الرؤى')" />
+
+<!-- Breadcrumb Navigation -->
+<div class="container breadcrumb-container">
+  <div class="d-flex justify-content-between align-items-center">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <a routerLink="/home" class="text-decoration-none">الصفحة الرئيسية</a>
+        </li>
+        <li class="breadcrumb-item">
+          <a routerLink="/our-vision" class="text-decoration-none">رؤيتنا</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+          إدارة الرؤى
+        </li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<!-- Vision Management Section -->
+<div class="container my-5" dir="rtl">
+  <!-- Page Header with Add New Button and Mark All Inactive button -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="section-heading">{{ t('vision_list_title', 'قائمة الرؤى') }}</h2>
+
+    <div class="d-flex gap-2">
+      @if (isHighManagement()) {
+        <button
+          class="btn btn-warning"
+          (click)="confirmMarkAllInactive()"
+          [disabled]="isLoading || markingAllInactive()"
+        >
+          <i class="bi bi-toggle-off me-1"></i>
+          @if (markingAllInactive()) {
+            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          }
+          إلغاء تفعيل جميع الرؤى
+        </button>
+
+        <a routerLink="/our-vision/new" class="btn btn-primary">
+          <i class="bi bi-plus-lg me-1"></i> إضافة رؤية
+        </a>
+      }
+    </div>
+  </div>
+
+  <!-- Search and Filter Controls -->
+  <div class="blog-controls mb-4">
+    <div class="row g-3">
+      <div class="col-md-8">
+        <div class="input-group">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="ابحث عن رؤية..."
+            [(ngModel)]="searchTerm"
+            (keyup.enter)="search()"
+          />
+          <button
+            class="btn btn-outline-secondary"
+            type="button"
+            (click)="search()"
+          >
+            <i class="bi bi-search"></i>
+          </button>
+          @if (searchTerm) {
+            <button
+              class="btn btn-outline-secondary"
+              type="button"
+              (click)="clearSearch()"
+            >
+              <i class="bi bi-x-lg"></i>
+            </button>
+          }
+        </div>
+      </div>
+      <div class="col-md-4">
+        <select
+          class="form-select"
+          [(ngModel)]="filterOption"
+          (change)="applyFilters()"
+        >
+          <option value="all">جميع الرؤى</option>
+          <option value="active">الرؤى المفعلة</option>
+          <option value="inactive">الرؤى غير المفعلة</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  @if (isLoading) {
+    <div class="text-center my-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">جاري التحميل...</span>
+      </div>
+      <p class="mt-2">جاري تحميل البيانات...</p>
+    </div>
+  }
+
+  <!-- Error Message -->
+  @if (error) {
+    <div class="alert alert-danger my-3">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
+    </div>
+  }
+
+  <!-- Vision Table -->
+  @if (!isLoading && !error) {
+    <div class="table-responsive">
+      <table class="table table-hover blog-table">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>العنوان</th>
+            <th>التاريخ</th>
+            <th>الحالة</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (vision of paginatedVisions; track vision.id) {
+            <tr>
+              <td>{{ vision.id }}</td>
+              <td class="blog-title">{{ vision.title }}</td>
+              <td>{{ vision.date | date:'dd/MM/yyyy' }}</td>
+              <td>
+                @if (isHighManagement()) {
+                  <div class="form-check form-switch">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      role="switch"
+                      [id]="'status-toggle-' + vision.id"
+                      [checked]="vision.status"
+                      (change)="toggleVisionStatus(vision)"
+                      [disabled]="vision.updating"
+                    >
+                    <label class="form-check-label" [for]="'status-toggle-' + vision.id">
+                      @if (vision.updating) {
+                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                      }
+                      {{ vision.status ? 'مفعل' : 'غير مفعل' }}
+                    </label>
+                  </div>
+                } @else {
+                  <span class="badge" [class.bg-success]="vision.status" [class.bg-secondary]="!vision.status">
+                    {{ vision.status ? 'مفعل' : 'غير مفعل' }}
+                  </span>
+                }
+              </td>
+              <td>
+                <div class="d-flex gap-2">
+                  <a
+                    [routerLink]="['/our-vision', vision.id]"
+                    class="btn btn-sm btn-outline-info"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  @if (isHighManagement()) {
+                    <a
+                      [routerLink]="['/our-vision/edit', vision.id]"
+                      class="btn btn-sm btn-outline-success"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <button
+                      class="btn btn-sm btn-outline-danger"
+                      (click)="confirmDelete(vision)"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (!isLoading && filteredVisions.length === 0) {
+    <div class="text-center my-5">
+      <div class="empty-state">
+        <i class="bi bi-newspaper fs-1 text-muted"></i>
+        <h4 class="mt-3">لا يوجد رؤى</h4>
+        <p class="text-muted">لم يتم العثور على رؤى مطابقة لبحثك</p>
+      </div>
+    </div>
+  }
+
+  <!-- Pagination -->
+  @if (totalPages > 1) {
+    <nav aria-label="Page navigation" class="mt-4">
+      <ul class="pagination justify-content-center">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <button
+            class="page-link"
+            (click)="changePage(currentPage - 1)"
+            aria-label="Previous"
+          >
+            <span aria-hidden="true">&laquo;</span>
+          </button>
+        </li>
+        @for (page of pages; track page) {
+          <li class="page-item" [class.active]="page === currentPage">
+            <button class="page-link" (click)="changePage(page)">
+              {{ page }}
+            </button>
+          </li>
+        }
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <button
+            class="page-link"
+            (click)="changePage(currentPage + 1)"
+            aria-label="Next"
+          >
+            <span aria-hidden="true">&raquo;</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+  }
+</div>
+
+<!-- Confirmation Dialog -->
+<app-confirm-dialog
+  [isVisible]="showConfirmDialog()"
+  [message]="confirmMessage"
+  [dangerMode]="confirmDangerMode"
+  (confirmed)="onConfirmAction()"
+  (cancelled)="onCancelAction()"
+></app-confirm-dialog>

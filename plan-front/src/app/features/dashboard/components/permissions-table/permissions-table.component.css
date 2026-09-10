@@ -1,0 +1,161 @@
+/* Base table styles */
+.table-container {
+  direction: rtl;
+  margin: 20px;
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  position: relative;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.permissions-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+/* Table header and cell styles */
+.permissions-table th,
+.permissions-table td {
+  padding: 12px;
+  border: 1px solid #dee2e6;
+}
+
+.permissions-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Status color styles */
+.permissions-table tr {
+  &.homepage td:last-child,
+  &.menu td:last-child {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  &.building td:last-child {
+    background-color: #ffebee;
+    color: #c62828;
+  }
+
+  &.listening td:last-child {
+    background-color: #e3f2fd;
+    color: #1565c0;
+  }
+}
+
+/* Permission type styles */
+.approve,
+.add {
+  background-color: #effde4;
+  color: #75b940;
+}
+
+.reject,
+.delete {
+  background-color: #fbeded;
+  color: #e74545;
+}
+
+.return {
+  background-color: #e1eeff;
+  color: #458be7;
+}
+
+.update {
+  background-color: #fff8e1;
+  color: #ffa000;
+}
+
+.approve,
+.reject,
+.return,
+.add,
+.update,
+.delete {
+  padding: 8px 20px;
+  border-radius: 25px;
+  width: 105px;
+}
+
+/* Employee cell styles */
+.employee-cell {
+  text-align: right !important;
+  padding: 10px !important;
+}
+
+.employee-cell-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.employee-name {
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+/* Edit button and link styles */
+.edit-button {
+  position: absolute;
+  left: 15px;
+  top: 15px;
+  padding: 6px 12px;
+  background-color: transparent;
+  border: none;
+  color: #2196f3;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    text-decoration: underline;
+    color: #1976d2;
+  }
+}
+
+.edit-link {
+  color: #0d6efd;
+  text-decoration: none;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  i {
+    font-size: 12px;
+  }
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/* Hover effects */
+.permissions-table tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+.permissions-table td:not(:last-child) {
+  font-size: 16px;
+  color: #4caf50;
+}
+
+/* Responsive styles */
+@media screen and (max-width: 768px) {
+  .table-container {
+    margin: 10px;
+    padding: 10px;
+    overflow-x: auto;
+  }
+
+  .permissions-table th,
+  .permissions-table td {
+    padding: 8px;
+    font-size: 14px;
+  }
+}

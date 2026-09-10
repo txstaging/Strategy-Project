@@ -1,0 +1,235 @@
+<main class="content container-fluid">
+  <div class="d-flex justify-content-between align-items-center m-4">
+    <div>
+      <h2>انشاء حساب</h2>
+      <p class="text-secondary">قم بملئ البيانات الاتية</p>
+    </div>
+  </div>
+
+  <div class="form-content mt-3 p-4 bg-white rounded shadow-sm">
+    <form [formGroup]="createUserForm" (ngSubmit)="createuser()">
+      <div class="row g-3 mb-4">
+        <!-- Username Field -->
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="userName" class="form-label fw-medium">الاسم</label>
+            <input
+              type="text"
+              id="userName"
+              [class.is-invalid]="createUserForm.get('userName')?.invalid && createUserForm.get('userName')?.touched"
+              class="form-control"
+              placeholder="الاسم"
+              formControlName="userName"
+            />
+            @if (createUserForm.get('userName')?.invalid && createUserForm.get('userName')?.touched) {
+              <small class="text-danger">{{ getErrorMessage('userName') }}</small>
+            }
+          </div>
+        </div>
+
+        <!-- Rank Field -->
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="rank" class="form-label fw-medium">الرتبة/المرتبة</label>
+            <input
+              type="text"
+              id="rank"
+              [class.is-invalid]="createUserForm.get('rank')?.invalid && createUserForm.get('rank')?.touched"
+              class="form-control"
+              placeholder="الرتبة/المرتبة"
+              formControlName="rank"
+            />
+            @if (createUserForm.get('rank')?.invalid && createUserForm.get('rank')?.touched) {
+              <small class="text-danger">{{ getErrorMessage('rank') }}</small>
+            }
+          </div>
+        </div>
+
+        <!-- Email Field -->
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="email" class="form-label fw-medium">البريد الالكتروني</label>
+            <input
+              type="email"
+              id="email"
+              [class.is-invalid]="createUserForm.get('email')?.invalid && createUserForm.get('email')?.touched"
+              class="form-control"
+              placeholder="البريد الالكتروني"
+              formControlName="email"
+            />
+            @if (createUserForm.get('email')?.invalid && createUserForm.get('email')?.touched) {
+              <small class="text-danger">{{ getErrorMessage('email') }}</small>
+            }
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="password" class="form-label fw-medium">كلمة المرور</label>
+            <input
+              type="password"
+              id="password"
+              [class.is-invalid]="createUserForm.get('password')?.invalid && createUserForm.get('password')?.touched"
+              class="form-control"
+              placeholder="كلمة المرور"
+              formControlName="password"
+            />
+            @if (createUserForm.get('password')?.invalid && createUserForm.get('password')?.touched) {
+              <small class="text-danger">{{ getErrorMessage('password') }}</small>
+            }
+          </div>
+        </div>
+
+        <!-- Phone Number Field -->
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="phoneNumber" class="form-label fw-medium">رقم التليفون</label>
+            <input
+              type="number"
+              id="phoneNumber"
+              [class.is-invalid]="createUserForm.get('phoneNumber')?.invalid && createUserForm.get('phoneNumber')?.touched"
+              class="form-control"
+              placeholder="551234567"
+              formControlName="phoneNumber"
+            />
+            @if (createUserForm.get('phoneNumber')?.invalid && createUserForm.get('phoneNumber')?.touched) {
+              <small class="text-danger">{{ getErrorMessage('phoneNumber') }}</small>
+            }
+          </div>
+        </div>
+
+        <!-- Unit Field — hidden for roles that are not scoped to a specific unit. -->
+        @if (!isRoleAboveUnit()) {
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="unitId" class="form-label fw-medium">الوحدة</label>
+              <select
+                id="unitId"
+                class="form-select"
+                formControlName="unitId"
+                [class.is-invalid]="createUserForm.get('unitId')?.invalid && createUserForm.get('unitId')?.touched"
+              >
+                <option value="" disabled selected>اختر الوحدة</option>
+                @for (item of data(); track item.id) {
+                  <option [value]="item.id">{{ item.name }}</option>
+                }
+              </select>
+              @if (createUserForm.get('unitId')?.invalid && createUserForm.get('unitId')?.touched) {
+                <small class="text-danger">{{ getErrorMessage('unitId') }}</small>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Role Field -->
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="role" class="form-label fw-medium">الوظيفة</label>
+            <select
+              id="role"
+              class="form-select"
+              formControlName="role"
+              [class.is-invalid]="createUserForm.get('role')?.invalid && createUserForm.get('role')?.touched"
+            >
+              <option value="" disabled selected>اختر الوظيفة</option>
+              <option [value]="RolesEnums.UnitEmployee">موظف وحدة</option>
+              <option [value]="RolesEnums.UnitManager">مدير وحدة</option>
+              <option [value]="RolesEnums.RegionManager">مدير عام</option>
+            </select>
+            @if (createUserForm.get('role')?.invalid && createUserForm.get('role')?.touched) {
+              <small class="text-danger">{{ getErrorMessage('role') }}</small>
+            }
+          </div>
+        </div>
+
+        <!-- Department Field -->
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="department" class="form-label fw-medium">القسم</label>
+            <input
+              type="text"
+              id="department"
+              [class.is-invalid]="createUserForm.get('department')?.invalid && createUserForm.get('department')?.touched"
+              class="form-control"
+              placeholder="القسم"
+              formControlName="department"
+            />
+            @if (createUserForm.get('department')?.invalid && createUserForm.get('department')?.touched) {
+              <small class="text-danger">{{ getErrorMessage('department') }}</small>
+            }
+          </div>
+        </div>
+
+        <!-- Administration Field -->
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="administration" class="form-label fw-medium">الإدارة</label>
+            <input
+              type="text"
+              id="administration"
+              [class.is-invalid]="createUserForm.get('administration')?.invalid && createUserForm.get('administration')?.touched"
+              class="form-control"
+              placeholder="الإدارة"
+              formControlName="administration"
+            />
+            @if (createUserForm.get('administration')?.invalid && createUserForm.get('administration')?.touched) {
+              <small class="text-danger">{{ getErrorMessage('administration') }}</small>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Permissions Section -->
+      <div class="row mb-4">
+        <div class="col-12">
+          @if (isRoleWithAutoPermissions()) {
+            <div class="alert alert-info d-flex align-items-center mb-2">
+              <i class="bi bi-info-circle me-2"></i>
+              <small>هذا الدور يحصل على جميع الصلاحيات تلقائيا</small>
+            </div>
+          } @else {
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                (click)="openPermissionsModal()"
+              >
+                <i class="bi bi-shield-lock me-2"></i>تعيين الصلاحيات
+              </button>
+              @if (hasPermissions()) {
+                <span class="badge bg-success">تم تعيين الصلاحيات</span>
+              } @else {
+                <span class="badge bg-warning text-dark">لم يتم تعيين الصلاحيات بعد</span>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="text-end mt-4">
+        <button
+          class="btn btn-success px-5"
+          type="submit"
+          [disabled]="createUserForm.invalid || !hasPermissions() || isSubmitting()"
+        >
+          @if (isSubmitting()) {
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            جاري الإنشاء...
+          } @else {
+            إنشاء مستخدم
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Permissions Modal -->
+  <app-edit-modal
+    [isOpen]="isModalOpen()"
+    [initialPermissions]="userPermissions()"
+    (closeModalEvent)="closeModal()"
+    (savePermissions)="handlePermissionsSave($event)"
+  ></app-edit-modal>
+</main>

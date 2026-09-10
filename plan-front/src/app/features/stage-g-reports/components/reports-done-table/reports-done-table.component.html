@@ -1,0 +1,331 @@
+<!-- Report Title -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h3>{{ t('reports_title', 'التقارير') }}</h3>
+    <p class="text-muted mb-0">{{ t('reports_description', 'وصف اهداف الخطة الاستراتيجية') }}</p>
+  </div>
+  <button class="btn btn-success d-print-none" (click)="printTable()">
+    <i class="bi bi-download"></i> تحميل الملف
+  </button>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="color: white !important; text-align: right;">{{ t('reports_unit_name', 'اسم الوحدة') }}</th>
+      <th style="color: white !important; text-align: right;">{{ t('reports_completion_percentage', 'نسبة الإنجاز') }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (unit of reportsData; track unit.unitId) {
+      <!-- Unit Header Row -->
+      <tr class="expandable-header unit-header" (click)="toggleSection('unit-' + unit.unitId)" style="cursor: pointer; background-color: #e9ecef;">
+        <td>
+          <i class="bi me-2" [class.bi-chevron-down]="!isSectionExpanded('unit-' + unit.unitId)" [class.bi-chevron-up]="isSectionExpanded('unit-' + unit.unitId)"></i>
+          {{ unit.unitName }}
+        </td>
+        <td>
+          <div class="progress-bar-container">
+            <div class="progress-bar">
+              <div
+                class="progress-bar-fill"
+                [style.width.%]="unit.unitPercentage"
+              ></div>
+            </div>
+            <span>{{ unit.unitPercentage !== null && unit.unitPercentage !== undefined ? unit.unitPercentage + '%' : '' }}</span>
+          </div>
+        </td>
+      </tr>
+
+      @if (isSectionExpanded('unit-' + unit.unitId)) {
+        <!-- Goals Section -->
+        <tr class="expandable-header section-header" (click)="toggleSection('goals-' + unit.unitId)" style="cursor: pointer; background-color: #f8f9fa;">
+          <td style="padding-left: 20px;">
+            <i class="bi me-2" [class.bi-chevron-down]="!isSectionExpanded('goals-' + unit.unitId)" [class.bi-chevron-up]="isSectionExpanded('goals-' + unit.unitId)"></i>
+            <i class="bi bi-bullseye me-2"></i>
+            {{ t('reports_goals', 'الأهداف') }}
+          </td>
+          <td>
+          </td>
+        </tr>
+
+        @if (isSectionExpanded('goals-' + unit.unitId)) {
+          @for (goal of unit.goals; track goal.goalId) {
+            <tr style="background-color: #ffffff;">
+              <td style="padding-left: 40px;">
+                {{ goal.goalName }}
+              </td>
+              <td>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="progress-bar-container">
+                    <div class="progress-bar">
+                      <div class="progress-bar-filll" [style.width.%]="goal.goalPercentage"   [ngClass]="{
+  'progress-low': goal.timeLine == 1,
+  'progress-high': goal.timeLine ==null
+}">
+
+
+
+
+                        
+                      </div>
+                      
+                    </div>
+                    <span>{{ goal.goalPercentage !== null && goal.goalPercentage !== undefined ? goal.goalPercentage + '%' : '' }}</span>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
+        }
+
+        <!-- Initiatives Section -->
+        <tr class="expandable-header section-header" (click)="toggleSection('initiatives-' + unit.unitId)" style="cursor: pointer; background-color: #f8f9fa;">
+          <td style="padding-left: 20px;">
+            <i class="bi me-2" [class.bi-chevron-down]="!isSectionExpanded('initiatives-' + unit.unitId)" [class.bi-chevron-up]="isSectionExpanded('initiatives-' + unit.unitId)"></i>
+            <i class="bi bi-lightbulb me-2"></i>
+            {{ t('reports_initiatives', 'المبادرات') }}
+          </td>
+          <td>
+          </td>
+        </tr>
+
+        @if (isSectionExpanded('initiatives-' + unit.unitId)) {
+          @for (goal of unit.goals; track goal.goalId) {
+            @for (initiative of goal.initiatives; track initiative.initiativeId) {
+              <tr style="background-color: #ffffff;">
+                <td style="padding-left: 40px;">
+                  {{ initiative.initiativeName }}
+                </td>
+                <td>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="progress-bar-container">
+                      <div class="progress-bar">
+                        <div class="progress-bar-filll" [style.width.%]="initiative.initiativePercentage"              [ngClass]="{
+  'progress-low': initiative.timeLine == 1,
+  'progress-high': initiative.timeLine ==null
+}"></div>
+                      </div>
+                      <span>{{ initiative.initiativePercentage !== null && initiative.initiativePercentage !== undefined ? initiative.initiativePercentage + '%' : '' }}</span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        }
+
+        <!-- Projects Section -->
+        <tr class="expandable-header section-header" (click)="toggleSection('projects-' + unit.unitId)" style="cursor: pointer; background-color: #f8f9fa;">
+          <td style="padding-left: 20px;">
+            <i class="bi me-2" [class.bi-chevron-down]="!isSectionExpanded('projects-' + unit.unitId)" [class.bi-chevron-up]="isSectionExpanded('projects-' + unit.unitId)"></i>
+            <i class="bi bi-folder me-2"></i>
+            {{ t('reports_projects', 'المشاريع') }}
+          </td>
+          <td>
+          </td>
+        </tr>
+
+        @if (isSectionExpanded('projects-' + unit.unitId)) {
+          @for (goal of unit.goals; track goal.goalId) {
+            @for (initiative of goal.initiatives; track initiative.initiativeId) {
+              @for (project of initiative.projects; track project.projectId) {
+                <tr style="background-color: #ffffff;">
+                  <td style="padding-left: 40px;">
+                    <div>
+                      <strong>{{ project.projectName }}</strong>
+                      <br>
+                      <small class="text-muted">
+                       <strong>الكود:</strong> {{ project.code }} |
+<strong>الأولوية:</strong> {{ project.priority }} |
+<strong>تاريخ البدء:</strong> {{ project.startDate | date:'dd/MM/yyyy' }} |
+<strong>تاريخ الانتهاء:</strong> {{ project.endDate | date:'dd/MM/yyyy' }}
+
+                      </small>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="d-flex justify-content-between align-items-center">
+                      @if (editingProject === project.projectId) {
+                        <div class="d-flex flex-column gap-2">
+                          <div class="d-flex align-items-center gap-2">
+                            <input
+                              type="number"
+                              class="form-control form-control-sm"
+                              [(ngModel)]="editingPercentage"
+                              min="0"
+                              max="100"
+                              style="width: 80px;"
+                            >
+                            <span>%</span>
+                          </div>
+                          <div class="d-flex align-items-center gap-2">
+                            <label class="btn btn-outline-secondary btn-sm mb-0" title="ارفاق ملف">
+                              <i class="bi bi-paperclip"></i> ارفاق ملف
+                              <input
+                                type="file"
+                                class="d-none"
+                                (change)="onFileSelected($event)"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                              >
+                            </label>
+                            @if (editingFile) {
+                              <small class="text-muted">{{ editingFile.name }}</small>
+                            }
+                          </div>
+                        </div>
+                      } @else {
+                        <div class="d-flex flex-column gap-1">
+                          <div class="progress-bar-container">
+                            <div class="progress-bar">
+                              <div
+                                class="progress-bar-filll"
+                                [style.width.%]="project.percentage || 0"
+                                             [ngClass]="{
+    'progress-low': project.timeLine == 1,
+    'progress-high': project.timeLine ==null
+  }"
+                              ></div>
+                            </div>
+                            <span>{{ project.percentage !== null && project.percentage !== undefined ? project.percentage + '%' : '' }}</span>
+                          </div>
+                          @if (project.percentageFilePath) {
+                            <a [href]="fileUrl(project.percentageFilePath)" target="_blank" rel="noopener" class="small text-decoration-none">
+                              <i class="bi bi-paperclip"></i> الملف المرفق
+                            </a>
+                          }
+                        </div>
+                      }
+                      <div class="d-flex gap-2 align-items-center d-print-none">
+                        @if (editingProject === project.projectId) {
+                          <button class="btn btn-success btn-sm" (click)="saveProjectPercentage(project.projectId)" [disabled]="editingPercentage < 0 || editingPercentage > 100">
+                            <i class="bi bi-check"></i>
+                          </button>
+                          <button class="btn btn-secondary btn-sm" (click)="cancelEdit()">
+                            <i class="bi bi-x"></i>
+                          </button>
+                        } @else {
+                          <button class="btn btn-outline-primary btn-sm" (click)="startEditProject(project.projectId, project.percentage || 0)" title="تعديل">
+                            <i class="bi bi-pencil"></i>
+                          </button>
+                        }
+                        <!-- Approval actions for percentage (stage-gated) -->
+                        @if (project.percentageStatus) {
+                          @if (isAllowToApprove && canActOnPercentage(project.percentageStatus)) {
+                            <app-admin-actions
+                              [item]="project.percentageItemId || project.projectId"
+                              (accept)="handleApprovePercentage(project)"
+                              (reject)="handleRejectPercentage(project)"
+                              (return)="handleReturnPercentage(project)"
+                            >
+                            </app-admin-actions>
+                          } @else {
+                            <app-status-action
+                              [status]="project.percentageStatus"
+                              [comment]="project.percentageComment || ''"
+                            >
+                            </app-status-action>
+                          }
+                        }
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          }
+        }
+      }
+    }
+
+    <!-- Overall Summary Row -->
+    <tr class="table-success" style="font-weight: bold;">
+      <td>
+        <img src="../../../../assets/images/v5-icon (1).png" alt="Icon for overall" />
+        {{ t('reports_total_summary', 'إجمالي نسبة الإنجاز لجميع الوحدات') }}
+      </td>
+      <td>
+        <div class="progress-bar-container">
+          <div class="progress-bar">
+            <div
+              class="progress-bar-fill"
+              [style.width.%]="totalPercentage"
+            ></div>
+          </div>
+          <span>{{ totalPercentage !== null && totalPercentage !== undefined ? totalPercentage + '%' : '' }}</span>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- Reason Modal for Reject/Return -->
+@if (showReasonModal) {
+  <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.7); z-index: 1060; position: fixed; top: 0; left: 0; width: 100%; height: 100%;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header" [ngClass]="{
+          'bg-danger text-white': reasonModalType === 'reject',
+          'bg-warning text-white': reasonModalType === 'return'
+        }">
+          <button type="button" class="btn-close btn-close-white" (click)="closeReasonModal()" aria-label="Close" style="order: -1; margin-left: 0; margin-right: auto;"></button>
+          <h5 class="modal-title" style="margin-right: 0; margin-left: auto;">
+            @if (reasonModalType === 'reject') {
+              <i class="bi bi-x-circle me-2"></i>
+              رفض نسبة الإنجاز
+            } @else {
+              <i class="bi bi-arrow-return-left me-2"></i>
+              إرجاع نسبة الإنجاز
+            }
+          </h5>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="reasonComment" class="form-label fw-bold">
+              @if (reasonModalType === 'reject') {
+                سبب الرفض:
+              } @else {
+                سبب الإرجاع:
+              }
+            </label>
+            <textarea
+              id="reasonComment"
+              class="form-control"
+              rows="4"
+              [(ngModel)]="reasonComment"
+              placeholder="اكتب السبب هنا..."
+              style="resize: none;"
+            ></textarea>
+          </div>
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-1"></i>
+            <small>يرجى كتابة سبب واضح ومفصل</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeReasonModal()">
+            إلغاء
+          </button>
+          <button
+            type="button"
+            class="btn"
+            [ngClass]="{
+              'btn-danger': reasonModalType === 'reject',
+              'btn-warning': reasonModalType === 'return'
+            }"
+            (click)="submitReasonAction()"
+            [disabled]="!reasonComment.trim()"
+          >
+            @if (reasonModalType === 'reject') {
+              <i class="bi bi-x-circle me-1"></i>
+              تأكيد الرفض
+            } @else {
+              <i class="bi bi-arrow-return-left me-1"></i>
+              تأكيد الإرجاع
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,15 @@
+<div id="pdfContent">
+<app-analysis-strength-page />
+
+<app-analysis-opportunities-page />
+
+<app-analysis-risks-page />
+
+<app-analysis-threats-page />
+</div>
+
+<button  (click)="generatePDF()"   class="pdf btn btn-success">Export Form To PDF</button> 
+@if(isAdmin==false)
+{
+    <button  (click)="Approve()"   class="pdf btn btn-success">أرسال التحليل الى مدير الوحدة</button> 
+}

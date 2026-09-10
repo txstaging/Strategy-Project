@@ -1,0 +1,28 @@
+@if (isOpen) {
+  <div class="modal" [class.show]="isOpen">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <button
+          type="button"
+          class="close-btn left-close-btn"
+          (click)="onClose()"
+        >
+          ×
+        </button>
+        <div class="text-center w-100 mt-4">
+          <img src="assets/images/icon 1.png" alt="" width="40" height="40" />
+          <h4 class="title">تعديل معلومات المبادرة</h4>
+        </div>
+
+        <app-initiatives-item-form
+          [isModal]="true"
+          [isEdit]="true"
+          [initiativeId]="initiativeId"
+          [planId]="planId"
+          (formSubmitted)="onFormSubmitted()"
+          (closeModalEvent)="onClose()"
+        ></app-initiatives-item-form>
+      </div>
+    </div>
+  </div>
+}

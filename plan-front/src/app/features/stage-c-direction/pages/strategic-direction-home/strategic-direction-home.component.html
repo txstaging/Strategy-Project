@@ -1,0 +1,157 @@
+<app-stages-header
+  [stageTitle]="stageTitle"
+  [stageDescription]="stageDescription"
+/>
+
+<!-- Loading indicator -->
+@if (isDataLoading) {
+  <div class="text-center my-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">جاري التحميل...</span>
+    </div>
+    <p class="mt-2">جاري تحميل البيانات...</p>
+  </div>
+}
+
+<div class="all-section d-flex flex-column" id="allSection">
+  @if (isManager) {
+    <div class="text-box mt-2">
+      <h5>الجهة المعنية</h5>
+      <p>
+        الفرع: {{ userInfo?.unitName }} <br />التاريخ: {{ userInfo?.createdAt }}
+      </p>
+    </div>
+  }
+
+  <div class="routing-body">
+    <router-outlet />
+  </div>
+
+  <div class="d-flex flex-column justify-content-end mt-4 ms-5 gap-3">
+    @if (!isDataLoading && !directionStatusService.isDirectionDataLoaded()) {
+      <div class="alert alert-info text-end mb-2">
+        <div class="d-flex align-items-center justify-content-end">
+          <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          <span>جاري تحميل البيانات وحساب إمكانية الموافقة...</span>
+        </div>
+      </div>
+    }
+
+    @if (!showDirectionSubmissionBtn && !showDirectionResubmitBtn && buttonDisabledReason && directionStatusService.isDirectionDataLoaded()) {
+      <div class="stage-status-message">
+        @if (isStageApproved()) {
+          <div class="alert alert-success text-end mb-2">
+            <i class="bi bi-check-circle-fill me-2"></i> {{ buttonDisabledReason }}
+          </div>
+        } @else if (isStageRejected()) {
+          <div class="alert alert-danger text-end mb-2">
+            <i class="bi bi-x-circle-fill me-2"></i> {{ buttonDisabledReason }}
+          </div>
+        } @else if (isStageReturned()) {
+          <div class="alert alert-warning text-end mb-2">
+            <i class="bi bi-arrow-counterclockwise me-2"></i> {{ buttonDisabledReason }}
+          </div>
+        } @else if (isWaitingForAction()) {
+          <div class="alert alert-info text-end mb-2">
+            <i class="bi bi-info-circle-fill me-2"></i> {{ buttonDisabledReason }}
+          </div>
+        } @else {
+          <div class="alert alert-warning text-end mb-2">
+            {{ buttonDisabledReason }}
+          </div>
+        }
+      </div>
+    }
+
+    <div class="d-flex justify-content-end gap-3">
+      <!-- Show submission button if user can approve the stage (first time) -->
+      @if (showDirectionSubmissionBtn && directionStatusService.isDirectionDataLoaded()) {
+        <button class="btn btn-primary px-4 py-2" (click)="approveDirection()" [disabled]="isLoading">
+          <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          {{ approveButtonText }}
+        </button>
+      }
+
+      <!-- Show resubmit button if new items were added after approval -->
+      @if (showDirectionResubmitBtn && directionStatusService.isDirectionDataLoaded()) {
+        <button class="btn btn-warning px-4 py-2" (click)="approveDirection()" [disabled]="isLoading">
+          <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          <i class="bi bi-arrow-repeat me-1"></i>
+          {{ resubmitButtonText }}
+        </button>
+      }
+
+      <!-- Next stage button if already approved -->
+      @if (directionStatusService.isDirectionApproved()) {
+        <a
+          class="btn btn-success px-3 py-2"
+          [routerLink]="[
+            '/plans',
+            planId,
+            'objectives'
+          ]"
+          routerLinkActive="active"
+        >
+          الي الاهداف <i class="bi bi-arrow-left"></i>
+      </a>
+      }
+
+      <!-- Debug button for development environment -->
+      @if (isDevelopment) {
+        <button class="btn btn-outline-secondary btn-sm" (click)="debugStatus()" [disabled]="isLoading">
+          <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          Debug Status
+        </button>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Dialog -->
+<app-confirm-dialog
+  [isVisible]="showConfirmationDialog"
+  [title]="'تأكيد التوجيه الاستراتيجي'"
+  [message]="confirmationMessage"
+  [confirmText]="isLoading ? 'جاري التأكيد...' : 'تأكيد'"
+  [cancelText]="'إلغاء'"
+  [dangerMode]="false"
+  (confirmed)="executeApproval()"
+  (cancelled)="cancelApproval()"
+></app-confirm-dialog>
+
+<!-- Success Popup -->
+@if (isSuccessPopupVisible) {
+  <div
+    class="popup-overlay"
+    (click)="closeSuccessPopup()"
+    tabindex="0"
+    (keydown.enter)="closeSuccessPopup()"
+  >
+    <div
+      class="container2"
+      (click)="$event.stopPropagation()"
+      style="padding: 5rem 2rem"
+      tabindex="0"
+      (keydown.enter)="$event.stopPropagation()"
+    >
+      <div class="text-center">
+        <div class="icons mb-4">
+          <span class="text-success"><i class="bi bi-check-lg"></i></span>
+        </div>
+        <div class="mb-4">
+          <span class="status-approved">تم التأكيد بنجاح !</span>
+        </div>
+        <div>
+          <button
+            (click)="closeSuccessPopup()"
+            class="btn btn-primary w-25 mt-4"
+          >
+            تأكيد
+          </button>
+        </div>
+      </div>
+    </div>
+   
+  </div>
+  
+}

@@ -1,0 +1,48 @@
+<div class="d-flex justify-content-end ps-4">
+  <button class="btn btn-primary mb-3" [routerLink]="['/settings']"> رجوع
+  </button>
+</div>
+
+<div class="container">
+  <div class="form-group mb-3">
+    <label for="departmentSelect">اختر القيادة المعنية</label>
+    <ng-select
+      id="departmentSelect"
+      [items]="userRoles"
+      bindLabel="name"
+      bindValue="value"
+      placeholder="اختر القيادة المعنية"
+      [(ngModel)]="selectedRole"
+      (change)="onRoleChange($event)"
+      [searchable]="true"
+      [clearable]="true"
+      dir="rtl"
+    >
+    </ng-select>
+  </div>
+
+  <div class="form-group mb-3">
+    <label for="employeeSelect">اختر اسم الموظف</label>
+    <ng-select
+      id="employeeSelect"
+      [items]="employees"
+      bindLabel="name"
+      bindValue="id"
+      placeholder="اختر اسم الموظف"
+      [(ngModel)]="selectedEmployee"
+      (change)="onEmployeeChange($event)"
+      [searchable]="true"
+      [clearable]="true"
+      dir="rtl"
+    >
+    </ng-select>
+  </div>
+</div>
+
+<app-permissions-table
+  [employeeName]="employeeName"
+  [permissionData]="permissions"
+  [userId]="selectedEmployee"
+  [role]="selectedRole"
+>
+</app-permissions-table>

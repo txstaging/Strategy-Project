@@ -1,0 +1,115 @@
+<main class="mb-5 pb-5">
+  <div class="d-flex justify-content-between align-items-center m-4">
+    <div>
+      <h2>الخطة الاستراتيجية</h2>
+      <p style="color: #9faab0">وصف الخطة الاستراتيجية</p>
+    </div>
+  </div>
+  <ul
+    class="nav nav-underline"
+    style="border-bottom: 1px solid #e8ecee; padding: 0"
+  >
+    <li class="nav-item">
+      <a
+        class="nav-link"
+        routerLink="/plans"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        style="cursor: pointer"
+        >الخطط الحالية</a
+      >
+    </li>
+    <li class="nav-item">
+      <a
+        class="nav-link"
+        routerLink="/plans/history"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        >سجل الخطط</a
+      >
+    </li>
+  </ul>
+  <!-- @if (isAdmin()) { -->
+    <div class="d-flex align-items-center gap-3 mt-4">
+      <app-year-filter (yearChange)="onYearChange($event)"></app-year-filter>
+      <app-branch-filter
+        (unitChange)="onUnitChange($event)"
+      ></app-branch-filter>
+    </div>
+  <!-- } -->
+
+  <div *ngIf="currentStrategicPlan?.metadata?.total !== 0; else noPlans">
+    <app-strategic-plans-table
+      [currentStrategicPlan]="currentStrategicPlan?.data"
+      [pagination]="currentStrategicPlan?.metadata"
+      [isActionPopupVisible]="isActionPopupVisible"
+      (togglePopup)="toggleActionPopup()"
+      (navigateToInProgressStage)="navigateToInProgressStage($event)"
+      (planUpdated)="onPlanUpdated()"
+    />
+
+    <!-- @if (isAdmin()) { -->
+      <div class="mt-4">
+        <app-pagination
+          [currentPage]="currentStrategicPlan?.metadata?.currentPage"
+          [totalPages]="totalPages"
+          [total]="currentStrategicPlan?.metadata?.total"
+          [perPage]="currentStrategicPlan?.metadata?.perPage"
+          (pageChange)="onPageChange($event)"
+        ></app-pagination>
+      </div>
+    <!-- } -->
+  </div>
+  <ng-template #noPlans>
+    <div class="content p-5 text-center">
+      <img src="/assets/images/folder.svg" alt="" />
+      <h1>لا يوجد خطط</h1>
+      <p style="color: #9faab0">
+        لا يوجد خطط تم رفعها من قبل ،، فضلا قم بارفاق خطة
+      </p>
+      @if (isHighManagementRole()) {
+        <button
+          type="submit"
+          class="btn btn-submit w-25 mt-5"
+          (click)="showCreatePopup()"
+        >
+          + إضافة خطة
+        </button>
+      }
+    </div>
+  </ng-template>
+</main>
+
+@if (isSuccessPopupVisible) {
+  <div
+    class="popup-overlay"
+    (click)="closeSuccessPopup()"
+    tabindex="0"
+    (keydown.enter)="closeSuccessPopup()"
+  >
+    <div
+      class="container2"
+      (click)="$event.stopPropagation()"
+      style="padding: 5rem 2rem"
+      tabindex="0"
+      (keydown.enter)="$event.stopPropagation()"
+    >
+      <div class="text-center">
+        <div class="icons mb-4">
+          <span class="text-success"><i class="bi bi-check-lg"></i></span>
+        </div>
+        <div class="mb-4">
+          <span class="status-approved">تم الأضافة بنجاح</span>
+        </div>
+        <div>
+          <button
+            (click)="closeSuccessPopup()"
+            class="btn btn-primary w-25 mt-4"
+          >
+            تأكيد
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

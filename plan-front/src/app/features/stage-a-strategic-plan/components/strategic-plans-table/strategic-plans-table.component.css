@@ -1,0 +1,151 @@
+.table-wrapper {
+  margin-top: 2rem;
+  border-radius: 8px;
+  /* overflow: hidden; */
+}
+
+.table {
+  margin-bottom: 0;
+}
+
+.table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  padding: 12px;
+  vertical-align: middle;
+}
+
+.table td {
+  padding: 15px;
+  vertical-align: middle;
+}
+
+/* Plan name cell styling */
+.plan-name-cell {
+  padding: 10px 15px !important;
+}
+
+.plan-name-cell .plan-name {
+  font-weight: 500;
+  max-width: 60%;
+  text-align: right;
+}
+
+.plan-name-cell .btn {
+  border-radius: 4px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+/* Action cell styling */
+.action-cell {
+  position: relative;
+  text-align: center;
+  min-width: 80px;
+}
+
+.action-wrapper {
+  display: inline-block;
+  position: relative;
+}
+
+.action-dots {
+  cursor: pointer;
+  border-radius: 50%;
+  padding: 8px;
+  display: inline-block;
+  background-color: transparent;
+  transition: background-color 0.2s;
+}
+
+.action-dots:hover {
+  background-color: #f0f0f0;
+}
+
+/* Status styles */
+.status-approved {
+  color: green;
+}
+
+.status-pending {
+  color: red;
+}
+
+.status-waiting {
+  color: orange;
+}
+
+/* Action popup styling */
+.actions-box {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+  width: 120px;
+  padding: 8px 0;
+  text-align: right;
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  margin-top: 5px;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.action-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Make sure icons align properly */
+.action-item i {
+  width: 16px;
+  text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .plan-name-cell {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .plan-name-cell .plan-name {
+    margin-bottom: 10px;
+    max-width: 100%;
+  }
+}
+
+/* Tooltips and popups */
+.reject-reason-popup {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  border: 1px solid #ebebeb;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.reject-reason-tooltip {
+  position: absolute;
+  top: 80px;
+  left: 30px;
+  transform: translateX(-50%);
+  background-color: white;
+  border: 1px solid #ebebeb;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}

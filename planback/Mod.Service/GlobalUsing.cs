@@ -1,0 +1,51 @@
+﻿global using System.Data;
+global using System.Globalization;
+global using System.IdentityModel.Tokens.Jwt;
+global using System.Security.Claims;
+global using System.Security.Cryptography;
+global using System.Text;
+global using AutoMapper;
+global using Microsoft.AspNetCore.Http;
+global using Microsoft.AspNetCore.Identity;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.IdentityModel.Tokens;
+global using Mod.APIs.DTOs.Auth;
+global using Mod.APIs.Extensions;
+global using Mod.Core.DTOs.AnalysisPoints;
+global using Mod.Core.DTOs.APIsResponse;
+global using Mod.Core.DTOs.APIsResponse.Auth;
+global using Mod.Core.DTOs.DirectionItems;
+global using Mod.Core.DTOs.DirectionItemsElements;
+global using Mod.Core.DTOs.Initiatives;
+global using Mod.Core.DTOs.PlanAnalysis;
+global using Mod.Core.DTOs.PlanDirection;
+global using Mod.Core.DTOs.PlanGoals;
+global using Mod.Core.DTOs.PlanProjects;
+global using Mod.Core.DTOs.Plans;
+global using Mod.Core.DTOs.Report;
+global using Mod.Core.DTOs.Units;
+global using Mod.Core.DTOs.Users;
+global using Mod.Core.Entities;
+global using Mod.Core.Entities.Identity;
+global using Mod.Core.Entities.Initiative;
+global using Mod.Core.Entities.StrategicPlan;
+global using Mod.Core.Enums;
+global using Mod.Core.RepositoriesContract;
+global using Mod.Core.Services.Contract.AnalysisPointsService;
+global using Mod.Core.Services.Contract.AuthService;
+global using Mod.Core.Services.Contract.DirectionItemsElementsService;
+global using Mod.Core.Services.Contract.DirectionItemsService;
+
+global using Mod.Core.Services.Contract.PlanAnalysisService;
+global using Mod.Core.Services.Contract.PlanDirectionService;
+
+
+global using Mod.Core.Services.Contract.PlanService;
+global using Mod.Core.Services.Contract.PlansService;
+
+global using Mod.Core.Services.Contract.UnitsService;
+global using Mod.Core.Services.Contract.UserService;
+global using Mod.Core.UnitOffWorkContract;
+global using Mod.Core.Utils;
+global using Mod.Repository.Data;

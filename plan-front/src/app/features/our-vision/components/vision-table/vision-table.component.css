@@ -1,0 +1,147 @@
+/* Header section with green background */
+.header-section {
+  background-color: #1d5245;
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  background-image: url('/assets/Background.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #0ce0a1;
+  text-align: center;
+  z-index: 2;
+}
+
+/* Breadcrumb styling */
+.breadcrumb-container {
+  margin-top: 1.5rem;
+  direction: rtl;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  float: right;
+  padding-left: 0.5rem;
+  padding-right: 0;
+  color: #6c757d;
+  content: "/";
+}
+
+.breadcrumb-item {
+  color: #6c757d;
+}
+
+.breadcrumb-item a {
+  color: #00A05A;
+}
+
+/* Blog controls section */
+.blog-controls {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  direction: rtl;
+}
+
+/* Blog table styling */
+.blog-table {
+  direction: rtl;
+  vertical-align: middle;
+}
+
+.blog-title {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Section headings */
+.section-heading {
+  color: #343a40;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  direction: rtl;
+}
+
+/* Empty state */
+.empty-state {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: #6c757d;
+}
+
+/* Pagination styling */
+.pagination {
+  direction: rtl;
+}
+
+.page-item:not(:first-child) .page-link {
+  margin-right: -1px;
+}
+
+.page-link {
+  border: 1px solid #dee2e6;
+  color: #00A05A;
+}
+
+.page-item.active .page-link {
+  background-color: #00A05A;
+  border-color: #00A05A;
+}
+
+.page-item.disabled .page-link {
+  color: #6c757d;
+}
+
+/* Button styling */
+.btn-primary {
+  background-color: #00A05A;
+  border-color: #00A05A;
+}
+
+.btn-primary:hover {
+  background-color: #00874c;
+  border-color: #00874c;
+}
+
+.btn-outline-secondary {
+  color: #6c757d;
+  border-color: #ced4da;
+}
+
+.btn-outline-info {
+  color: #0dcaf0;
+  border-color: #0dcaf0;
+}
+
+.btn-outline-success {
+  color: #00A05A;
+  border-color: #00A05A;
+}
+
+.btn-outline-danger {
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+/* Badge styling */
+.badge.bg-primary {
+  background-color: #00A05A !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .blog-title {
+    max-width: 150px;
+  }
+}

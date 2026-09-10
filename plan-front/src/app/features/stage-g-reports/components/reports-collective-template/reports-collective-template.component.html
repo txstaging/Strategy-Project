@@ -1,0 +1,64 @@
+<!-- Unit Filter and Print Controls -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex align-items-center gap-3 d-print-none">
+    <label for="unitFilter" class="form-label mb-0">تصفية حسب الوحدة:</label>
+    <select
+      id="unitFilter"
+      class="form-select"
+      style="width: auto;"
+      (change)="onUnitSelectionChange($any($event.target).value)"
+    >
+      <option value="all">جميع الوحدات</option>
+      @for (unit of availableUnits; track unit.unitId) {
+        <option [value]="unit.unitId">{{ unit.unitName }}</option>
+      }
+    </select>
+  </div>
+  <div class="d-flex justify-content-end mb-3">
+    <button class="btn btn-success d-print-none" (click)="printTable()">
+      <i class="bi bi-download"></i> تحميل الملف
+    </button>
+  </div>
+</div>
+
+<div class="container mt-4 p-0 table-scroll">
+  <table>
+    <tr>
+      <th class="goal sticky-col sticky-col-first">الهدف</th>
+      <th class="initiative">المبادرة</th>
+      <th class="project">المشاريع</th>
+      <th class="project">الأولوية</th>
+      <th class="start-date">تاريخ البدء</th>
+      <th class="end-date sticky-col sticky-col-last">تاريخ الانتهاء</th>
+    </tr>
+    @for (unit of filteredData; track unit.unitId) {
+      @for (goal of unit.goals; track goal.goalId; let goalIndex = $index) {
+        @for (initiative of goal.initiatives; track initiative.initiativeId; let initIndex = $index) {
+          @for (project of initiative.projects; track project.projectId; let projIndex = $index) {
+            <tr>
+              <!-- Goal Name with Correct Rowspan -->
+              @if (initIndex === 0 && projIndex === 0) {
+                <td [attr.rowspan]="getRowspan(goal)">
+                  {{ goal.goalName }}
+                </td>
+              }
+
+              <!-- Initiative Name with Correct Rowspan -->
+              @if (projIndex === 0) {
+                <td [attr.rowspan]="initiative.projects.length">
+                  {{ initiative.initiativeName }}
+                </td>
+              }
+
+              <!-- Project Details -->
+              <td>{{ project.projectName }}</td>
+              <td>{{ project.priority }}</td>
+              <td>{{ project.startDate }}</td>
+              <td>{{ project.endDate }}</td>
+            </tr>
+          }
+        }
+      }
+    }
+  </table>
+</div>

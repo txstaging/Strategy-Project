@@ -1,0 +1,407 @@
+@if (isOpen) {
+  <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050;">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header justify-content-between">
+          <h5 class="modal-title flex-grow-1">
+            <i class="bi bi-plus-circle me-2"></i>
+            إضافة مشاريع للمبادرة
+          </h5>
+          <button type="button" class="btn-close me-auto" (click)="closeModal()" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
+
+          <!-- Weight Validation Alert -->
+          @if (weightError) {
+            <div class="alert alert-danger d-flex align-items-center mb-3" role="alert">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              <div>
+                <strong>خطأ في الوزن:</strong> {{ weightError }}
+              </div>
+            </div>
+          }
+
+          <!-- Goal and Initiative Selection (Fixed for all projects) -->
+          <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+              <h6 class="mb-0">
+                <i class="bi bi-target me-2"></i>
+                اختيار الهدف والمبادرة (مشترك لجميع المشاريع)
+              </h6>
+            </div>
+            <div class="card-body">
+              <form [formGroup]="selectionForm">
+                <div class="row">
+                  <div class="col-md-6">
+                    <label for="planGoalsId" class="form-label">الهدف <span class="text-danger">*</span></label>
+                    <select
+                      id="planGoalsId"
+                      class="form-select"
+                      formControlName="planGoalsId"
+                      [class.is-invalid]="selectionForm.get('planGoalsId')?.invalid && selectionForm.get('planGoalsId')?.touched"
+                    >
+                      <option value="">اختر الهدف</option>
+                      @if (loadingGoals) {
+                        <option disabled>جار التحميل...</option>
+                      } @else {
+                        @for (goal of goals; track goal.id) {
+                          <option [value]="goal.id">{{ goal.name }}</option>
+                        }
+                      }
+                    </select>
+                    @if (selectionForm.get('planGoalsId')?.invalid && selectionForm.get('planGoalsId')?.touched) {
+                      <div class="invalid-feedback">يرجى اختيار الهدف</div>
+                    }
+                  </div>
+
+                  <div class="col-md-6">
+                    <label for="planInitiativeId" class="form-label">المبادرة <span class="text-danger">*</span></label>
+                    <select
+                      id="planInitiativeId"
+                      class="form-select"
+                      formControlName="planInitiativeId"
+                      [class.is-invalid]="selectionForm.get('planInitiativeId')?.invalid && selectionForm.get('planInitiativeId')?.touched"
+                      [disabled]="!selectionForm.get('planGoalsId')?.value || loadingInitiatives"
+                    >
+                      <option value="">اختر المبادرة</option>
+                      @if (loadingInitiatives) {
+                        <option disabled>جار التحميل...</option>
+                      } @else {
+                        @for (initiative of initiatives; track initiative.id) {
+                          <option [value]="initiative.id">{{ initiative.name }}</option>
+                        }
+                      }
+                    </select>
+                    @if (selectionForm.get('planInitiativeId')?.invalid && selectionForm.get('planInitiativeId')?.touched) {
+                      <div class="invalid-feedback">يرجى اختيار المبادرة</div>
+                    }
+                    @if (!selectionForm.get('planGoalsId')?.value) {
+                      <small class="text-muted">يرجى اختيار الهدف أولاً</small>
+                    }
+                  </div>
+                </div>
+
+                <!-- Initiative Weight Info -->
+                @if (selectedInitiativeWeight > 0) {
+                  <div class="row mt-3">
+                    <div class="col-12">
+                      <div class="alert alert-info">
+                        <h6 class="alert-heading mb-2">
+                          <i class="bi bi-info-circle me-2"></i>
+                          معلومات وزن المبادرة: {{ selectedInitiativeName }}
+                        </h6>
+                        <div class="row">
+                          <div class="col-md-4">
+                            <strong>الوزن الكلي:</strong> {{ selectedInitiativeWeight }}
+                          </div>
+                          <div class="col-md-4">
+                            <strong>المستخدم:</strong> {{ currentUsedWeight }}
+                          </div>
+                          <div class="col-md-4">
+                            <strong>المتاح:</strong> {{ availableWeight }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </form>
+            </div>
+          </div>
+
+          <!-- Project Form (for adding/editing individual projects) -->
+          @if (selectionForm.valid) {
+            <div class="card mb-4">
+              <div class="card-header bg-success text-white">
+                <h6 class="mb-0">
+                  <i class="bi bi-folder-plus me-2"></i>
+                  @if (editingProjectIndex !== null) {
+                    تعديل المشروع
+                  } @else {
+                    إضافة مشروع جديد
+                  }
+                </h6>
+              </div>
+              <div class="card-body">
+                <form [formGroup]="projectForm">
+
+                  <!-- Project Basic Info -->
+                  <div class="row mb-3">
+                    <div class="col-md-8">
+                      <label for="name" class="form-label">اسم المشروع <span class="text-danger">*</span></label>
+                      <textarea
+                        id="name"
+                        class="form-control"
+                        formControlName="name"
+                        rows="2"
+                        [class.is-invalid]="projectForm.get('name')?.invalid && projectForm.get('name')?.touched"
+                        placeholder="أدخل اسم المشروع"
+                      ></textarea>
+                      @if (projectForm.get('name')?.invalid && projectForm.get('name')?.touched) {
+                        <div class="invalid-feedback">يرجى إدخال اسم المشروع</div>
+                      }
+                    </div>
+
+                    <div class="col-md-4">
+                      <label for="priority" class="form-label">الأولوية <span class="text-danger">*</span></label>
+                      <select
+                        id="priority"
+                        class="form-select"
+                        formControlName="priority"
+                        [class.is-invalid]="projectForm.get('priority')?.invalid && projectForm.get('priority')?.touched"
+                      >
+                        <option value="أولوية أولى">أولوية أولى</option>
+                        <option value="أولوية ثانية">أولوية ثانية</option>
+                        <option value="أولوية ثالثة">أولوية ثالثة</option>
+                      </select>
+                      @if (projectForm.get('priority')?.invalid && projectForm.get('priority')?.touched) {
+                        <div class="invalid-feedback">يرجى اختيار الأولوية</div>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Project Details Row 1 -->
+                  <div class="row mb-3">
+                    <div class="col-md-4">
+                      <label for="code" class="form-label">رمز المشروع <span class="text-danger">*</span></label>
+                      <input
+                        type="text"
+                        id="code"
+                        class="form-control"
+                        formControlName="code"
+                        [class.is-invalid]="projectForm.get('code')?.invalid && projectForm.get('code')?.touched"
+                        placeholder="رمز المشروع"
+                      />
+                      @if (projectForm.get('code')?.invalid && projectForm.get('code')?.touched) {
+                        <div class="invalid-feedback">يرجى إدخال رمز المشروع</div>
+                      }
+                    </div>
+
+                    <div class="col-md-4">
+                      <label for="duration" class="form-label">المدة <span class="text-danger">*</span></label>
+                      <input
+                        type="text"
+                        id="duration"
+                        class="form-control"
+                        formControlName="duration"
+                        [class.is-invalid]="projectForm.get('duration')?.invalid && projectForm.get('duration')?.touched"
+                        placeholder="مدة المشروع"
+                      />
+                      @if (projectForm.get('duration')?.invalid && projectForm.get('duration')?.touched) {
+                        <div class="invalid-feedback">يرجى إدخال مدة المشروع</div>
+                      }
+                    </div>
+
+                    <div class="col-md-4">
+                      <label for="weight" class="form-label">وزن المشروع <span class="text-danger">*</span></label>
+                      <input
+                        type="number"
+                        id="weight"
+                        class="form-control"
+                        formControlName="weight"
+                        [class.is-invalid]="(projectForm.get('weight')?.invalid && projectForm.get('weight')?.touched) || weightError"
+                        placeholder="وزن المشروع"
+                        min="1"
+                        [max]="availableWeight"
+                      />
+                      @if (projectForm.get('weight')?.invalid && projectForm.get('weight')?.touched) {
+                        <div class="invalid-feedback">يرجى إدخال وزن المشروع (أكبر من 0)</div>
+                      }
+                      @if (weightError) {
+                        <div class="invalid-feedback d-block">{{ weightError }}</div>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Project Details Row 2 -->
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label for="beneficiaries" class="form-label">المستفيدون <span class="text-danger">*</span></label>
+                      <textarea
+                        id="beneficiaries"
+                        class="form-control"
+                        formControlName="beneficiaries"
+                        rows="2"
+                        [class.is-invalid]="projectForm.get('beneficiaries')?.invalid && projectForm.get('beneficiaries')?.touched"
+                        placeholder="أدخل المستفيدين من المشروع"
+                      ></textarea>
+                      @if (projectForm.get('beneficiaries')?.invalid && projectForm.get('beneficiaries')?.touched) {
+                        <div class="invalid-feedback">يرجى إدخال المستفيدين</div>
+                      }
+                    </div>
+
+                    <div class="col-md-6">
+                      <label for="supervisingAuthority" class="form-label">الجهة المشرفة <span class="text-danger">*</span></label>
+                      <textarea
+                        id="supervisingAuthority"
+                        class="form-control"
+                        formControlName="supervisingAuthority"
+                        rows="2"
+                        [class.is-invalid]="projectForm.get('supervisingAuthority')?.invalid && projectForm.get('supervisingAuthority')?.touched"
+                        placeholder="أدخل الجهة المشرفة على المشروع"
+                      ></textarea>
+                      @if (projectForm.get('supervisingAuthority')?.invalid && projectForm.get('supervisingAuthority')?.touched) {
+                        <div class="invalid-feedback">يرجى إدخال الجهة المشرفة</div>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Dates -->
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label for="startDate" class="form-label">تاريخ البداية <span class="text-danger">*</span></label>
+                      <input
+                        type="date"
+                        id="startDate"
+                        class="form-control"
+                        formControlName="startDate"
+                        [class.is-invalid]="projectForm.get('startDate')?.invalid && projectForm.get('startDate')?.touched"
+                      />
+                      @if (projectForm.get('startDate')?.invalid && projectForm.get('startDate')?.touched) {
+                        <div class="invalid-feedback">يرجى إدخال تاريخ البداية</div>
+                      }
+                    </div>
+
+                    <div class="col-md-6">
+                      <label for="endDate" class="form-label">تاريخ النهاية <span class="text-danger">*</span></label>
+                      <input
+                        type="date"
+                        id="endDate"
+                        class="form-control"
+                        formControlName="endDate"
+                        [class.is-invalid]="projectForm.get('endDate')?.invalid && projectForm.get('endDate')?.touched"
+                      />
+                      @if (projectForm.get('endDate')?.invalid && projectForm.get('endDate')?.touched) {
+                        <div class="invalid-feedback">يرجى إدخال تاريخ النهاية</div>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Add/Update Project Button -->
+                  <div class="text-end">
+                    @if (editingProjectIndex !== null) {
+                      <button type="button" class="btn btn-secondary me-2" (click)="cancelEdit()">
+                        <i class="bi bi-x-circle me-1"></i>
+                        إلغاء التعديل
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-warning"
+                        (click)="addOrUpdateProject()"
+                        [disabled]="!canAddProject"
+                      >
+                        <i class="bi bi-check-circle me-1"></i>
+                        تحديث المشروع
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn btn-primary"
+                        (click)="addOrUpdateProject()"
+                        [disabled]="!canAddProject"
+                      >
+                        <i class="bi bi-plus-circle me-1"></i>
+                        إضافة إلى القائمة
+                      </button>
+                    }
+                  </div>
+                </form>
+              </div>
+            </div>
+          }
+
+          <!-- Projects List -->
+          @if (projectsToAdd.length > 0) {
+            <div class="card mb-4">
+              <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                  <i class="bi bi-list-check me-2"></i>
+                  المشاريع المضافة ({{ projectsToAdd.length }})
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead class="table-light">
+                      <tr>
+                        <th>#</th>
+                        <th>اسم المشروع</th>
+                        <th>الرمز</th>
+                        <th>الأولوية</th>
+                        <th>الوزن</th>
+                        <th>الإجراءات</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (project of projectsToAdd; track project.code + project.name; let i = $index) {
+                        <tr [class.table-warning]="editingProjectIndex === i">
+                          <td>{{ i + 1 }}</td>
+                          <td class="fw-medium">{{ project.name }}</td>
+                          <td><small class="text-muted">{{ project.code }}</small></td>
+                          <td><span class="badge bg-info">{{ project.priority }}</span></td>
+                          <td><span class="badge bg-secondary">{{ project.weight }}</span></td>
+                          <td>
+                            <div class="btn-group btn-group-sm">
+                              <button
+                                type="button"
+                                class="btn btn-outline-primary"
+                                (click)="editProject(i)"
+                                [disabled]="submitting"
+                                title="تعديل"
+                              >
+                                <i class="bi bi-pencil"></i>
+                              </button>
+                              <button
+                                type="button"
+                                class="btn btn-outline-danger"
+                                (click)="deleteProject(i)"
+                                [disabled]="submitting"
+                                title="حذف"
+                              >
+                                <i class="bi bi-trash"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                    <tfoot class="table-light">
+                      <tr>
+                        <td colspan="4"><strong>إجمالي الوزن:</strong></td>
+                        <td><strong class="badge bg-primary fs-6">{{ currentUsedWeight }}</strong></td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+          }
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">
+            إلغاء
+          </button>
+          <button
+            type="button"
+            class="btn btn-success"
+            (click)="submitAllProjects()"
+            [disabled]="!canSubmitAll"
+          >
+            @if (submitting) {
+              <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+              جار الحفظ...
+            } @else {
+              <i class="bi bi-check-all me-2"></i>
+              حفظ جميع المشاريع ({{ projectsToAdd.length }})
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

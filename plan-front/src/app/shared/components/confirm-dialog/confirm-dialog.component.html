@@ -1,0 +1,51 @@
+<!-- Modal Backdrop -->
+<div
+  class="modal-backdrop"
+  [class.show]="isVisible"
+  (click)="onCancel()"
+  *ngIf="isVisible"
+  role="dialog"
+  aria-modal="true"
+  tabindex="-1"
+  aria-labelledby="modalTitle"
+>
+  <!-- Modal Dialog -->
+  <div
+    class="modal-dialog"
+    (click)="stopPropagation($event)"
+    role="document"
+    tabindex="0"
+  >
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">{{ title }}</h5>
+        <button
+          type="button"
+          class="btn-close"
+          (click)="onCancel()"
+          aria-label="إغلاق"
+        >×</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <p>{{ message }}</p>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="onCancel()">
+          {{ cancelText }}
+        </button>
+        <button
+          type="button"
+          [class]="dangerMode ? 'btn btn-danger' : 'btn btn-primary'"
+          (click)="onConfirm()"
+        >
+          {{ confirmText }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

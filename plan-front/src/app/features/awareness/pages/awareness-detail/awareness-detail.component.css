@@ -1,0 +1,258 @@
+/* Header section with green background */
+.header-section {
+  background-color: #1d5245;
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  background-image: url('/assets/Background.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #0ce0a1;
+  text-align: center;
+  z-index: 2;
+}
+
+/* Breadcrumb styling */
+.breadcrumb-container {
+  margin-top: 1.5rem;
+  direction: rtl;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  float: right;
+  padding-left: 0.5rem;
+  padding-right: 0;
+  color: #6c757d;
+  content: "/";
+}
+
+.breadcrumb-item {
+  color: #6c757d;
+}
+
+.breadcrumb-item a {
+  color: #00A05A;
+}
+
+/* Awareness detail container */
+.blog-detail-container {
+  direction: rtl;
+}
+
+/* Back button */
+.back-btn {
+  background-color: #00A05A;
+  color: white;
+  border-radius: 4px;
+  padding: 0.5rem 1.2rem;
+  border: none;
+  font-weight: 500;
+}
+
+.back-btn:hover {
+  background-color: #00874c;
+  color: white;
+}
+
+/* Awareness header */
+.blog-header {
+  margin-bottom: 2rem;
+}
+
+.blog-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.blog-date {
+  color: #6c757d;
+  font-size: 0.95rem;
+}
+
+/* Awareness image */
+.blog-image-container {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.blog-main-image {
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Awareness content */
+.blog-content {
+  line-height: 1.8;
+  font-size: 1.1rem;
+  color: #444;
+  text-align: justify;
+}
+
+.blog-paragraph {
+  margin-bottom: 1.5rem;
+}
+
+/* Related awareness section */
+.related-blogs-section {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #eee;
+}
+
+.section-heading {
+  color: #333;
+  font-weight: bold;
+  font-size: 1.6rem;
+  text-align: right;
+  margin-bottom: 1.5rem;
+}
+
+/* Small card styling */
+.news-card-small {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eee;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  direction: rtl;
+}
+
+.news-image-small {
+  height: 180px;
+  width: 100%;
+  object-fit: cover;
+}
+
+.news-content-small {
+  padding: 1rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.news-title-small {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #00A05A;
+}
+
+.news-title-small a {
+  color: #00A05A;
+}
+
+.news-date-small {
+  color: #6c757d;
+  font-size: 0.85rem;
+  margin-top: auto;
+}
+
+/* No awareness found */
+.no-blog-container {
+  padding: 3rem 0;
+}
+
+.no-blog-icon {
+  max-width: 100px;
+  opacity: 0.7;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .blog-title {
+    font-size: 1.7rem;
+  }
+
+  .blog-content {
+    font-size: 1rem;
+  }
+}
+
+/* Admin actions */
+.admin-actions {
+  display: flex;
+  align-items: center;
+}
+
+.admin-actions .btn-outline-success {
+  color: #00A05A;
+  border-color: #00A05A;
+}
+
+.admin-actions .btn-outline-success:hover {
+  background-color: #00A05A;
+  color: white;
+}
+
+.admin-actions .btn-outline-danger:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* Related awareness styling */
+.related-blog-card {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eee;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  direction: rtl;
+}
+
+.related-blog-image {
+  height: 180px;
+  width: 100%;
+  object-fit: cover;
+}
+
+.related-blog-content {
+  padding: 1rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.related-blog-title {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #00A05A;
+}
+
+.related-blog-title a {
+  color: #00A05A !important;
+  text-decoration: none;
+}
+
+.related-blog-date {
+  color: #6c757d;
+  font-size: 0.85rem;
+  margin-top: auto;
+}
+
+/* Additional global link style to ensure all links in this component follow the branding */
+:host ::ng-deep a {
+  color: #00A05A;
+}
+
+/* Make sure all links with text-decoration-none class properly apply the style */
+a.text-decoration-none {
+  text-decoration: none !important;
+}

@@ -1,0 +1,195 @@
+<aside class="sidebar position-sticky top-0">
+  <nav>
+    <a
+      routerLink="/plans"
+      routerLinkActive
+      [class.active]="router.url === '/strategy-plan'"
+      class="mb-0"
+    >
+      <img src="./../../../../../assets/v5-icon.png" alt="Strategy Plan Icon" />
+      &nbsp;الخطة الاستراتيجية
+    </a>
+    <ul
+      class="text-end pe-2 mb-3"
+      style="list-style: none; padding: 0; margin-bottom: 0"
+    >
+      <li>
+        <a
+          [class.active]="router.url.includes('analysis-stage')"
+          [class.disabled]="!isStageActive('analysis-stage')"
+          (click)="isStageActive('analysis-stage') && navigateToStage('')"
+          (keydown)="onKeyDown($event, 'analysis-stage')"
+          [attr.title]="
+            isStageActive('analysis-stage')
+              ? 'التحليل'
+              : 'هذه المرحلة غير متاحة حاليًا'
+          "
+          tabindex="0"
+          role="button"
+          [attr.aria-disabled]="!isStageActive('analysis-stage')"
+        >
+          <i
+            class="bi"
+            [ngClass]="
+              isStageActive('analysis-stage')
+                ? 'bi-arrow-return-left'
+                : 'bi-lock'
+            "
+          ></i>
+          &nbsp;&nbsp;التحليل
+          <span
+            *ngIf="isStageActive('analysis-stage')"
+            class="status-indicator active"
+          ></span>
+          <span
+            *ngIf="!isStageActive('analysis-stage')"
+            class="status-indicator inactive"
+          ></span>
+        </a>
+      </li>
+      <li>
+        <a
+          [class.active]="router.url.includes('direction-stage')"
+          [class.disabled]="!isStageActive('direction-stage')"
+          (click)="
+            isStageActive('direction-stage') &&
+              navigateToStage('direction-stage')
+          "
+          (keydown)="onKeyDown($event, 'direction-stage')"
+          [attr.title]="
+            isStageActive('direction-stage')
+              ? 'التوجه الاستراتيجي'
+              : 'هذه المرحلة غير متاحة حاليًا'
+          "
+          tabindex="0"
+          role="button"
+          [attr.aria-disabled]="!isStageActive('direction-stage')"
+        >
+          <i
+            class="bi"
+            [ngClass]="
+              isStageActive('direction-stage')
+                ? 'bi-arrow-return-left'
+                : 'bi-lock'
+            "
+          ></i>
+          &nbsp;&nbsp;التوجه الاستراتيجي
+          <span
+            *ngIf="isStageActive('direction-stage')"
+            class="status-indicator active"
+          ></span>
+          <span
+            *ngIf="!isStageActive('direction-stage')"
+            class="status-indicator inactive"
+          ></span>
+        </a>
+      </li>
+      <li>
+        <a
+          [class.active]="router.url.includes('objectives')"
+          [class.disabled]="!isStageActive('objectives')"
+          (click)="isStageActive('objectives') && navigateToStage('objectives')"
+          (keydown)="onKeyDown($event, 'objectives')"
+          [attr.title]="
+            isStageActive('objectives')
+              ? 'الأهداف'
+              : 'هذه المرحلة غير متاحة حاليًا'
+          "
+          tabindex="0"
+          role="button"
+          [attr.aria-disabled]="!isStageActive('objectives')"
+        >
+          <i
+            class="bi"
+            [ngClass]="
+              isStageActive('objectives') ? 'bi-arrow-return-left' : 'bi-lock'
+            "
+          ></i>
+          &nbsp;&nbsp;الأهداف
+          <span
+            *ngIf="isStageActive('objectives')"
+            class="status-indicator active"
+          ></span>
+          <span
+            *ngIf="!isStageActive('objectives')"
+            class="status-indicator inactive"
+          ></span>
+        </a>
+      </li>
+      <li>
+        <a
+          [class.active]="router.url.includes('initiatives')"
+          [class.disabled]="!isStageActive('initiatives')"
+          (click)="
+            isStageActive('initiatives') && navigateToStage('initiatives')
+          "
+          (keydown)="onKeyDown($event, 'initiatives')"
+          [attr.title]="
+            isStageActive('initiatives')
+              ? 'المبادرات'
+              : 'هذه المرحلة غير متاحة حاليًا'
+          "
+          tabindex="0"
+          role="button"
+          [attr.aria-disabled]="!isStageActive('initiatives')"
+        >
+          <i
+            class="bi"
+            [ngClass]="
+              isStageActive('initiatives') ? 'bi-arrow-return-left' : 'bi-lock'
+            "
+          ></i>
+          &nbsp;&nbsp;المبادرات
+          <span
+            *ngIf="isStageActive('initiatives')"
+            class="status-indicator active"
+          ></span>
+          <span
+            *ngIf="!isStageActive('initiatives')"
+            class="status-indicator inactive"
+          ></span>
+        </a>
+      </li>
+      <li>
+        <a
+          [class.active]="router.url.includes('projects')"
+          [class.disabled]="!isStageActive('projects')"
+          (click)="isStageActive('projects') && navigateToStage('projects')"
+          (keydown)="onKeyDown($event, 'projects')"
+          [attr.title]="
+            isStageActive('projects')
+              ? 'المشاريع'
+              : 'هذه المرحلة غير متاحة حاليًا'
+          "
+          tabindex="0"
+          role="button"
+          [attr.aria-disabled]="!isStageActive('projects')"
+        >
+          <i
+            class="bi"
+            [ngClass]="
+              isStageActive('projects') ? 'bi-arrow-return-left' : 'bi-lock'
+            "
+          ></i>
+          &nbsp;&nbsp;المشاريع
+          <span
+            *ngIf="isStageActive('projects')"
+            class="status-indicator active"
+          ></span>
+          <span
+            *ngIf="!isStageActive('projects')"
+            class="status-indicator inactive"
+          ></span>
+        </a>
+      </li>
+    </ul>
+    <a
+      routerLink="/plans/reports"
+      routerLinkActive
+      [class.active]="router.url.includes('reports')"
+    >
+      <img src="/assets/v5-icon (4).png" alt="Reports Icon" />
+      &nbsp;&nbsp;التقارير
+    </a>
+  </nav>
+</aside>

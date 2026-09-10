@@ -1,0 +1,91 @@
+.actions {
+  background-color: #f0f0f0;
+  padding: 7px 20px;
+  border: 1px solid #e8ecee;
+  border-radius: 50px;
+  cursor: pointer;
+}
+
+.edit {
+  background-color: #e1eeff;
+  color: #458be7;
+  padding: 7px 20px;
+  border: 1px solid #e8ecee;
+  border-radius: 50px;
+  cursor: pointer;
+}
+
+
+/* RTL Modal Styles */
+.modal-header {
+  direction: rtl;
+  text-align: right;
+}
+
+.modal-header .btn-close {
+  order: -1;
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.modal-header .modal-title {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+.modal-body {
+  direction: rtl;
+  text-align: right;
+}
+
+.modal-footer {
+  direction: rtl;
+  justify-content: flex-start;
+}
+
+.modal-footer .btn {
+  margin-left: 0.5rem;
+  margin-right: 0;
+}
+
+.modal-footer .btn:first-child {
+  margin-left: 0;
+}
+
+/* Table RTL adjustments */
+.table th,
+.table td {
+  text-align: right;
+}
+
+.table th:first-child,
+.table td:first-child {
+  text-align: center;
+}
+
+.table th:last-child,
+.table td:last-child {
+  text-align: center;
+}
+
+/* Form RTL adjustments */
+.form-label {
+  text-align: right;
+}
+
+.d-flex.justify-content-between {
+  direction: rtl;
+}
+
+/* Button group RTL */
+.btn-group .btn {
+  margin-left: 0.25rem;
+  margin-right: 0;
+}
+
+.btn-group .btn:first-child {
+  margin-left: 0;
+}
+.table-responsive{
+  overflow: visible;
+}

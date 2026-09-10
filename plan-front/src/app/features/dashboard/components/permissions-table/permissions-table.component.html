@@ -1,0 +1,49 @@
+<div class="table-container">
+  <a class="btn btn-primary mb-3" (click)="openModal()" tabindex="0">
+    <span>تعديل</span>
+  </a>
+
+  <table class="permissions-table">
+    <thead>
+      <tr>
+        <th>اسم الموظف</th>
+        <th colspan="7" class="text-center">الاجراءات المتاحة للموظف</th>
+        <th>الأذونات</th>
+      </tr>
+      <tr>
+        <th></th>
+        @for (page of pages; track page.key) {
+          <th>{{ page.name }}</th>
+        }
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <td [attr.rowspan]="7" class="employee-cell">
+        <div class="employee-cell-content">
+          <div class="employee-name">{{ employeeName }}</div>
+        </div>
+      </td>
+      @for (action of permissionActions; track action.type) {
+        <tr>
+          @for (page of pages; track page.key) {
+            <td>{{ hasPermission(page.key, action.type) ? '✓' : '-' }}</td>
+          }
+          <td>
+            <span [ngClass]="action.type.toLowerCase()">{{ action.name }}</span>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+<app-edit-modal
+  [isOpen]="isModalOpen"
+  [initialPermissions]="permissionData"
+  [userId]="userId"
+  [role]="role"
+  (closeModalEvent)="closeModal()"
+  (savePermissions)="handlePermissionsSave($event)"
+>
+</app-edit-modal>

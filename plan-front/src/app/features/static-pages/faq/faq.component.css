@@ -1,0 +1,277 @@
+/* Header section with green background */
+.header {
+  background-color: #1d5245;
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  position: relative;
+  /* overflow: hidden; */
+  background-image: url('/assets/Background.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  border-bottom-left-radius: 40px;
+  border-bottom-right-radius: 40px;
+}
+
+.section-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #fff;
+  text-align: right;
+  margin: 0;
+}
+
+/* Breadcrumb styling */
+.breadcrumb-container {
+  direction: rtl;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  float: right;
+  padding-left: 0.5rem;
+  padding-right: 0;
+  color: #6c757d;
+  content: "/";
+}
+
+.breadcrumb-item {
+  color: #6c757d;
+}
+
+.breadcrumb-item a {
+  color: #00A05A;
+}
+
+/* Main content container with extra padding */
+.container.my-5 {
+  padding-bottom: 60px;
+}
+
+/* Introduction section */
+.intro-section {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+  direction: rtl;
+}
+
+.intro-title {
+  color: #1d5245;
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #00A05A;
+  padding-bottom: 0.75rem;
+  width: fit-content;
+}
+
+.intro-text {
+  color: #333;
+  line-height: 1.8;
+  font-size: 1.1rem;
+}
+
+/* FAQ Sidebar */
+.faq-sidebar {
+  direction: rtl;
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 20px;
+}
+
+.sidebar-title {
+  color: #1d5245;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: right;
+  border-bottom: 2px solid #00A05A;
+  padding-bottom: 0.5rem;
+}
+
+.list-group {
+  direction: rtl;
+  text-align: right;
+}
+
+.list-group-item {
+  border-color: rgba(0, 160, 90, 0.1);
+  color: #333;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border-radius: 6px !important;
+  margin-bottom: 6px;
+  padding: 12px 16px;
+}
+
+.list-group-item:hover, .list-group-item:focus {
+  background-color: rgba(0, 160, 90, 0.05);
+  color: #00A05A;
+  border-color: rgba(0, 160, 90, 0.2);
+}
+
+.list-group-item.active {
+  background-color: #00A05A;
+  border-color: #00A05A;
+  color: white;
+  font-weight: 600;
+}
+
+/* FAQ Categories */
+.faq-category {
+  direction: rtl;
+  margin-bottom: 5rem;
+  scroll-margin-top: 100px;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-height: 400px;
+}
+
+.category-title {
+  color: #1d5245;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: right;
+  border-bottom: 2px solid #00A05A;
+  padding-bottom: 0.75rem;
+  width: fit-content;
+}
+
+.category-description {
+  color: #555;
+  font-size: 1rem;
+  line-height: 1.8;
+  background-color: rgba(0, 160, 90, 0.05);
+  padding: 1rem;
+  border-radius: 6px;
+  border-right: 3px solid #00A05A;
+}
+
+/* Accordion Styling */
+.accordion {
+  direction: rtl;
+  text-align: right;
+}
+
+.accordion-item {
+  border: 1px solid rgba(0, 160, 90, 0.1);
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.accordion-button {
+  padding: 1.25rem 1.5rem;
+  font-weight: 600;
+  color: #1d5245;
+  background-color: #f9f9f9;
+  text-align: right;
+}
+
+.accordion-button:not(.collapsed) {
+  color: #00A05A;
+  background-color: rgba(0, 160, 90, 0.1);
+  box-shadow: none;
+}
+
+.accordion-button:focus {
+  box-shadow: none;
+  border-color: rgba(0, 160, 90, 0.25);
+}
+
+.accordion-button::after {
+  margin-right: auto;
+  margin-left: unset;
+}
+
+.accordion-body {
+  padding: 1.5rem;
+  color: #333;
+  line-height: 1.8;
+}
+
+/* Add a page footer margin to allow for scrolling to reveal the last section */
+.row::after {
+  content: "";
+  display: block;
+  height: 80px;
+  width: 100%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .faq-sidebar {
+    margin-bottom: 2rem;
+    position: static;
+  }
+
+  .faq-category {
+    padding: 1.5rem;
+    margin-bottom: 3rem;
+    min-height: 300px;
+  }
+
+  .intro-section {
+    padding: 1.5rem;
+  }
+
+  .intro-title {
+    font-size: 1.4rem;
+  }
+
+  .intro-text {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar-title, .category-title {
+    font-size: 1.2rem;
+  }
+
+  .accordion-button {
+    padding: 1rem 1.25rem;
+    font-size: 0.95rem;
+  }
+
+  .accordion-body {
+    padding: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .faq-category {
+    scroll-margin-top: 70px;
+    padding: 1.25rem;
+    margin-bottom: 2.5rem;
+    min-height: 250px;
+  }
+
+  .header {
+    height: 180px;
+  }
+
+  .list-group-item {
+    padding: 10px 14px;
+  }
+
+  .category-description {
+    font-size: 0.9rem;
+    padding: 0.75rem;
+  }
+
+  .intro-section {
+    padding: 1.25rem;
+  }
+}

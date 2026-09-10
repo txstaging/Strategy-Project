@@ -1,0 +1,15 @@
+﻿global using System.Linq.Expressions;
+global using System.Reflection;
+global using Microsoft.AspNetCore.Identity;
+global using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore.Metadata.Builders;
+global using Mod.Core.DTOs.Plans;
+global using Mod.Core.Entities;
+global using Mod.Core.Entities.Identity;
+global using Mod.Core.Entities.Initiative;
+global using Mod.Core.Entities.StrategicPlan;
+global using Mod.Core.Enums;
+global using Mod.Core.RepositoriesContract;
+global using Mod.Core.UnitOffWorkContract;
+global using Mod.Repository.Data;

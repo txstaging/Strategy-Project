@@ -1,0 +1,11 @@
+.header {
+  background: url('/assets/Background.png');
+  height: 400px;
+  color: white;
+  padding: 2rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-bottom-left-radius: 40px;
+  border-bottom-right-radius: 40px;
+}

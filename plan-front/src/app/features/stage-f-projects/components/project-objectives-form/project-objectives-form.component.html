@@ -1,0 +1,42 @@
+<div class="px-4">
+  <select
+    [(ngModel)]="selectedObjectiveId"
+    class="form-select w-25"
+    (change)="onObjectiveSelect($event)"
+  >
+    <option value="" selected disabled>برجاء اختيار هدف</option>
+    @for (objective of objectives(); track objective.id) {
+      <option [value]="objective.id">{{ objective?.name }}</option>
+    }
+  </select>
+</div>
+
+<div class="container mt-5 px-4">
+  <div class="row">
+    <div class="col-8">
+      <h6 class="text-success">
+        اسم الهدف :
+        <span class="text-muted">{{
+          selectedObjective()?.name
+            ? selectedObjective()?.name
+            : 'برجاء اختيار هدف'
+        }}</span>
+      </h6>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="mt-3 mb-4 col-6">
+      <label for="description" class="form-label">وصف الهدف</label>
+      <div id="description" style="color: #5e5e5e">
+        {{ selectedObjective()?.description || 'سيتم الملأ تلقائياً' }}
+      </div>
+    </div>
+    <div class="mb-3 mb-4 col-6">
+      <label for="mainIndicator" class="form-label">المؤشر الرئيسي</label>
+      <div id="mainIndicator" style="color: #5e5e5e">
+        {{ selectedObjective()?.indicator || 'سيتم الملأ تلقائياً' }}
+      </div>
+    </div>
+  </div>
+</div>

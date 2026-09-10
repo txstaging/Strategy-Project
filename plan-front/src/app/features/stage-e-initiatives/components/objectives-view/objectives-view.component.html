@@ -1,0 +1,25 @@
+
+
+<div>
+  <h6 class="text-success">
+    اسم الهدف :
+    <span class="text-muted">{{ selectedObjective?.name }}</span>
+  </h6>
+</div>
+<div
+  class="row mt-5"
+  style="border-bottom: 1px solid #e8ecee; padding-bottom: 50px"
+>
+  <div class="col-6">
+    <h6>الوصف</h6>
+    <p class="text-muted">
+      {{ selectedObjective?.description }}
+    </p>
+  </div>
+  <div class="col-6">
+    <h6>المؤشر الرئيسي</h6>
+    <p class="text-muted">
+      {{ selectedObjective?.indicator }}
+    </p>
+  </div>
+</div>

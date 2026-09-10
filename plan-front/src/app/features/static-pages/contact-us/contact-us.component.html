@@ -1,0 +1,79 @@
+<!-- Header Section with Green Background -->
+<app-pages-header [headerTitle]="'تواصل معنا'" />
+
+<!-- Breadcrumb Navigation -->
+<div class="container breadcrumb-container mt-3">
+  <div class="d-flex justify-content-between align-items-center">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <a routerLink="/home" class="text-decoration-none">الصفحة الرئيسية</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">تواصل معنا</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<!-- Contact Information Section -->
+<div class="container my-5">
+  <div class="row">
+    <!-- Contact Information Card -->
+    <div class="col-lg-5 mb-4">
+      <div class="contact-card">
+        <h2 class="contact-title">معلومات الاتصال</h2>
+
+        <div class="contact-info-item">
+          <div class="contact-icon">
+            <i class="bi bi-geo-alt-fill"></i>
+          </div>
+          <div>
+            <h3 class="contact-item-title">العنوان</h3>
+            <p>{{ contactInfo.address }}</p>
+          </div>
+        </div>
+
+        <div class="contact-info-item">
+          <div class="contact-icon">
+            <i class="bi bi-envelope-fill"></i>
+          </div>
+          <div>
+            <h3 class="contact-item-title">البريد الإلكتروني</h3>
+            <p *ngFor="let email of contactInfo.emails">
+              <strong>{{ email.type }}:</strong>
+              <a href="mailto:{{ email.email }}" class="email-link">{{
+                email.email
+              }}</a>
+            </p>
+          </div>
+        </div>
+
+        <div class="contact-info-item">
+          <div class="contact-icon">
+            <i class="bi bi-telephone-fill"></i>
+          </div>
+          <div>
+            <h3 class="contact-item-title">أرقام الهاتف</h3>
+            <p *ngFor="let phone of contactInfo.phones">
+              <strong>{{ phone.type }}:</strong>
+              <span class="phone-link">{{ phone.number }}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map Section -->
+    <div class="col-lg-7 mb-4">
+      <div class="map-container">
+        <h2 class="contact-title">موقعنا على الخريطة</h2>
+        <!-- Placeholder for map, in a real implementation you would include Google Maps or other map integration -->
+        <div class="map-placeholder">
+          <i class="bi bi-map"></i>
+          <p>خريطة الموقع</p>
+          <!-- <span class="placeholder-text">سيتم عرض خريطة تفاعلية هنا</span> -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

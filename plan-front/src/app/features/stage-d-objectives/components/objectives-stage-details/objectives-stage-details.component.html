@@ -1,0 +1,123 @@
+@if (isOpen) {
+  <div
+    class="modal modal-container"
+    [class.show]="isOpen"
+    [style.display]="isOpen ? 'block' : 'none'"
+    tabindex="-1"
+  >
+    <div class="modal_dialog--content">
+      <div class="form-container">
+        <button class="close-btn" (click)="onClose()" aria-label="Close">
+          &times;
+        </button>
+        <div class="text-center">
+          <img src="/assets/v7-icon.png" alt="" />
+          <div class="form-title">{{ title }}</div>
+        </div>
+        <div class="objective-details">
+          <h6 class="text-muted mb-3 mt-5">أهم العناصر للهدف</h6>
+          <h6 class="mb-3">نقاط القوة</h6>
+          <div class="mb-4">
+            @for (strength of data?.strength; track $index) {
+              <span>{{ strength.name }}</span>
+            }
+          </div>
+
+          <h6 class="mb-3">نقاط الفرص</h6>
+          <div class="mb-4">
+            @for (opportunity of data?.opportunity; track $index) {
+              <span>{{ opportunity.name }}</span>
+            }
+          </div>
+
+          <h6 class="mb-3">نقاط التهديد</h6>
+          <div class="mb-4">
+            @for (threat of data?.threat; track $index) {
+              <span>{{ threat.name }}</span>
+            }
+          </div>
+          <h6 class="mb-3">نقاط الضعف</h6>
+          <div class="mb-4">
+            @for (risk of data?.risk; track $index) {
+              <span>{{ risk.name }}</span>
+            }
+          </div>
+          <div>
+            <h6 class="mt-5">الهدف</h6>
+            <p>{{ data?.name?.value || 'غير محدد' }}</p>
+            @if (isAdmin && canTakeActionOnItem && canTakeActionOnItem(data?.name?.status)) {
+              <app-admin-actions
+                [item]="data.name"
+                (accept)="handleAccept(data.name, 'name')"
+                (reject)="handleReject($event, 'name')"
+                (return)="handleReturn($event, 'name')"
+              >
+              </app-admin-actions>
+            } @else {
+              <app-status-action
+                [status]="data?.name?.status"
+                [comment]="data?.name?.comment"
+              >
+              </app-status-action>
+            }
+
+            <div class="row mt-4">
+              <div class="col-6">
+                <h6>وصف الهدف</h6>
+                <p>
+                  {{ data?.descripition?.value || 'غير محدد' }}
+                </p>
+                @if (isAdmin && canTakeActionOnItem && canTakeActionOnItem(data?.descripition?.status)) {
+                  <app-admin-actions
+                    [item]="data.descripition"
+                    (accept)="handleAccept(data.descripition, 'descripition')"
+                    (reject)="handleReject($event, 'descripition')"
+                    (return)="handleReturn($event, 'descripition')"
+                  >
+                  </app-admin-actions>
+                } @else {
+                  <app-status-action
+                    [status]="data?.descripition?.status"
+                    [comment]="data?.descripition?.comment"
+                  >
+                  </app-status-action>
+                }
+              </div>
+              <div class="col-6">
+                <h6>المؤشر الرئيسي</h6>
+                <p>
+                  {{ data?.indicator?.value || 'غير محدد' }}
+                </p>
+                @if (isAdmin && canTakeActionOnItem && canTakeActionOnItem(data?.indicator?.status)) {
+                  <app-admin-actions
+                    [item]="data.indicator"
+                    (accept)="handleAccept(data.indicator, 'indicator')"
+                    (reject)="handleReject($event, 'indicator')"
+                    (return)="handleReturn($event, 'indicator')"
+                  >
+                  </app-admin-actions>
+                } @else {
+                  <app-status-action
+                    [status]="data?.indicator?.status"
+                    [comment]="data?.indicator?.comment"
+                  >
+                  </app-status-action>
+                }
+              </div>
+            </div>
+
+            <app-comment-modal
+              [isOpen]="showCommentModal"
+              [reasonModalType]="reasonModalType"
+              (closed)="showCommentModal = false"
+              (submitted)="handleCommentSubmit($event)"
+            >
+            </app-comment-modal>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show" *ngIf="isOpen"></div>
+}
+

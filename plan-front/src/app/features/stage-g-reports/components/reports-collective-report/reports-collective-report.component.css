@@ -1,0 +1,278 @@
+/* General table styles */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  border: 1px solid #ddd;
+}
+
+th,
+td {
+  padding: 12px;
+  text-align: right;
+  border-bottom: 1px solid #ddd;
+  transition:
+    background-color 0.3s ease,
+    padding 0.2s ease;
+}
+
+/* Apply hover effect to all collapsible sections */
+.unit-row:hover,
+.goal-row:hover,
+.initiative-row:hover,
+.expandable-header:hover {
+  background-color: #c4c4c4; /* Force darker shade */
+  padding-right: 15px; /* Smooth transition */
+  cursor: pointer;
+}
+
+/* Arrow icon styles */
+.arrow-icon {
+  display: inline-block;
+  transition: transform 0.3s ease;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.arrow-icon.expanded {
+  transform: rotate(180deg);
+}
+
+/* Ensure each level has proper indentation */
+.unit-row td {
+  font-weight: bold;
+  background-color: #e3e3e3;
+}
+
+.goal-row td {
+  margin-right: 20px;
+  padding-right: 20px;
+  font-weight: 600;
+}
+
+.initiative-row td {
+  margin-right: 40px;
+  padding-right: 40px;
+  font-weight: 500;
+}
+
+.project-row td {
+  margin-right: 60px;
+  padding-right: 60px;
+  font-weight: 400;
+}
+
+/* Progress bar styles */
+.progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-bar {
+  width: 100px;
+  height: 8px;
+  background-color: #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #28a745;
+}
+.progress-bar-filll {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.progress-low {
+  background-color: #dc3545; /* red */
+}
+
+.progress-medium {
+  background-color: #ffc107; /* yellow */
+}
+
+.progress-high {
+  background-color: #28a745; /* green */
+}
+
+body {
+  background-color: #f8f9fa;
+  font-family: 'Rubik', sans-serif;
+}
+
+.sidebar {
+  background-color: #fff;
+  border-right: 1px solid #fff;
+  border-radius: 15px;
+  height: 300px;
+  padding: 1.5rem;
+}
+
+.sidebar a {
+  display: block;
+  padding: 10px 15px;
+  color: #000;
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.sidebar a.active {
+  color: #00a05a;
+}
+
+.nav-link {
+  color: #000;
+  font-weight: 700;
+}
+
+.nav-link.active {
+  color: #00a05a;
+  border-bottom: 2px solid #00a05a;
+}
+
+.section-header {
+  background-color: #e9ecef;
+  font-weight: bold;
+  text-align: center;
+  padding: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+th,
+td {
+  padding: 10px;
+  border: 1px solid #ddd;
+}
+
+th {
+  background-color: #28a745;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+}
+
+tr {
+  background-color: #f0f0f0;
+}
+
+.expandable-header {
+  cursor: pointer;
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+.expandable-header .icon {
+  float: right;
+  font-size: 18px;
+  margin-left: 10px;
+  transition: transform 0.3s ease;
+}
+
+.collapsible-content {
+  display: none;
+}
+
+.nested-header {
+  cursor: pointer;
+  background-color: #f9f9f9;
+}
+
+.nested-header .icon {
+  float: right;
+  font-size: 16px;
+  color: #888;
+  margin-left: 10px;
+}
+
+.progress-bar-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-bar {
+  width: 100px;
+  height: 8px;
+  background-color: #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #28a745;
+}
+
+/* Print Styles */
+@media print {
+  .d-print-none {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    font-size: 12px !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  th, td {
+    border: 1px solid #000 !important;
+    padding: 5px !important;
+    font-size: 11px !important;
+  }
+
+  th {
+    background-color: #f0f0f0 !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .progress-bar {
+    border: 1px solid #000 !important;
+    background-color: #fff !important;
+  }
+
+  .progress-bar-fill {
+    background-color: #000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Expand all sections for printing */
+  .unit-row, .goal-row, .initiative-row, .project-row {
+    display: table-row !important;
+  }
+
+  /* Page breaks */
+  tr {
+    page-break-inside: avoid;
+  }
+
+  table {
+    page-break-after: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+}

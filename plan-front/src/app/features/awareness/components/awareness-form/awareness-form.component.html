@@ -1,0 +1,185 @@
+<!-- Header Section with Green Background -->
+<app-pages-header [headerTitle]="isEditMode() ? 'تعديل موضوع التوعية' : 'إضافة موضوع توعية'" />
+
+<!-- Breadcrumb Navigation -->
+<div class="container breadcrumb-container mt-3">
+  <div class="d-flex justify-content-between align-items-center">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <a routerLink="/home" class="text-decoration-none">الصفحة الرئيسية</a>
+        </li>
+        <li class="breadcrumb-item">
+          <a routerLink="/awareness" class="text-decoration-none">التوعية</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+          {{ isEditMode() ? 'تعديل موضوع التوعية' : 'إضافة موضوع توعية' }}
+        </li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<!-- Awareness Form -->
+<div class="container my-5" dir="rtl">
+  <!-- Loading Indicator -->
+  @if (isLoading()) {
+    <div class="text-center my-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">جاري التحميل...</span>
+      </div>
+      <p class="mt-2">جاري تحميل البيانات...</p>
+    </div>
+  }
+
+  <!-- Error Message -->
+  @if (error()) {
+    <div class="alert alert-danger my-3">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error() }}
+    </div>
+  }
+
+  <!-- Form Container -->
+  @if (!isLoading()) {
+    <div class="blog-form-container">
+      <form [formGroup]="awarenessForm" (ngSubmit)="onSubmit()" novalidate>
+        <!-- Title -->
+        <div class="mb-4">
+          <label for="awarenessTitle" class="form-label">عنوان التوعية <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            dir="rtl"
+            class="form-control"
+            id="awarenessTitle"
+            formControlName="title"
+            placeholder="أدخل عنوان التوعية"
+            [class.is-invalid]="
+              awarenessForm.get('title')?.invalid &&
+              (awarenessForm.get('title')?.touched || formSubmitted)
+            "
+          />
+          <div
+            class="invalid-feedback"
+            *ngIf="
+              awarenessForm.get('title')?.invalid &&
+              (awarenessForm.get('title')?.touched || formSubmitted)
+            "
+          >
+            @if (awarenessForm.get('title')?.errors?.['required']) {
+              عنوان التوعية مطلوب
+            }
+            @if (awarenessForm.get('title')?.errors?.['minlength']) {
+              يجب أن يتكون العنوان من {{ awarenessForm.get('title')?.errors?.['minlength'].requiredLength }} أحرف على الأقل
+            }
+          </div>
+        </div>
+
+        <!-- Date -->
+        <div class="mb-4">
+          <label for="awarenessDate" class="form-label">تاريخ التوعية <span class="text-danger">*</span></label>
+          <input
+            type="date"
+            class="form-control"
+            id="awarenessDate"
+            formControlName="date"
+            [class.is-invalid]="
+              awarenessForm.get('date')?.invalid &&
+              (awarenessForm.get('date')?.touched || formSubmitted)
+            "
+          />
+          <div
+            class="invalid-feedback"
+            *ngIf="
+              awarenessForm.get('date')?.invalid &&
+              (awarenessForm.get('date')?.touched || formSubmitted)
+            "
+          >
+            تاريخ التوعية مطلوب
+          </div>
+        </div>
+
+        <!-- Image Upload -->
+        <div class="mb-4">
+          <label for="awarenessImage" class="form-label">صورة التوعية</label>
+          <div class="d-flex flex-column align-items-center">
+            <!-- Image Preview -->
+            <div class="image-preview-container mb-3" *ngIf="imagePreview()">
+              <img [src]="imagePreview()" alt="Preview" class="image-preview" />
+              <button
+                type="button"
+                class="btn btn-sm btn-danger remove-image"
+                (click)="removeImage()"
+              >
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+
+            <!-- Upload Button -->
+            <div class="upload-btn-wrapper">
+              <button type="button" class="btn btn-outline-secondary">
+                <i class="bi bi-upload me-2"></i> {{ imagePreview() ? 'تغيير الصورة' : 'اختر صورة' }}
+              </button>
+              <input
+                type="file"
+                id="awarenessImage"
+                #fileInput
+                accept="image/*"
+                (change)="onFileSelected($event)"
+              />
+            </div>
+            <small class="form-text text-muted mt-2" *ngIf="isEditMode()">
+              في حالة عدم اختيار صورة جديدة، لن يتم تغيير الصورة الحالية
+            </small>
+          </div>
+        </div>
+
+        <!-- Content (Jodit Editor) -->
+        <div class="mb-4">
+          <label for="awarenessText" class="form-label">محتوى التوعية <span class="text-danger">*</span></label>
+          <jodit-editor
+            id="awarenessText"
+            [(ngModel)]="editorContent"
+            [ngModelOptions]="{standalone: true}"
+            [config]="editorConfig"
+            [class.is-invalid]="!editorContent && formSubmitted"
+          ></jodit-editor>
+          <div
+            class="text-danger small mt-1"
+            *ngIf="!editorContent && formSubmitted"
+          >
+            محتوى التوعية مطلوب
+          </div>
+        </div>
+
+        <!-- Is Active (Status) -->
+        <div class="mb-4 form-check form-switch">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="awarenessStatus"
+            formControlName="status"
+          />
+          <label class="form-check-label" for="awarenessStatus">
+            حالة التوعية (فعال/غير فعال)
+          </label>
+          <div class="form-text">
+            عند تفعيل هذا الخيار، سيظهر الموضوع للزوار. وعند إلغاء التفعيل، لن يظهر الموضوع.
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="d-flex justify-content-end gap-3 mt-5">
+          <button type="button" class="btn btn-secondary" (click)="cancel()">
+            إلغاء
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+          >
+            {{ isEditMode() ? 'تحديث التوعية' : 'نشر التوعية' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</div>

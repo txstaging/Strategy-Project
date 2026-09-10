@@ -1,0 +1,43 @@
+<div class="container-fluid d-flex gap-5 mt-5 mb-5 pb-5">
+  <main class="content w-100">
+    <div class="d-flex justify-content-between align-items-center m-4">
+      <div>
+        <h2>{{ t('reports_title', 'التقارير') }}</h2>
+        <p>{{ t('reports_description', 'وصف اهداف الخطة الاستراتيجية') }}</p>
+      </div>
+    </div>
+    <ul
+      class="nav nav-underline"
+      style="border-bottom: 1px solid #e8ecee; padding: 0; gap: 15px"
+    >
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          [routerLink]="['/plans/reports']"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          >{{ t('reports_completion', 'نسبة الانجاز') }}</a
+        >
+      </li>
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          routerLink="collective-template"
+          routerLinkActive="active"
+          >{{ t('reports_collective_template', 'النموذج المجمع') }}</a
+        >
+      </li>
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          routerLink="collective-report"
+          routerLinkActive="active"
+          >{{ t('reports_collective_report', 'التقرير المجمع') }}</a
+        >
+      </li>
+    </ul>
+    <div class="container mt-4 p-0">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

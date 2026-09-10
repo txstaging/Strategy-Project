@@ -1,0 +1,388 @@
+.header {
+  height: 650px;
+  padding: 2rem 1rem;
+  border-bottom-left-radius: 40px;
+  border-bottom-right-radius: 40px;
+  background: url('/assets/images/Background.png') center/cover;
+  color: white;
+  padding: 2rem 1rem;
+  border-bottom-left-radius: 40px;
+  border-bottom-right-radius: 40px;
+}
+
+.carousel .card {
+  background-color: transparent !important;
+  overflow: hidden;
+  border: none;
+  color: #fff;
+}
+
+
+
+.main .card {
+  text-align: center;
+  border: none;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.main .icon {
+  font-size: 40px;
+  color: #0e5a34;
+}
+
+.main-units .card {
+  cursor: pointer;
+}
+
+.info-section {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.info-section .card {
+  text-align: center;
+  border: none;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.user-info {
+  text-align: center;
+  font-size: 1.5rem;
+  margin-top: 20px;
+}
+
+.process-section {
+  display: flex;
+  justify-content: space-evenly;
+  margin-bottom: 30px;
+  /* position: relative; */
+}
+
+.line::after {
+  content: '';
+  width: 90%;
+  height: 1px;
+  background: #e8ecee;
+  position: absolute;
+  top: 42%;
+  right: 0;
+}
+
+.vertical-line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 52%;
+  width: 1px;
+  background-color: #e8ecee;
+}
+
+.process-step {
+  padding-inline: 40px;
+  width: 300px;
+}
+
+.process-step h5 {
+  margin-right: 40px;
+}
+
+
+body {
+  background-color: #f8f9fa;
+  font-family: 'Rubik', sans-serif;
+}
+
+.carousel .card {
+  background-color: transparent !important;
+  overflow: hidden;
+  border: none;
+  color: #fff;
+}
+
+.carousel-indicators [data-bs-target] {
+  opacity: 1;
+}
+
+.main-units .card {
+  text-align: center;
+  border: none;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.main-units .icon {
+  font-size: 40px;
+  color: #0e5a34;
+}
+
+.info-section {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.info-section .card {
+  text-align: center;
+  border: none;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.process-section {
+  display: flex;
+  justify-content: space-evenly;
+  margin-bottom: 30px;
+  /* position: relative; */
+}
+
+.line::after {
+  content: '';
+  width: 90%;
+  height: 1px;
+  background: #e8ecee;
+  position: absolute;
+  top: 42%;
+  right: 0;
+}
+
+.vertical-line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 52%;
+  width: 1px;
+  background-color: #e8ecee;
+}
+
+.process-step {
+  padding-inline: 40px;
+  width: 300px;
+}
+
+.process-step h5 {
+  margin-right: 40px;
+}
+
+.sidebar {
+  background-color: #fff;
+  border-right: 1px solid #fff;
+  border-radius: 15px;
+  height: 300px;
+  padding: 1.5rem;
+}
+
+.sidebar a {
+  display: block;
+  padding: 10px 15px;
+  color: #000;
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+
+
+p {
+  color: #9faab0;
+}
+
+.user-container {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 10px;
+}
+.branch {
+  color: #9faab0;
+  font-size: 12px;
+}
+
+/* Owl Carousel Custom Styles */
+::ng-deep .owl-carousel {
+  direction: ltr;
+}
+
+::ng-deep .owl-carousel .owl-stage-outer {
+  direction: rtl;
+}
+
+::ng-deep .owl-theme .owl-nav {
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0 20px;
+}
+
+::ng-deep .owl-theme .owl-nav [class*="owl-"] {
+  font-size: 1.5rem;
+  background-color: rgba(0, 160, 90, 0.7);
+  color: white;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+
+/* Custom Owl Carousel Styling to match Bootstrap */
+::ng-deep .owl-theme .owl-dots {
+  position: absolute;
+  bottom: -30px;
+  left: 0;
+  right: 0;
+  margin: auto;
+  text-align: center;
+  z-index: 10;
+}
+
+/* Make sure any owl-dot that becomes active has the right color */
+::ng-deep .owl-theme .owl-dots .owl-dot.active span {
+  background-color: #00a05a !important;
+}
+
+/* All other dots should be gray */
+::ng-deep .owl-theme .owl-dots .owl-dot:not(.active) span {
+  background-color: #D6D6D6;
+  /* width: 20px;
+  height: 10px;
+  margin: 0; */
+  border-radius: 30px;
+}
+
+/* Ensure consistent sizing for all dots */
+::ng-deep .owl-theme .owl-dots .owl-dot span {
+  width: 20px;
+  height: 10px;
+  margin: 0 4px;
+  border-radius: 30px;
+  display: block;
+}
+
+/* Make sure the carousel itself is transparent */
+::ng-deep .owl-carousel {
+  background-color: transparent;
+}
+
+/* Background color adjustment for carousel */
+.carousel-container {
+  background-color: transparent;
+}
+
+.card {
+  background-color: transparent !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+
+
+
+/* Carousel container styling */
+.carousel-container {
+  max-width: 1140px; /* Bootstrap container width */
+  margin: 0 auto;
+  padding: 0;
+  position: relative;
+}
+
+.custom-carousel {
+  margin-bottom: 30px; /* Space for dots */
+}
+
+/* Make the carousel take the full width of the container */
+::ng-deep .owl-stage-outer {
+  width: 100%;
+}
+
+/* Make carousel cards match original styling */
+.carousel-container .card {
+  background-color: transparent !important;
+  color: #fff;
+  border: none;
+}
+
+/* Make all card backgrounds transparent in the carousel */
+::ng-deep .owl-carousel .card,
+.carousel-container .card,
+.owl-carousel .card {
+  background-color: rgba(222, 226, 230, 0) !important;
+}
+
+/* Process Grid Styles */
+.process-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  width: 100%;
+}
+
+.process-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  border: 1px solid #e8ecee;
+  height: 170px;
+}
+
+.process-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #00a05a;
+  margin-bottom: 0.5rem;
+}
+
+.process-icon {
+  margin-bottom: 0.5rem;
+}
+
+.process-icon img {
+  width: 45px;
+  height: 45px;
+  object-fit: contain;
+}
+
+.process-text {
+  color: #5e5e5e;
+  font-size: 1rem;
+}
+
+/* Keep these for backwards compatibility if needed */
+.process-section,
+.process-step,
+.vertical-line::before,
+.line::after {
+  /* Keep these if you need them elsewhere, otherwise they can be removed */
+}
+
+/* Info section clickable cards */
+.info-section .card.info-card {
+  cursor: pointer;
+  background: #fff !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.info-section .card.info-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}

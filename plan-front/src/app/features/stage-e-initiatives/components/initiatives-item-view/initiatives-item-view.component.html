@@ -1,0 +1,152 @@
+<div
+  class="d-flex justify-content-between mt-4"
+  style="border-bottom: 1px solid #e8ecee; padding-bottom: 20px"
+>
+  <div class="d-flex align-items-center gap-5">
+    <h6 class="text-success">
+      {{ index }} المبادرة :
+      <span class="text-muted">{{ detailsItem.name?.value || detailsItem.name }}</span>
+    </h6>
+  </div>
+  <div class="d-flex gap-3 align-items-center">
+    @if (!isInitiativesApproved) {
+      <div class="d-flex justify-content-center gap-2">
+        @if (isAdmin) {
+          <!-- Admin Actions for Initiative-Level Approval -->
+          @if (canTakeAction()) {
+            @if (canApproveInitiative()) {
+              <button
+                class="btn btn-success btn-sm"
+                (click)="handleAccept(detailsItem)"
+                title="موافقة على المبادرة"
+              >
+                <i class="bi bi-check-lg"></i> موافقة
+              </button>
+            } @else {
+              <button
+                class="btn btn-warning btn-sm"
+                disabled
+                [title]="getInitiativeApprovalValidationMessage()"
+              >
+                <i class="bi bi-exclamation-triangle"></i> غير مكتمل
+              </button>
+            }
+            <button
+              class="btn btn-outline-secondary btn-sm"
+              (click)="handleReturn(detailsItem)"
+              title="إرجاع المبادرة"
+            >
+              <i class="bi bi-arrow-left"></i> إرجاع
+            </button>
+            <button
+              class="btn btn-outline-danger btn-sm"
+              (click)="handleReject(detailsItem)"
+              title="رفض المبادرة"
+            >
+              <i class="bi bi-x-lg"></i> رفض
+            </button>
+          } @else {
+            <div class="d-flex align-items-center">
+              <app-status-action
+                [status]="detailsItem.status"
+              ></app-status-action>
+            </div>
+          }
+        } @else {
+          <!-- Unit Employee Actions -->
+          @if (canEditBasedOnStatus()) {
+            <button class="edit" (click)="openEditModal()">
+              <i class="bi bi-pen"></i> تعديل
+            </button>
+            <button
+              class="btn btn-outline-danger btn-sm"
+              (click)="deleteInitiative()"
+              title="حذف المبادرة"
+            >
+              <i class="bi bi-trash"></i> حذف
+            </button>
+          } @else {
+            <app-status-action
+              [status]="detailsItem.status"
+            ></app-status-action>
+          }
+        }
+      </div>
+    } @else {
+      <div class="d-flex align-items-center">
+        <app-status-action [status]="detailsItem.status"></app-status-action>
+      </div>
+    }
+    <div class="actions" (click)="openViewModal()" tabindex="0">
+      <button class="btn p-0">
+        عرض المبادرة <i class="bi bi-eye-fill text-success"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<app-initiatives-item-edit-modal
+  [isOpen]="showEditModal"
+  [initiativeData]="detailsItem"
+  (closeModal)="closeEditModal()"
+  (submitted)="onEditSubmitted($event)"
+  [planId]="planId"
+  [initiativeId]="detailsItem?.id"
+></app-initiatives-item-edit-modal>
+
+<app-initiatives-item-view-modal
+  [isOpen]="showViewModal"
+  [initiative]="detailsItem"
+  (closed)="closeViewModal()"
+  [isAdmin]="isAdmin"
+  [isInitiativesApproved]="isInitiativesApproved"
+></app-initiatives-item-view-modal>
+
+<!-- Comment Modal for Reject/Return -->
+<app-comment-modal
+  [isOpen]="showCommentModal"
+  (closed)="showCommentModal = false"
+  (submitted)="handleRestore($event)"
+  [reasonModalType]="reasonModalType"
+>
+</app-comment-modal>
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteModal) {
+  <div class="modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">تأكيد الحذف</h5>
+          <button type="button" class="btn-close" (click)="cancelDelete()" aria-label="إغلاق">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="text-center">
+            <div class="mb-3">
+              <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <h6>هل أنت متأكد من حذف هذه المبادرة؟</h6>
+            <p class="text-muted">
+              <strong>{{ detailsItem.name?.value || detailsItem.name }}</strong>
+            </p>
+            <p class="text-muted small">
+              هذا الإجراء لا يمكن التراجع عنه
+            </p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cancelDelete()">
+            إلغاء
+          </button>
+          <button type="button" class="btn btn-danger" (click)="confirmDelete()">
+            <i class="bi bi-trash"></i> حذف
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- al-kharj-unit-manager -->

@@ -1,0 +1,185 @@
+<!-- Header Section with Green Background -->
+<app-pages-header [headerTitle]="isEditMode() ? 'تعديل الرؤية' : 'إضافة رؤية'" />
+
+<!-- Breadcrumb Navigation -->
+<div class="container breadcrumb-container mt-3">
+  <div class="d-flex justify-content-between align-items-center">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <a routerLink="/home" class="text-decoration-none">الصفحة الرئيسية</a>
+        </li>
+        <li class="breadcrumb-item">
+          <a routerLink="/our-vision" class="text-decoration-none">رؤيتنا</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+          {{ isEditMode() ? 'تعديل الرؤية' : 'إضافة رؤية' }}
+        </li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<!-- Vision Form -->
+<div class="container my-5" dir="rtl">
+  <!-- Loading Indicator -->
+  @if (isLoading()) {
+    <div class="text-center my-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">جاري التحميل...</span>
+      </div>
+      <p class="mt-2">جاري تحميل البيانات...</p>
+    </div>
+  }
+
+  <!-- Error Message -->
+  @if (error()) {
+    <div class="alert alert-danger my-3">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error() }}
+    </div>
+  }
+
+  <!-- Form Container -->
+  @if (!isLoading()) {
+    <div class="blog-form-container">
+      <form [formGroup]="visionForm" (ngSubmit)="onSubmit()" novalidate>
+        <!-- Title -->
+        <div class="mb-4">
+          <label for="visionTitle" class="form-label">عنوان الرؤية <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            dir="rtl"
+            class="form-control"
+            id="visionTitle"
+            formControlName="title"
+            placeholder="أدخل عنوان الرؤية"
+            [class.is-invalid]="
+              visionForm.get('title')?.invalid &&
+              (visionForm.get('title')?.touched || formSubmitted)
+            "
+          />
+          <div
+            class="invalid-feedback"
+            *ngIf="
+              visionForm.get('title')?.invalid &&
+              (visionForm.get('title')?.touched || formSubmitted)
+            "
+          >
+            @if (visionForm.get('title')?.errors?.['required']) {
+              عنوان الرؤية مطلوب
+            }
+            @if (visionForm.get('title')?.errors?.['minlength']) {
+              يجب أن يتكون العنوان من {{ visionForm.get('title')?.errors?.['minlength'].requiredLength }} أحرف على الأقل
+            }
+          </div>
+        </div>
+
+        <!-- Date -->
+        <div class="mb-4">
+          <label for="visionDate" class="form-label">تاريخ الرؤية <span class="text-danger">*</span></label>
+          <input
+            type="date"
+            class="form-control"
+            id="visionDate"
+            formControlName="date"
+            [class.is-invalid]="
+              visionForm.get('date')?.invalid &&
+              (visionForm.get('date')?.touched || formSubmitted)
+            "
+          />
+          <div
+            class="invalid-feedback"
+            *ngIf="
+              visionForm.get('date')?.invalid &&
+              (visionForm.get('date')?.touched || formSubmitted)
+            "
+          >
+            تاريخ الرؤية مطلوب
+          </div>
+        </div>
+
+        <!-- Image Upload -->
+        <div class="mb-4">
+          <label for="visionImage" class="form-label">صورة الرؤية</label>
+          <div class="d-flex flex-column align-items-center">
+            <!-- Image Preview -->
+            <div class="image-preview-container mb-3" *ngIf="imagePreview()">
+              <img [src]="imagePreview()" alt="Preview" class="image-preview" />
+              <button
+                type="button"
+                class="btn btn-sm btn-danger remove-image"
+                (click)="removeImage()"
+              >
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+
+            <!-- Upload Button -->
+            <div class="upload-btn-wrapper">
+              <button type="button" class="btn btn-outline-secondary">
+                <i class="bi bi-upload me-2"></i> {{ imagePreview() ? 'تغيير الصورة' : 'اختر صورة' }}
+              </button>
+              <input
+                type="file"
+                id="visionImage"
+                #fileInput
+                accept="image/*"
+                (change)="onFileSelected($event)"
+              />
+            </div>
+            <small class="form-text text-muted mt-2" *ngIf="isEditMode()">
+              في حالة عدم اختيار صورة جديدة، لن يتم تغيير الصورة الحالية
+            </small>
+          </div>
+        </div>
+
+        <!-- Content (Jodit Editor) -->
+        <div class="mb-4">
+          <label for="visionText" class="form-label">محتوى الرؤية <span class="text-danger">*</span></label>
+          <jodit-editor
+            id="visionText"
+            [(ngModel)]="editorContent"
+            [ngModelOptions]="{standalone: true}"
+            [config]="editorConfig"
+            [class.is-invalid]="!editorContent && formSubmitted"
+          ></jodit-editor>
+          <div
+            class="text-danger small mt-1"
+            *ngIf="!editorContent && formSubmitted"
+          >
+            محتوى الرؤية مطلوب
+          </div>
+        </div>
+
+        <!-- Is Active (Status) -->
+        <div class="mb-4 form-check form-switch">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="visionStatus"
+            formControlName="status"
+          />
+          <label class="form-check-label" for="visionStatus">
+            حالة الرؤية (فعال/غير فعال)
+          </label>
+          <div class="form-text">
+            عند تفعيل هذا الخيار، ستظهر الرؤية للزوار. وعند إلغاء التفعيل، لن تظهر الرؤية.
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="d-flex justify-content-end gap-3 mt-5">
+          <button type="button" class="btn btn-secondary" (click)="cancel()">
+            إلغاء
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+          >
+            {{ isEditMode() ? 'تحديث الرؤية' : 'نشر الرؤية' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</div>

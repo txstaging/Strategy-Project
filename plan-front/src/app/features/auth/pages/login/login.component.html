@@ -1,0 +1,78 @@
+<div class="container-fluid login-container">
+  <div class="row" style="height: 100vh">
+    <!-- Left Panel -->
+    <div class="col-md-6 p-0">
+      <div class="side-panel h-100">
+        <div class="logo">
+          <img src="./../../assets/Logo.png" alt="" />
+          <a href="#" class="text-white me-5">&rarr; للعودة للرئيسية</a>
+        </div>
+        <div class="title" style="margin-block: 25%">
+          <h3 class="mb-4 text-success">المنصة الرقمية لأدارة الخطة الاستراتيجية</h3>
+          
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="col-md-4 p-5 login-card" style="margin-top: 8rem">
+      <div class="form-content" style="margin-block: 10%">
+        <h2 class="mb-4">تسجيل الدخول</h2>
+        <p>
+          فضلًا قم بإدخال بياناتك الشخصية التي تم إرسالها لك من قبل مدير النظام
+          ..
+        </p>
+        <form [formGroup]="form" (ngSubmit)="login()">
+          <div class="mb-3">
+            <div class="d-flex justify-content-between">
+              <label for="email" class="form-label">البريد الإلكتروني</label>
+              @if (form.get('email')?.invalid && form.get('email')?.touched) {
+                <small class="text-danger">
+                  برجاء ادخال البريد الإلكتروني صحيح
+                </small>
+              }
+            </div>
+            <input
+              type="email"
+              id="email"
+              class="form-control"
+              [class.is-invalid]="
+                form.get('email')?.invalid && form.get('email')?.touched
+              "
+              placeholder="example@example.com"
+              formControlName="email"
+            />
+          </div>
+          <div class="mb-5">
+            <div class="d-flex justify-content-between">
+              <label for="password" class="form-label">كلمة المرور</label>
+              @if (
+                form.get('password')?.invalid && form.get('password')?.touched
+              ) {
+                <small class="text-danger"> مطلوب </small>
+              }
+            </div>
+            <div class="input-group">
+              <input
+                type="password"
+                id="password"
+                class="form-control"
+                [class.is-invalid]="
+                  form.get('password')?.invalid && form.get('password')?.touched
+                "
+                style="border-radius: 5px"
+                formControlName="password"
+              />
+            </div>
+          </div>
+          <button type="submit" class="btn w-100 button">تسجيل الدخول</button>
+          @if (isError) {
+            <div class="alert alert-danger mt-3">
+              البريد الإلكتروني أو كلمة المرور غير متطابقة
+            </div>
+          }
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

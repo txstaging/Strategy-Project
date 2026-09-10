@@ -1,0 +1,127 @@
+<!-- Header Section with Green Background -->
+<app-pages-header [headerTitle]="faq.title" />
+
+<!-- Breadcrumb Navigation -->
+<div class="container breadcrumb-container mt-3">
+  <div class="d-flex justify-content-between align-items-center">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <a routerLink="/home" class="text-decoration-none">الصفحة الرئيسية</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+          {{ faq.title }}
+        </li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<!-- FAQ Content -->
+<div class="container my-5">
+  <!-- Introduction Section -->
+  <div class="row mb-5">
+    <div class="col-12">
+      <div class="intro-section text-end">
+        <h2 class="intro-title">مرحباً بكم في صفحة الأسئلة الشائعة</h2>
+        <p class="intro-text">
+          نقدم لكم في هذه الصفحة إجابات عن الأسئلة المتكررة حول سلاح الصيانة
+          وتاريخه وأنظمته وإجراءاته. يمكنكم استخدام القائمة للتنقل بين الأقسام
+          المختلفة.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Sidebar Categories -->
+    <div class="col-lg-3 mb-4">
+      <div class="faq-sidebar">
+        <h2 class="sidebar-title">الأقسام</h2>
+        <div class="list-group">
+          @for (
+            category of faq.categories;
+            track category.title;
+            let idx = $index
+          ) {
+            <a
+              (click)="scrollToCategory(idx, $event)"
+              href="#category-{{ idx }}"
+              class="list-group-item list-group-item-action"
+              [class.active]="activeCategory === idx"
+            >
+              {{ category.title }}
+            </a>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ Sections -->
+    <div class="col-lg-9">
+      @for (
+        category of faq.categories;
+        track category.title;
+        let categoryIndex = $index
+      ) {
+        <div
+          class="faq-category"
+          id="category-{{ categoryIndex }}"
+          #categorySection
+        >
+          <h2 class="category-title">{{ category.title }}</h2>
+
+          <!-- Category description based on index -->
+          <p class="category-description mb-4">
+            @if (categoryIndex === 0) {
+              هذا القسم يحتوي على معلومات أساسية حول سلاح الصيانة في القوات
+              البرية المملكة السعودية، بما في ذلك تعريفه ومسؤولياته وتأسيسه.
+            } @else if (categoryIndex === 1) {
+              يستعرض هذا القسم التطور التاريخي لسلاح الصيانة والإنجازات التي
+              حققها على مر السنين، وكيف تطورت آلياته وأنظمته.
+            } @else {
+              يتناول هذا القسم الأنظمة والإجراءات المتبعة في سلاح الصيانة وكيفية
+              تنفيذ مهامه وتأهيل كوادره الفنية.
+            }
+          </p>
+
+          <div class="accordion" id="accordion-{{ categoryIndex }}">
+            @for (
+              item of category.questions;
+              track item.question;
+              let questionIndex = $index
+            ) {
+              <div class="accordion-item">
+                <h3 class="accordion-header">
+                  <button
+                    class="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    [attr.data-bs-target]="
+                      '#faq-' + categoryIndex + '-' + questionIndex
+                    "
+                    aria-expanded="false"
+                    [attr.aria-controls]="
+                      'faq-' + categoryIndex + '-' + questionIndex
+                    "
+                  >
+                    {{ item.question }}
+                  </button>
+                </h3>
+                <div
+                  [id]="'faq-' + categoryIndex + '-' + questionIndex"
+                  class="accordion-collapse collapse"
+                  [attr.data-bs-parent]="'#accordion-' + categoryIndex"
+                >
+                  <div class="accordion-body">
+                    {{ item.answer }}
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

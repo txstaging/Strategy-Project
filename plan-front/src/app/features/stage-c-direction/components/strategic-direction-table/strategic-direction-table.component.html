@@ -1,0 +1,805 @@
+<div class="mt-4">
+
+
+  <!-- Option to create a new item only for Unit Employees -->
+  @if (canAddItems() && !directionStatusService.isDirectionApproved()) {
+    <div class="d-flex justify-content-end mt-3 mb-4">
+      <div class="dropdown">
+        <button class="btn btn-success dropdown-toggle" type="button" id="createNewItemDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          إضافة عنصر جديد
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="createNewItemDropdown">
+          <li><button class="dropdown-item" (click)="togglePopup(StrategicDirectionTypeEnum.Vision, 'create')">رؤية</button></li>
+          <li><button class="dropdown-item" (click)="togglePopup(StrategicDirectionTypeEnum.Message, 'create')">رسالة</button></li>
+          <li><button class="dropdown-item" (click)="togglePopup(StrategicDirectionTypeEnum.Value, 'create')">قيم</button></li>
+        </ul>
+      </div>
+    </div>
+  }
+
+  <!-- Filters Panel -->
+  <div class="filters-panel mb-4 p-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0">فلترة عناصر التوجه</h5>
+      <button class="btn btn-sm btn-outline-secondary" (click)="resetFilters()">
+        <i class="bi bi-arrow-clockwise me-1"></i> إعادة تعيين الفلاتر
+      </button>
+    </div>
+
+    <div class="row" >
+      <div class="col-md-4 mb-2">
+        <label class="form-label" for="typeFilter">نوع العنصر</label>
+        <div class="filter-buttons d-flex gap-2">
+          @for (type of ['الكل', 'الرؤية', 'الرسالة', 'القيم']; track type) {
+            <button
+              class="btn btn-sm"
+              [class.btn-primary]="filters.type === getFilterTypeValue(type)"
+              [class.btn-outline-primary]="filters.type !== getFilterTypeValue(type)"
+              (click)="setTypeFilter(getFilterTypeValue(type))">
+              {{ type }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="col-md-4 mb-2">
+        <label class="form-label" for="statusFilter">الحالة</label>
+        <select id="statusFilter" class="form-select form-select-sm" [(ngModel)]="filters.status" (change)="applyFilters()">
+          <option value="all">الكل</option>
+          <option value="Pending">معلق</option>
+          <option value="Approved">موافق عليه</option>
+          <option value="Rejected">مرفوض</option>
+          <option value="Returned">معاد للتعديل</option>
+          <option value="SavedAsDraft">مسودة</option>
+        </select>
+      </div>
+
+      <div class="col-md-4 mb-2">
+        <label class="form-label" for="searchInput">بحث</label>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input
+            id="searchInput"
+            type="text"
+            class="form-control"
+            placeholder="بحث في عناصر التوجه..."
+            [(ngModel)]="filters.searchText"
+            (input)="applyFilters()"
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main hierarchical table -->
+  <div class="table-wrapper" id="pdfContent">
+    <table class="table table-bordered">
+      <thead class="table-header">
+        <tr>
+          <th style="width: 20%">عناصر التوجه</th>
+          <th style="width: 60%">التفاصيل</th>
+          <th style="width: 20%">الاجراءات</th>
+        </tr>
+      </thead>
+      <tbody style="background-color: #fff; vertical-align: middle">
+        <!-- Vision Category -->
+        @for (visionItem of getFilteredDirectionItems('Vision'); track visionItem.id) {
+          <tr class="category-row">
+            <td>
+              <div class="fw-bold my-2">{{ directions['vision'] }}</div>
+              <div class="status-badge-container mt-1">
+                <span class="status-badge" [ngClass]="getStatusClass(visionItem.status)">
+                  {{ getStatusText(visionItem.status) }}
+                </span>
+              </div>
+            </td>
+            <td>
+              <div class="d-flex align-items-center justify-content-between">
+                <div>{{ visionItem.name || visionItem.content }}</div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-sm btn-outline-info" (click)="togglePopupView('Vision', visionItem.id)">
+                    <i class="bi bi-eye-fill"></i> عرض التفاصيل
+                  </button>
+                  @if (canEditOrDeleteItem(visionItem)) {
+                    <app-popup
+                      [pageName]="'Direction'"
+                      [item]="visionItem"
+                      [position]="{ top: '30px', left: '0px' }"
+                      (optionSelected)="handleOptionSelected($event)"
+                      title="تعديل أو حذف العنصر"
+                    ></app-popup>
+                  }
+                </div>
+              </div>
+            </td>
+            <td>
+              @if (!directionStatusService.isDirectionApproved()) {
+                <div class="d-flex justify-content-center">
+                  @if (isReturnedItem(visionItem.status)) {
+                    <!-- Show returned item message with clickable comment button -->
+                    <div class="d-flex flex-column align-items-center gap-2">
+                      <div class="alert alert-warning p-2 mb-0 text-center" style="font-size: 0.85rem;">
+                        <div class="d-flex align-items-center justify-content-center">
+                          <i class="bi bi-arrow-counterclockwise me-2"></i>
+                          <strong>{{ getReturnedItemMessage(visionItem.status) }}</strong>
+                        </div>
+                      </div>
+                      <button
+                        class="btn btn-outline-warning btn-sm"
+                        (click)="openReturnCommentModal(visionItem)"
+                        title="عرض سبب الإرجاع">
+                        <i class="bi bi-info-circle me-1"></i>
+                        عرض سبب الإرجاع
+                      </button>
+                    </div>
+                  } @else if (isAdmin && (visionItem.status === 'Pending' || canTakeAction(visionItem.status))) {
+                    <app-admin-actions
+                      (accept)="onAcceptItem(visionItem.id,true)"
+                      (reject)="openCommentModal('reject', visionItem.id)"
+                      (return)="openCommentModal('return', visionItem.id)"
+                    ></app-admin-actions>
+                  } @else {
+                    <app-status-action
+                      [status]="visionItem.status"
+                      [comment]="visionItem.comment"
+                    ></app-status-action>
+                  }
+                </div>
+              } @else {
+                <app-status-action
+                  [status]="visionItem.status"
+                  [comment]="visionItem.comment"
+                ></app-status-action>
+              }
+            </td>
+          </tr>
+          <!-- Vision Sub-items -->
+          @if ((visionItem.elements && visionItem.elements.length > 0) || (visionItem.directionItemsElements && visionItem.directionItemsElements.length > 0)) {
+            @for (element of filterSubElements(visionItem.elements || visionItem.directionItemsElements); track element.id) {
+              <tr class="subitem-row">
+                <td class="ps-4">
+                  <div class="element-badge">
+                    <span class="element-number">{{ $index + 1 }}</span>
+                    <span class="element-label">عنصر</span>
+                  </div>
+                </td>
+                <td class="ps-4">
+                  <div class="element-content">
+                    <!-- Support both name and value properties -->
+                    <div>{{ element.name || element.value }}</div>
+                    <span class="element-detail text-muted">{{ element.description || "" }}</span>
+                  </div>
+                </td>
+                <td>
+                  @if (!directionStatusService.isDirectionApproved()) {
+                    <div class="d-flex justify-content-center">
+                      @if (isReturnedItem(element.status)) {
+                        <!-- Show returned item message with clickable comment button -->
+                        <div class="d-flex flex-column align-items-center gap-2">
+                          <div class="alert alert-warning p-2 mb-0 text-center" style="font-size: 0.85rem;">
+                            <div class="d-flex align-items-center justify-content-center">
+                              <i class="bi bi-arrow-counterclockwise me-2"></i>
+                              <strong>{{ getReturnedItemMessage(element.status) }}</strong>
+                            </div>
+                          </div>
+                          <button
+                            class="btn btn-outline-warning btn-sm"
+                            (click)="openReturnCommentModal(element)"
+                            title="عرض سبب الإرجاع">
+                            <i class="bi bi-info-circle me-1"></i>
+                            عرض سبب الإرجاع
+                          </button>
+                        </div>
+                      } @else if (isAdmin && (element.status === 'Pending' || canTakeAction(element.status))) {
+                        <app-admin-actions
+                          (accept)="onAcceptItem(element.id,false)"
+                          (reject)="openCommentModal('reject', element.id)"
+                          (return)="openCommentModal('return', element.id)"
+                        ></app-admin-actions>
+                      } @else {
+                        <app-status-action
+                          [status]="element.status"
+                          [comment]="element.comment"
+                        ></app-status-action>
+                      }
+                    </div>
+                  } @else {
+                    <app-status-action
+                      [status]="element.status"
+                      [comment]="element.comment"
+                    ></app-status-action>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        }
+
+        <!-- Message Category -->
+        @for (messageItem of getFilteredDirectionItems('Message'); track messageItem.id) {
+          <tr class="category-row">
+            <td>
+              <div class="fw-bold my-2">{{ directions['message'] }}</div>
+              <div class="status-badge-container mt-1">
+                <span class="status-badge" [ngClass]="getStatusClass(messageItem.status)">
+                  {{ getStatusText(messageItem.status) }}
+                </span>
+              </div>
+            </td>
+            <td>
+              <div class="d-flex align-items-center justify-content-between">
+                <div>{{ messageItem.name || messageItem.content }}</div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-sm btn-outline-info" (click)="togglePopupView('Message', messageItem.id)">
+                    <i class="bi bi-eye-fill"></i> عرض التفاصيل
+                  </button>
+                  @if (canEditOrDeleteItem(messageItem)) {
+                    <app-popup
+                      [pageName]="'Direction'"
+                      [item]="messageItem"
+                      [position]="{ top: '30px', left: '0px' }"
+                      (optionSelected)="handleOptionSelected($event)"
+                      title="تعديل أو حذف العنصر"
+                    ></app-popup>
+                  }
+                </div>
+              </div>
+            </td>
+            <td>
+              @if (!directionStatusService.isDirectionApproved()) {
+                <div class="d-flex justify-content-center">
+                  @if (isReturnedItem(messageItem.status)) {
+                    <!-- Show returned item message with clickable comment button -->
+                    <div class="d-flex flex-column align-items-center gap-2">
+                      <div class="alert alert-warning p-2 mb-0 text-center" style="font-size: 0.85rem;">
+                        <div class="d-flex align-items-center justify-content-center">
+                          <i class="bi bi-arrow-counterclockwise me-2"></i>
+                          <strong>{{ getReturnedItemMessage(messageItem.status) }}</strong>
+                        </div>
+                      </div>
+                      <button
+                        class="btn btn-outline-warning btn-sm"
+                        (click)="openReturnCommentModal(messageItem)"
+                        title="عرض سبب الإرجاع">
+                        <i class="bi bi-info-circle me-1"></i>
+                        عرض سبب الإرجاع
+                      </button>
+                    </div>
+                  } @else if (isAdmin && (messageItem.status === 'Pending' || canTakeAction(messageItem.status))) {
+                    <app-admin-actions
+                      (accept)="onAcceptItem(messageItem.id,true)"
+                      (reject)="openCommentModal('reject', messageItem.id)"
+                      (return)="openCommentModal('return', messageItem.id)"
+                    ></app-admin-actions>
+                  } @else {
+                    <app-status-action
+                      [status]="messageItem.status"
+                      [comment]="messageItem.comment"
+                    ></app-status-action>
+                  }
+                </div>
+              } @else {
+                <app-status-action
+                  [status]="messageItem.status"
+                  [comment]="messageItem.comment"
+                ></app-status-action>
+              }
+            </td>
+          </tr>
+          <!-- Message Sub-items -->
+          @if ((messageItem.elements && messageItem.elements.length > 0) || (messageItem.directionItemsElements && messageItem.directionItemsElements.length > 0)) {
+            @for (element of filterSubElements(messageItem.elements || messageItem.directionItemsElements); track element.id) {
+              <tr class="subitem-row">
+                <td class="ps-4">
+                  <div class="element-badge">
+                    <span class="element-number">{{ $index + 1 }}</span>
+                    <span class="element-label">عنصر</span>
+                  </div>
+                </td>
+                <td class="ps-4">
+                  <div class="element-content">
+                    <!-- Support both name and value properties -->
+                    <div>{{ element.name || element.value }}</div>
+                    <span class="element-detail text-muted">{{ element.description || "" }}</span>
+                  </div>
+                </td>
+                <td>
+                  @if (!directionStatusService.isDirectionApproved()) {
+                    <div class="d-flex justify-content-center">
+                      @if (isReturnedItem(element.status)) {
+                        <!-- Show returned item message with clickable comment button -->
+                        <div class="d-flex flex-column align-items-center gap-2">
+                          <div class="alert alert-warning p-2 mb-0 text-center" style="font-size: 0.85rem;">
+                            <div class="d-flex align-items-center justify-content-center">
+                              <i class="bi bi-arrow-counterclockwise me-2"></i>
+                              <strong>{{ getReturnedItemMessage(element.status) }}</strong>
+                            </div>
+                          </div>
+                          <button
+                            class="btn btn-outline-warning btn-sm"
+                            (click)="openReturnCommentModal(element)"
+                            title="عرض سبب الإرجاع">
+                            <i class="bi bi-info-circle me-1"></i>
+                            عرض سبب الإرجاع
+                          </button>
+                        </div>
+                      } @else if (isAdmin && (element.status === 'Pending' || canTakeAction(element.status))) {
+                        <app-admin-actions
+                          (accept)="onAcceptItem(element.id,false)"
+                          (reject)="openCommentModal('reject', element.id)"
+                          (return)="openCommentModal('return', element.id)"
+                        ></app-admin-actions>
+                      } @else {
+                        <app-status-action
+                          [status]="element.status"
+                          [comment]="element.comment"
+                        ></app-status-action>
+                      }
+                    </div>
+                  } @else {
+                    <app-status-action
+                      [status]="element.status"
+                      [comment]="element.comment"
+                    ></app-status-action>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        }
+
+        <!-- Values Category -->
+        @for (valueItem of getFilteredDirectionItems('Value'); track valueItem.id) {
+          <tr class="category-row">
+            <td>
+              <div class="fw-bold my-2">{{ directions['value'] }}</div>
+              <div class="status-badge-container mt-1">
+                <span class="status-badge" [ngClass]="getStatusClass(valueItem.status)">
+                  {{ getStatusText(valueItem.status) }}
+                </span>
+              </div>
+            </td>
+            <td>
+              <div class="d-flex align-items-center justify-content-between">
+                <div>{{ valueItem.name || valueItem.content }}</div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-sm btn-outline-info" (click)="togglePopupView('Value', valueItem.id)">
+                    <i class="bi bi-eye-fill"></i> عرض التفاصيل
+                  </button>
+                  @if (canEditOrDeleteItem(valueItem)) {
+                    <app-popup
+                      [pageName]="'Direction'"
+                      [item]="valueItem"
+                      [position]="{ top: '30px', left: '0px' }"
+                      (optionSelected)="handleOptionSelected($event)"
+                      title="تعديل أو حذف العنصر"
+                    ></app-popup>
+                  }
+                </div>
+              </div>
+            </td>
+            <td>
+              @if (!directionStatusService.isDirectionApproved()) {
+                <div class="d-flex justify-content-center">
+                  @if (isReturnedItem(valueItem.status)) {
+                    <!-- Show returned item message with clickable comment button -->
+                    <div class="d-flex flex-column align-items-center gap-2">
+                      <div class="alert alert-warning p-2 mb-0 text-center" style="font-size: 0.85rem;">
+                        <div class="d-flex align-items-center justify-content-center">
+                          <i class="bi bi-arrow-counterclockwise me-2"></i>
+                          <strong>{{ getReturnedItemMessage(valueItem.status) }}</strong>
+                        </div>
+                      </div>
+                      <button
+                        class="btn btn-outline-warning btn-sm"
+                        (click)="openReturnCommentModal(valueItem)"
+                        title="عرض سبب الإرجاع">
+                        <i class="bi bi-info-circle me-1"></i>
+                        عرض سبب الإرجاع
+                      </button>
+                    </div>
+                  } @else if (isAdmin && (valueItem.status === 'Pending' || canTakeAction(valueItem.status))) {
+                    <app-admin-actions
+                      (accept)="onAcceptItem(valueItem.id,true)"
+                      (reject)="openCommentModal('reject', valueItem.id)"
+                      (return)="openCommentModal('return', valueItem.id)"
+                    ></app-admin-actions>
+                  } @else {
+                    <app-status-action
+                      [status]="valueItem.status"
+                      [comment]="valueItem.comment"
+                    ></app-status-action>
+                  }
+                </div>
+              } @else {
+                <app-status-action
+                  [status]="valueItem.status"
+                  [comment]="valueItem.comment"
+                ></app-status-action>
+              }
+            </td>
+          </tr>
+          <!-- Values Sub-items -->
+          @if ((valueItem.elements && valueItem.elements.length > 0) || (valueItem.directionItemsElements && valueItem.directionItemsElements.length > 0)) {
+            @for (element of filterSubElements(valueItem.elements || valueItem.directionItemsElements); track element.id) {
+              <tr class="subitem-row">
+                <td class="ps-4">
+                  <div class="element-badge">
+                    <span class="element-number">{{ $index + 1 }}</span>
+                    <span class="element-label">عنصر</span>
+                  </div>
+                </td>
+                <td class="ps-4">
+                  <div class="element-content">
+                    <!-- Support both name and value properties -->
+                    <div>{{ element.name || element.value }}</div>
+                    <span class="element-detail text-muted">{{ element.description || "" }}</span>
+                  </div>
+                </td>
+                <td>
+                  @if (!directionStatusService.isDirectionApproved()) {
+                    <div class="d-flex justify-content-center">
+                      @if (isReturnedItem(element.status)) {
+                        <!-- Show returned item message with clickable comment button -->
+                        <div class="d-flex flex-column align-items-center gap-2">
+                          <div class="alert alert-warning p-2 mb-0 text-center" style="font-size: 0.85rem;">
+                            <div class="d-flex align-items-center justify-content-center">
+                              <i class="bi bi-arrow-counterclockwise me-2"></i>
+                              <strong>{{ getReturnedItemMessage(element.status) }}</strong>
+                            </div>
+                          </div>
+                          <button
+                            class="btn btn-outline-warning btn-sm"
+                            (click)="openReturnCommentModal(element)"
+                            title="عرض سبب الإرجاع">
+                            <i class="bi bi-info-circle me-1"></i>
+                            عرض سبب الإرجاع
+                          </button>
+                        </div>
+                      } @else if (isAdmin && (element.status === 'Pending' || canTakeAction(element.status))) {
+                        <app-admin-actions
+                          (accept)="onAcceptItem(element.id,false)"
+                          (reject)="openCommentModal('reject', element.id)"
+                          (return)="openCommentModal('return', element.id)"
+                        ></app-admin-actions>
+                      } @else {
+                        <app-status-action
+                          [status]="element.status"
+                          [comment]="element.comment"
+                        ></app-status-action>
+                      }
+                    </div>
+                  } @else {
+                    <app-status-action
+                      [status]="element.status"
+                      [comment]="element.comment"
+                    ></app-status-action>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        }
+
+        <!-- Show empty state message if no items exist after filtering -->
+        @if (!hasFilteredItems()) {
+          <tr>
+            <td colspan="3" class="text-center py-4">
+              <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle me-2"></i>
+                @if (hasAnyDirectionItems()) {
+                  لا توجد عناصر تطابق معايير الفلترة المحددة
+                } @else {
+                  لا توجد عناصر للتوجه الاستراتيجي. يرجى إضافة عناصر جديدة.
+                }
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Comment modal for actions -->
+<app-comment-modal
+  [isOpen]="commentModal.isOpen"
+  (submitted)="handleOnComment($event, commentModal.elementId, commentModal.type)"
+  (closed)="closeCommentModal()"
+  [reasonModalType]="commentModal.type"
+></app-comment-modal>
+
+<!-- Single form template -->
+@if (isFormVisible()) {
+<div
+  class="popup-overlay"
+  tabindex="0"
+  (click)="togglePopup(currentFormType)"
+>
+  <div class="form-container" (click)="$event.stopPropagation()" tabindex="0">
+    <button
+      (click)="togglePopup(currentFormType)"
+      class="close-btn"
+      aria-label="Close"
+    >
+      &times;
+    </button>
+
+    <div class="text-center">
+      <img src="./../../../../assets/v7-icon.png" alt="" />
+      <div class="form-title">التوجه الاستراتيجي</div>
+      <h4 class="text-muted">{{ getFormTitle() }}</h4>
+    </div>
+
+    <form [formGroup]="strategicForm" (ngSubmit)="onSubmit()">
+      <!-- Hidden ID field -->
+      <input type="hidden" formControlName="id">
+
+      <div class="mb-3 u">
+        <label for="title" class="form-label"
+          >تفاصيل {{ getFormTitle() }}</label
+        >
+        <div class="d-flex justify-content-between">
+          <label for="title" class="form-label">تفاصيل {{ getFormTitle() }}</label>
+          @if (strategicForm.get('name')?.invalid && strategicForm.get('name')?.touched) {
+            <small class="text-danger">
+              برجاء ادخال تفاصيل {{ getFormTitle() }}
+            </small>
+          }
+        </div>
+        <textarea
+          [class.is-invalid]="strategicForm.get('name')?.invalid && strategicForm.get('name')?.touched"
+          [placeholder]="'تفاصيل ' + getFormTitle()"
+          formControlName="name"
+          style="height: 5rem"
+          cols="3"
+        ></textarea>
+      </div>
+
+      <div class="mb-3" formArrayName="directionItemsElements">
+        <div class="d-flex justify-content-between align-items-center">
+          <label for="content" class="form-label">أهم العناصر التي تم التركيز عليها</label>
+        </div>
+        @for (element of directionItemsElements.controls; track $index) {
+          <div class="u" [formGroupName]="$index">
+            <div class="d-flex justify-content-between  align-items-center">
+              <label for="element-{{$index}}" class="form-label">عنصر {{ $index + 1 }}</label>
+              @if (element.get('name')?.invalid && element.get('name')?.touched) {
+                <small class="text-danger">
+                  برجاء ادخال عنصر {{ $index + 1 }}
+                </small>
+              }
+            </div>
+            <textarea
+              id="element-{{$index}}"
+              [class.is-invalid]="element.get('name')?.invalid && element.get('name')?.touched"
+              [placeholder]="'عنصر ' + ($index + 1)"
+              formControlName="name"
+              [value]=" element.get('name')?.value "
+            ></textarea>
+          </div>
+        }
+      </div>
+
+      <div class="text-center d-flex justify-content-start gap-3">
+        <button type="button" class="btn btn-success" (click)="addElement()">
+          + اضافة عنصر
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="removeElement()"
+        >
+          - إزالة عنصر
+        </button>
+      </div>
+      <div class="text-center mb-2 mt-5">
+        <button class="btn btn-primary w-25">تأكيد</button>
+      </div>
+    </form>
+  </div>
+</div>
+}
+
+@if (isViewModal()) {
+<div class="popup-overlay" tabindex="0">
+  <div class="container view-container">
+    <button
+      class="close-btn"
+      (click)="togglePopupView(currentFormType)"
+      aria-label="Close"
+    >
+      &times;
+    </button>
+
+    <div class="text-center">
+      <img src="./../../../../assets/v7-icon.png" alt="" />
+      <div class="title">معلومات التوجه الاستراتيجي</div>
+      <h4 class="text-muted">{{ getFormTitle() }}</h4>
+    </div>
+
+    <div class="text-box mt-5 mx-3">
+      <h5 class="mb-3">عنصر {{ getFormTitle() }}</h5>
+      <p style="color: #646464">{{ strategicForm.get('name')?.value }}</p>
+
+      <h5 class="mt-5 mb-4">أهم العناصر التي تم التركيز عليها</h5>
+      @for (element of directionItemsElements.controls; track $index) {
+        <div class="element-container" [ngClass]="getStatusClass(element.get('status')?.value)">
+          <div class="d-flex justify-content-between  align-items-center">
+            <p class="my-3" style="color: #646464">
+              <span class="element-number">{{ $index + 1 }}</span>
+              {{ element.get('name')?.value }}
+            </p>
+            <span class="status-badge small" [ngClass]="getStatusClass(element.get('status')?.value)">
+              {{ getStatusText(element.get('status')?.value) }}
+            </span>
+          </div>
+
+          <div class="d-flex justify-content-start">
+            @if (
+              isAdmin &&
+              !directionStatusService.isDirectionApproved() &&
+              (element.get('status')?.value === 'Pending' || canTakeAction(element.get('status')?.value))
+            ) {
+              <app-admin-actions
+                [itemId]="element.get('id')?.value"
+                (accept)="onAcceptItem(element.get('id')?.value,false)"
+                (reject)="openCommentModal('reject', element.get('id')?.value)"
+                (return)="openCommentModal('return', element.get('id')?.value)"
+              ></app-admin-actions>
+            } @else {
+              <app-status-action
+                [status]="element.get('status')?.value"
+                [comment]="element.get('comment')?.value"
+              ></app-status-action>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+}
+
+@if (isSuccessPopupVisible) {
+<div
+  class="popup-overlay"
+  (click)="closeSuccessPopup()"
+  tabindex="0"
+  (keydown.enter)="closeSuccessPopup()"
+>
+  <div
+    class="container2"
+    (click)="$event.stopPropagation()"
+    style="padding: 5rem 2rem"
+    tabindex="0"
+    (keydown.enter)="$event.stopPropagation()"
+  >
+    <div class="text-center">
+      <div class="icons mb-4">
+        <span class="text-success"><i class="bi bi-check-lg"></i></span>
+      </div>
+      <div class="mb-4">
+        <span class="status-approved">تم التأكيد بنجاح !</span>
+      </div>
+      <div>
+        <button
+          (click)="closeSuccessPopup()"
+          class="btn btn-primary w-25 mt-4"
+        >
+          تأكيد
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteConfirmationModal) {
+  <div
+    class="popup-overlay"
+    (click)="closeDeleteConfirmationModal()"
+    tabindex="0"
+    (keydown.escape)="closeDeleteConfirmationModal()"
+  >
+    <div
+      class="container2"
+      (click)="$event.stopPropagation()"
+      style="padding: 2rem"
+      tabindex="0"
+    >
+      <div class="text-center">
+        <div class="icons mb-4">
+          <span class="text-danger"><i class="bi bi-exclamation-triangle-fill fs-1"></i></span>
+        </div>
+        <div class="mb-4">
+          <h4 class="text-danger">تأكيد الحذف</h4>
+          <p class="mt-3">هل أنت متأكد من أنك تريد حذف هذا العنصر؟</p>
+          <p class="text-muted">لا يمكن التراجع عن هذا الإجراء.</p>
+        </div>
+        <div class="d-flex justify-content-center gap-3">
+          <button
+            (click)="closeDeleteConfirmationModal()"
+            (keydown.enter)="closeDeleteConfirmationModal()"
+            class="btn btn-secondary px-4"
+            tabindex="0"
+            [disabled]="isDeleting"
+          >
+            إلغاء
+          </button>
+          <button
+            (click)="confirmDelete()"
+            (keydown.enter)="confirmDelete()"
+            class="btn btn-danger px-4"
+            tabindex="0"
+            [disabled]="isDeleting"
+          >
+            @if (isDeleting) {
+              <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              جاري الحذف...
+            } @else {
+              حذف
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Return Comment Modal -->
+@if (showReturnCommentModal) {
+  <div
+    class="popup-overlay"
+    (click)="closeReturnCommentModal()"
+    tabindex="0"
+    (keydown.escape)="closeReturnCommentModal()"
+  >
+    <div
+      class="container2"
+      (click)="$event.stopPropagation()"
+      style="padding: 2rem; max-width: 600px;"
+      tabindex="0"
+    >
+      <div class="text-center">
+        <div class="icons mb-4">
+          <span class="text-warning"><i class="bi bi-arrow-counterclockwise fs-1"></i></span>
+        </div>
+        <div class="mb-4">
+          <h4 class="text-warning">سبب إرجاع العنصر</h4>
+          @if (selectedReturnItem) {
+            <p class="mt-3 text-muted">{{ getReturnedItemMessage(selectedReturnItem.status) }}</p>
+          }
+        </div>
+
+        @if (selectedReturnItem) {
+          <div class="text-start bg-light p-3 rounded mb-4">
+            <div class="fw-bold mb-2 text-primary">سبب الإرجاع:</div>
+            <div class="text-dark">
+              {{ getReturnReasonText(selectedReturnItem.comment) }}
+            </div>
+          </div>
+        }
+
+        <div class="d-flex justify-content-center">
+          <button
+            (click)="closeReturnCommentModal()"
+            (keydown.enter)="closeReturnCommentModal()"
+            class="btn btn-primary px-4"
+            tabindex="0"
+          >
+            موافق
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+   
+}
+
+<button  (click)="generatePDF()"   class="pdf btn btn-success">Export Form To PDF</button> 
+@if(isAdmin==false)
+{
+  <button  (click)="Approve()"   class="pdf btn btn-success">أرسال الى مدير الوحدة</button> 
+}

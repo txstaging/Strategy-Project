@@ -1,0 +1,181 @@
+<div class="table-wrapper">
+  <table class="table table-bordered text-center p-table">
+    <thead>
+      <tr>
+        @for (col of columns; track col) {
+          <th [style.width]="col.width">
+            {{ col.label }}
+          </th>
+        }
+
+        <ng-container *ngIf="showPriorityColumns">
+          <th>
+            التأثير <br />
+            (10-0)
+          </th>
+          <th>
+            التأكد <br />
+            (10-0)
+          </th>
+          <th>
+            الأولوية <br />
+            (100-0)
+          </th>
+        </ng-container>
+        <th>الحاله</th>
+        <th>الاجراءات</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      @for (item of data(); track item) {
+        <tr>
+          @for (col of columns; track col) {
+            <td>
+              {{ item[col.key] }}
+            </td>
+          }
+          <ng-container *ngIf="showPriorityColumns">
+            <td>{{ item['impact'] }}</td>
+            <td>{{ item['degreeOfCertainty'] }}</td>
+            <td>{{ item['impact'] * item['degreeOfCertainty'] }}</td>
+          </ng-container>
+          <td>
+            <div class="d-flex justify-content-center">
+
+              @if (canTakeAction(item)) {
+                <!-- Region Manager and High Management can take actions on individual points -->
+                <app-admin-actions
+                  [item]="item"
+                  [pageName]="'Analysis'"
+                  (accept)="handleAccept($event)"
+                  (reject)="handleReject($event)"
+                  (return)="handleReturn($event)"
+                >
+                </app-admin-actions>
+              } @else {
+                <!-- Display status to all other roles -->
+                <app-status-action
+                  [status]="item['status']"
+                  [comment]="item['comment']"
+                >
+                </app-status-action>
+              }
+            </div>
+          </td>
+          <td>
+            @if (canEditItem(item) || canDeleteItem(item)) {
+              <div class="actions-wrapper text-center">
+                <app-popup
+                  [pageName]="'Analysis'"
+                  [item]="item"
+                  [position]="{ top: '30px', left: '0px' }"
+                  (optionSelected)="handleOptionSelected($event)"
+                  title="تعديل أو عرض أو حذف النقطة"
+                  class="d-block text-center"
+                >
+                </app-popup>
+              </div>
+            } @else {
+              <div class="actions-wrapper text-center">
+                <button
+                  class="btn btn-link p-0 border-0"
+                  (click)="handleOptionSelected({ type: 'view', item: item })"
+                  title="عرض النقطة فقط"
+                >
+                  <i class="bi bi-eye-fill text-success fs-5"></i>
+                </button>
+              </div>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  @if (showCreateButton && hasAddPermission()) {
+    <button (click)="toggleFormModel('create')" class="btn btn-success mt-4">
+      اضافة نقطة {{ createButtonText }}
+    </button>
+  } @else if (showCreateButton && isAnalysisApproved) {
+    <div class="alert alert-info mt-4 text-end">
+      <i class="bi bi-info-circle-fill me-2"></i>
+      تم الموافقة على هذه المرحلة ولا يمكن إضافة نقاط جديدة
+    </div>
+  }
+</div>
+
+
+
+@if (popupVisibleMode) {
+  <app-analysis-form
+    [mode]="popupVisibleMode"
+    [data]="editSelectedItem"
+    (formClosed)="closePopup($event)"
+    [title]="createButtonText"
+    [type]="type"
+    [planId]="planId"
+  ></app-analysis-form>
+}
+
+<app-comment-modal
+  [isOpen]="showCommentModal"
+  [reasonModalType]="reasonModalType"
+  (closed)="handleCommentModalClosed()"
+  (submitted)="handleRestore($event)"
+>
+</app-comment-modal>
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteConfirmationModal) {
+  <div
+    class="popup-overlay"
+    (click)="closeDeleteConfirmationModal()"
+    tabindex="0"
+    (keydown.escape)="closeDeleteConfirmationModal()"
+  >
+    <div
+      class="container2"
+      (click)="$event.stopPropagation()"
+      style="padding: 2rem"
+      tabindex="0"
+    >
+      <div class="text-center">
+        <div class="icons mb-4">
+          <span class="text-danger"><i class="bi bi-exclamation-triangle-fill fs-1"></i></span>
+        </div>
+        <div class="mb-4">
+          <h4 class="text-danger">تأكيد الحذف</h4>
+          <p class="mt-3">هل أنت متأكد من أنك تريد حذف هذه النقطة؟</p>
+          <p class="text-muted">لا يمكن التراجع عن هذا الإجراء.</p>
+        </div>
+        <div class="d-flex justify-content-center gap-3">
+          <button
+            (click)="closeDeleteConfirmationModal()"
+            (keydown.enter)="closeDeleteConfirmationModal()"
+            class="btn btn-secondary px-4"
+            tabindex="0"
+            [disabled]="isDeleting"
+          >
+            إلغاء
+          </button>
+          <button
+            (click)="confirmDelete()"
+            (keydown.enter)="confirmDelete()"
+            class="btn btn-danger px-4"
+            tabindex="0"
+            [disabled]="isDeleting"
+          >
+            @if (isDeleting) {
+              <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              جاري الحذف...
+            } @else {
+              حذف
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+

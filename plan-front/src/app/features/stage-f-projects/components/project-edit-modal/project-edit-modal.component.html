@@ -1,0 +1,251 @@
+<div class="modal-overlay">
+  <div class="modal-container">
+    <button class="close-btn" (click)="close()">×</button>
+
+    <div class="text-center">
+      <div class="title">تعديل معلومات المشروع</div>
+    </div>
+
+    <div class="mt-5">
+      <div class="d-flex justify-content-between">
+        <h6 class="text-success">الأولوية:</h6>
+        @if (
+          projectForm.get('priority')?.invalid &&
+          projectForm.get('priority')?.touched
+        ) {
+          <small class="text-danger"> برجاء ادخال الأولوية </small>
+        }
+      </div>
+      <select
+        [class.is-invalid]="
+          projectForm.get('priority')?.invalid &&
+          projectForm.get('priority')?.touched
+        "
+        [ngModel]="projectForm.get('priority')?.value"
+        (ngModelChange)="projectForm.get('priority')?.setValue($event)"
+        class="form-select"
+      >
+        <option value="أولوية أولى">أولوية أولى</option>
+        <option value="أولوية ثانية">أولوية ثانية</option>
+        <option value="أولوية ثالثة">أولوية ثالثة</option>
+      </select>
+
+      <form [formGroup]="projectForm" (ngSubmit)="onSubmit()" class="mt-5">
+        <div class="row">
+          <div class="col-2" style="display: none;">
+            <div class="d-flex justify-content-between">
+              <label for="projectId" class="form-label">ID</label>
+              @if (
+                projectForm.get('id')?.invalid &&
+                projectForm.get('id')?.touched
+              ) {
+                <small class="text-danger"> برجاء ادخال ID </small>
+              }
+            </div>
+            <textarea
+              [class.is-invalid]="
+                projectForm.get('id')?.invalid &&
+                projectForm.get('id')?.touched
+              "
+              id="projectId"
+              formControlName="id"
+              [readonly]="true"
+              class="form-control"
+            ></textarea>
+          </div>
+          <div class="col-2">
+            <div class="d-flex justify-content-between">
+              <label for="code" class="form-label">رمز المشروع</label>
+              @if (
+                projectForm.get('code')?.invalid &&
+                projectForm.get('code')?.touched
+              ) {
+                <small class="text-danger"> برجاء ادخال رمز المشروع </small>
+              }
+            </div>
+            <textarea
+              [class.is-invalid]="
+                projectForm.get('code')?.invalid &&
+                projectForm.get('code')?.touched
+              "
+              id="code"
+              formControlName="code"
+              class="form-control"
+            ></textarea>
+          </div>
+          <div class="col-2">
+            <div class="d-flex justify-content-between">
+              <label for="projectName" class="form-label"
+                >اسم المشروع</label
+              >
+              @if (
+                projectForm.get('name')?.invalid &&
+                projectForm.get('name')?.touched
+              ) {
+                <small class="text-danger"> برجاء ادخال اسم المشروع </small>
+              }
+            </div>
+            <textarea
+              [class.is-invalid]="
+                projectForm.get('name')?.invalid &&
+                projectForm.get('name')?.touched
+              "
+              id="projectName"
+              formControlName="name"
+              class="form-control"
+            ></textarea>
+          </div>
+          <div class="col-2">
+            <div class="d-flex justify-content-between">
+              <label for="projectDuration" class="form-label">المدة</label>
+              @if (
+                projectForm.get('duration')?.invalid &&
+                projectForm.get('duration')?.touched
+              ) {
+                <small class="text-danger"> برجاء ادخال المدة </small>
+              }
+            </div>
+            <textarea
+              [class.is-invalid]="
+                projectForm.get('duration')?.invalid &&
+                projectForm.get('duration')?.touched
+              "
+              id="projectDuration"
+              formControlName="duration"
+              class="form-control"
+            ></textarea>
+          </div>
+          <div class="col-2">
+            <div class="d-flex justify-content-between">
+              <label for="projectBeneficiaries" class="form-label"
+                >المستفيدون</label
+              >
+              @if (
+                projectForm.get('beneficiaries')?.invalid &&
+                projectForm.get('beneficiaries')?.touched
+              ) {
+                <small class="text-danger"> برجاء ادخال المستفيدون </small>
+              }
+            </div>
+            <textarea
+              [class.is-invalid]="
+                projectForm.get('beneficiaries')?.invalid &&
+                projectForm.get('beneficiaries')?.touched
+              "
+              id="projectBeneficiaries"
+              formControlName="beneficiaries"
+              class="form-control"
+            ></textarea>
+          </div>
+          <div class="col-2">
+            <div class="d-flex justify-content-between">
+              <label for="projectAuthority" class="form-label"
+                >الجهة المشرفة</label
+              >
+              @if (
+                projectForm.get('supervisingAuthority')?.invalid &&
+                projectForm.get('supervisingAuthority')?.touched
+              ) {
+                <small class="text-danger">
+                  برجاء ادخال الجهة المشرفة
+                </small>
+              }
+            </div>
+            <textarea
+              [class.is-invalid]="
+                projectForm.get('supervisingAuthority')?.invalid &&
+                projectForm.get('supervisingAuthority')?.touched
+              "
+              id="projectAuthority"
+              formControlName="supervisingAuthority"
+              class="form-control"
+            ></textarea>
+          </div>
+          <div class="col-2">
+            <div class="d-flex justify-content-between">
+              <label for="projectWeight" class="form-label"
+                >وزن المشروع</label
+              >
+              @if (
+                projectForm.get('weight')?.invalid &&
+                projectForm.get('weight')?.touched
+              ) {
+                <small class="text-danger"> برجاء ادخال وزن المشروع </small>
+              }
+            </div>
+            <textarea
+              [class.is-invalid]="
+                projectForm.get('weight')?.invalid &&
+                projectForm.get('weight')?.touched
+              "
+              id="projectWeight"
+              formControlName="weight"
+              class="form-control"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Date Fields Row -->
+        <div class="row mt-3">
+          <div class="col-6">
+            <div class="d-flex justify-content-between">
+              <label for="startDate" class="form-label">تاريخ البداية</label>
+              @if (
+                projectForm.get('startDate')?.invalid &&
+                projectForm.get('startDate')?.touched
+              ) {
+                <small class="text-danger"> برجاء ادخال تاريخ البداية </small>
+              }
+            </div>
+            <input
+              type="date"
+              [class.is-invalid]="
+                projectForm.get('startDate')?.invalid &&
+                projectForm.get('startDate')?.touched
+              "
+              id="startDate"
+              formControlName="startDate"
+              class="form-control"
+            />
+          </div>
+          <div class="col-6">
+            <div class="d-flex justify-content-between">
+              <label for="endDate" class="form-label">تاريخ النهاية</label>
+              @if (
+                projectForm.get('endDate')?.invalid &&
+                projectForm.get('endDate')?.touched
+              ) {
+                <small class="text-danger"> برجاء ادخال تاريخ النهاية </small>
+              }
+            </div>
+            <input
+              type="date"
+              [class.is-invalid]="
+                projectForm.get('endDate')?.invalid &&
+                projectForm.get('endDate')?.touched
+              "
+              id="endDate"
+              formControlName="endDate"
+              class="form-control"
+            />
+          </div>
+        </div>
+
+        <div class="text-center mt-5">
+          <button
+            type="submit"
+            class="btn btn-primary w-25"
+            [disabled]="submitting()"
+          >
+            @if (submitting()) {
+              <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+              جاري التحديث...
+            } @else {
+              تأكيد
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

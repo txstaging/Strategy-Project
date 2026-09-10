@@ -1,0 +1,66 @@
+@if (isVisible) {
+  <div
+    class="popup-overlay"
+    (click)="closeCreatePopup()"
+    tabindex="0"
+    (keydown.enter)="closeCreatePopup()"
+  >
+    <div
+      class="form-container"
+      (click)="$event.stopPropagation()"
+      tabindex="0"
+      (keydown.enter)="$event.stopPropagation()"
+    >
+      <button
+        (click)="closeCreatePopup()"
+        class="close-btn d-flex justify-content-end"
+        aria-label="Close"
+        style="left: 1rem"
+      >
+        &times;
+      </button>
+
+      <div class="text-center">
+        <img src="./../../../../assets/v5-icon.png" alt="" />
+        <div class="form-title">
+          {{
+            editData && !isView ? 'تعديل خطة' : isView ? 'تفصيل' : 'إضافة خطة'
+          }}
+        </div>
+
+        <p class="text-muted">أسم الخطة</p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <label for="title" class="form-label">اسم الخطة</label>
+            @if (form.get('name')?.invalid && form.get('name')?.touched) {
+              <small class="text-danger"> برجاء ادخال اسم الخطة </small>
+            }
+          </div>
+          @if (!isView) {
+            <textarea
+              class="form-control"
+              [class.is-invalid]="
+                form.get('name')?.invalid && form.get('name')?.touched
+              "
+              placeholder="قم بادخال اسم الخطة"
+              formControlName="name"
+            ></textarea>
+          } @else if (editData) {
+            <p>{{ editData?.name }}</p>
+          }
+        </div>
+
+        <div class="text-center">
+          @if (!isView) {
+            <button type="submit" class="btn btn-success w-25">
+              {{ editData ? 'تعديل' : isView ? 'تفصيل' : '+ إضافة' }}
+            </button>
+          }
+        </div>
+      </form>
+    </div>
+  </div>
+}

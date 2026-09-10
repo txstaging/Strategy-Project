@@ -1,0 +1,12 @@
+<app-pages-header
+  [headerTitle]="pageTitle"
+  [pageDescriptionFirst]="pageDescriptionFirst"
+  [pageDescriptionSecond]="pageDescriptionSecond"
+/>
+<div class="container-fluid d-flex gap-5 mt-5 my-5 bg-white">
+  <app-strategic-plan-side-bar />
+
+  <div class="content w-75">
+    <router-outlet />
+  </div>
+</div>

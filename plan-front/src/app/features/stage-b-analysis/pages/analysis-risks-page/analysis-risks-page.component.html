@@ -1,0 +1,11 @@
+<app-analysis-table
+  [type]="'Risk'"
+  [createButtonText]="'ضعف'"
+  [showCreateButton]="true"
+  [isAnalysisApproved]="PlanStatusService.isAnalysisApproved()"
+  [planId]="PlanStatusService.planId()"
+  [columns]="[
+    { key: 'name', label: '  الضعف  ', width: '15vw' },
+    { key: 'procedures', label: 'الاجراءات المتخذ حيالها', width: '35vw' },
+  ]"
+/>

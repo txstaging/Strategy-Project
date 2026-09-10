@@ -1,0 +1,322 @@
+<div
+  class="popup-overlay h-100 d-flex justify-content-center align-items-center"
+  [class.show]="isOpen"
+  [style.display]="isOpen ? 'block' : 'none'"
+  tabindex="-1"
+  style="background-color: rgba(0, 0, 0, 0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1050;"
+>
+  <div class="modal-dialog modal-xl" style="max-width: 90%; margin: 2rem auto;">
+    <div class="modal-content" style="border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);">
+      <!-- Modal Header -->
+      <div class="modal-header bg-secondary text-white p-2" style="border-radius: 15px 15px 0 0;">
+        <button
+          type="button"
+          class="btn-close btn-close-white"
+          (click)="closeModal()"
+          aria-label="Close"
+          style="order: -1; margin-left: 0; margin-right: auto;"
+        ></button>
+        <h4 class="modal-title fw-bold" style="margin-right: 0; margin-left: auto;">
+          <i class="bi bi-eye me-2"></i>
+          تفاصيل المبادرة: {{ initiative?.name?.value || 'غير محدد' }}
+        </h4>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body p-4  bg-white" style="max-height: 70vh; overflow-y: auto; min-width: 800px;">
+
+        <!-- Initiative Basic Info -->
+        <div class="card mb-4 border-0 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 text-primary">
+              <i class="bi bi-info-circle me-2"></i>
+              معلومات أساسية
+            </h5>
+    </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <span class="fw-bold text-success">اسم المبادرة:</span>
+                <p class="mt-1 p-2 bg-light rounded">{{ initiative?.name?.value || 'غير محدد' }}</p>
+                @if (!isInitiativesApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(initiative?.name?.status)) {
+                  <!-- Use admin-actions for initiative name like KPIs and items -->
+                  <div class="mt-2">
+                <app-admin-actions
+                  [item]="initiative?.name?.id"
+                      (accept)="handleAcceptName($event)"
+                      (reject)="handleRejectName($event)"
+                      (return)="handleReturnName($event)"
+                >
+                </app-admin-actions>
+          </div>
+                } @else if (initiative?.name?.status) {
+                  <div class="mt-2">
+            <app-status-action
+              [status]="initiative?.name?.status"
+              [comment]="initiative?.name?.comment"
+            >
+            </app-status-action>
+          </div>
+          
+        }
+      </div>
+              <div class="col-md-6 mb-3">
+                <span class="fw-bold text-success">الهدف المرتبط:</span>
+                <p class="mt-1 p-2 bg-light rounded">{{ initiative?.goal?.name || 'غير محدد' }}</p>
+                @if (initiative?.goal?.descripition) {
+                  <small class="text-muted">{{ initiative?.goal?.descripition }}</small>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPIs Section -->
+        <div class="card mb-4 border-0 shadow-sm">
+          <div class="card-header bg-light">
+            <h5 class="mb-0 text-primary">
+              <i class="bi bi-graph-up me-2"></i>
+              مؤشرات الأداء الرئيسية (KPIs)
+            </h5>
+          </div>
+          <div class="card-body">
+            @if (initiative?.initiativeKPIs && initiative?.initiativeKPIs.length > 0) {
+              <div class="row">
+                @for (kpi of initiative?.initiativeKPIs; track kpi.id; let i = $index) {
+                  <div class="col-md-6 mb-3">
+                    <div class="border rounded p-3 h-100" style="background-color: #f8f9fa;">
+                      <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="fw-bold text-primary mb-0">مؤشر {{ i + 1 }}</h6>
+                      </div>
+                      <p class="mb-3">{{ kpi?.value || 'غير محدد' }}</p>
+                      @if (!isInitiativesApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(kpi?.status)) {
+                  <app-admin-actions
+                    [item]="kpi?.id"
+                          (accept)="handleAcceptKPI($event)"
+                          (reject)="handleRejectKPI($event)"
+                          (return)="handleReturnKPI($event)"
+                  >
+                  </app-admin-actions>
+                      } @else if (kpi?.status) {
+                  <app-status-action
+                    [status]="kpi?.status"
+                    [comment]="kpi?.comment"
+                  >
+                  </app-status-action>
+                }
+                    </div>
+                  </div>
+              }
+            </div>
+          } @else {
+              <div class="text-center py-4">
+                <i class="bi bi-graph-up" style="font-size: 3rem; color: #6c757d;"></i>
+                <p class="text-muted mt-2">لا توجد مؤشرات أداء محددة</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Initiative Items Section -->
+        @if (initiative?.initiativeItem && initiative?.initiativeItem.length > 0) {
+          <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-header bg-light">
+              <h5 class="mb-0 text-primary">
+                <i class="bi bi-list-check me-2"></i>
+                عناصر المبادرة
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                @for (item of initiative.initiativeItem; track item.id) {
+                  <div class="col-md-6 mb-4">
+                    <div class="border rounded p-3 h-100  " [ngClass]="{
+                      'border-primary': item.type === 1,
+                      'border-success': item.type === 2,
+                      'border-warning': item.type === 3
+                    }" style="background-color: #f8f9fa;">
+                      <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="fw-bold mb-0" [ngClass]="{
+                          'text-primary': item.type === 1,
+                          'text-success': item.type === 2,
+                          'text-warning': item.type === 3
+                        }">
+                          <i class="bi" [ngClass]="{
+                            'bi-person-check': item.type === 1,
+                            'bi-people': item.type === 2,
+                            'bi-exclamation-triangle': item.type === 3
+                          }" style="margin-left: 0.5rem;"></i>
+                          @if (item.type === 1) {
+                            المسؤول عن المبادرة
+                          } @else if (item.type === 2) {
+                            شركاء التنفيذ للمبادرة
+                          } @else if (item.type === 3) {
+                            معوقات التنفيذ
+                          } @else {
+                            عنصر المبادرة
+                          }
+                        </h6>
+      </div>
+                      <p class="mb-3">{{ item?.value || 'غير محدد' }}</p>
+                      @if (!isInitiativesApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(item?.status)) {
+                  <app-admin-actions
+                          [item]="item?.id"
+                          (accept)="handleAcceptItem($event)"
+                          (reject)="handleRejectItem($event)"
+                          (return)="handleReturnItem($event)"
+                  >
+                  </app-admin-actions>
+                      } @else if (item?.status) {
+                  <app-status-action
+                          [status]="item?.status"
+                          [comment]="item?.comment"
+                  >
+                  </app-status-action>
+                }
+                    </div>
+                  </div>
+              }
+            </div>
+            </div>
+          </div>
+        }
+
+                    <!-- Initiative Overall Status Action (separate from name) -->
+                    <div class="row mt-3">
+                      <div class="col-12">
+                        <div class="border rounded p-3" style="background-color: #f8f9fa;">
+                          <h6 class="fw-bold text-primary mb-2">
+                            <i class="bi bi-clipboard-check me-2"></i>
+                            حالة المبادرة العامة
+                          </h6>
+                          <p class="mb-2">الحالة الحالية: <span class="badge bg-secondary">{{ getStatusInArabic(initiative?.status) }}</span></p>
+
+                          @if (!isInitiativesApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(initiative?.status) && areAllIndividualElementsActedUpon()) {
+                            <!-- Button for initiative overall status -->
+                            <button
+                              type="button"
+                              class="btn btn-primary btn-sm me-2"
+                              (click)="handleApproveInitiativeOverall()"
+                            >
+                              <i class="bi bi-check-circle me-1"></i>
+                              موافقة المبادرة عموماً
+                            </button>
+                          } @else if (!isInitiativesApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(initiative?.status) && !areAllIndividualElementsActedUpon()) {
+                            <!-- Descriptive message about pending elements -->
+                            <div class="alert alert-info d-flex align-items-center" style="margin-bottom: 0;">
+                              <i class="bi bi-info-circle me-2"></i>
+                              <div>
+                                <small class="fw-bold">يجب التصرف في النقاط التالية أولاً:</small>
+                                <ul class="mb-0 mt-1" style="font-size: 0.875rem;">
+                                  @for (pendingItem of getPendingElementsMessages(); track pendingItem) {
+                                    <li>{{ pendingItem }}</li>
+                                  }
+                                </ul>
+                              </div>
+        </div>
+                          } @else if (initiative?.status) {
+                  <app-status-action
+                              [status]="initiative?.status"
+                              [comment]="initiative?.comment"
+                  >
+                  </app-status-action>
+              }
+            </div>
+            </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer p-3" style="border-radius: 0 0 15px 15px;">
+        <!-- Final initiative approval button (only appears when all items complete) -->
+        @if (!isInitiativesApproved && isAllowToApprove && canApproveInitiative()) {
+          <button
+            type="button"
+            class="btn btn-success btn-lg me-2"
+            (click)="handleApproveInitiative()"
+                  >
+            <i class="bi bi-check-circle me-2"></i>
+            موافقة المبادرة كاملة
+          </button>
+        }
+
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">
+          <i class="bi bi-x-circle me-1"></i>
+          إغلاق
+        </button>
+      </div>
+    </div>
+  </div>
+            </div>
+
+<!-- Reason Modal for Reject/Return -->
+@if (showReasonModal) {
+  <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.7); z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header" [ngClass]="{
+          'bg-danger text-white': reasonModalType === 'reject',
+          'bg-warning text-white': reasonModalType === 'return'
+        }">
+          <button type="button" class="btn-close btn-close-white" (click)="closeReasonModal()" aria-label="Close" style="order: -1; margin-left: 0; margin-right: auto;"></button>
+          <h5 class="modal-title" style="margin-right: 0; margin-left: auto;">
+            @if (reasonModalType === 'reject') {
+              <i class="bi bi-x-circle me-2"></i>
+              رفض العنصر
+          } @else {
+              <i class="bi bi-arrow-return-left me-2"></i>
+              إرجاع العنصر
+            }
+          </h5>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="reasonComment" class="form-label fw-bold">
+              @if (reasonModalType === 'reject') {
+                سبب الرفض:
+                } @else {
+                سبب الإرجاع:
+              }
+            </label>
+            <textarea
+              id="reasonComment"
+              class="form-control"
+              rows="4"
+              [(ngModel)]="reasonComment"
+              placeholder="اكتب السبب هنا..."
+              style="resize: none;"
+            ></textarea>
+          </div>
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-1"></i>
+            <small>يرجى كتابة سبب واضح ومفصل</small>
+          </div>
+            </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeReasonModal()">
+            إلغاء
+          </button>
+          <button
+            type="button"
+            class="btn"
+            [ngClass]="{
+              'btn-danger': reasonModalType === 'reject',
+              'btn-warning': reasonModalType === 'return'
+            }"
+            (click)="submitReasonAction()"
+            [disabled]="!reasonComment.trim()"
+          >
+            @if (reasonModalType === 'reject') {
+              <i class="bi bi-x-circle me-1"></i>
+              تأكيد الرفض
+          } @else {
+              <i class="bi bi-arrow-return-left me-1"></i>
+              تأكيد الإرجاع
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+

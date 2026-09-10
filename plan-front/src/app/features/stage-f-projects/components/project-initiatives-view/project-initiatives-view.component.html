@@ -1,0 +1,43 @@
+<div
+  class="modal"
+  [class.show]="isOpen"
+  [style.display]="isOpen ? 'block' : 'none'"
+>
+  <div class="container">
+    <button class="close-btn" (click)="close()">×</button>
+
+    <div class="text-center">
+      <img src="assets/images/icon 1.png" alt="" />
+      <div class="title">معلومات المبادرة</div>
+    </div>
+
+    <div class="text-box mt-5">
+      <div class="mb-4">
+        <h6>اسم المبادرة</h6>
+        <p>{{ initiativeDetails?.name?.value }}</p>
+      </div>
+
+      <div class="mb-4">
+        <h6>المؤشرات - KPI</h6>
+        @for (kpi of initiativeDetails?.initiativeKPIs; track kpi) {
+          <p>{{ kpi.value }}</p>
+        }
+      </div>
+
+      <div class="mb-4">
+        <h6>المسؤول عن المبادرة</h6>
+        <p>{{ initiativeDetails?.adminInCharge?.value }}</p>
+      </div>
+
+      <div class="mb-4">
+        <h6>شركاء التنفيذ للمبادرة</h6>
+        <p>{{ initiativeDetails?.partners?.value }}</p>
+      </div>
+
+      <div class="mb-4">
+        <h6>معوقات التنفيذ</h6>
+        <p>{{ initiativeDetails?.obstacles?.value }}</p>
+      </div>
+    </div>
+  </div>
+</div>

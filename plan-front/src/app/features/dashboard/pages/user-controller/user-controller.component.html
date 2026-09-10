@@ -1,0 +1,98 @@
+<div class="container my-5" dir="rtl">
+  <!-- Page Header with Add New Button and Mark All Inactive button -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="section-heading">قائمة المستخدمين</h2>
+
+    <div class="d-flex gap-2">
+      @if (isHighManagement()) {
+       
+
+        <a routerLink="/settings/create-user" class="btn btn-primary">
+          <i class="bi bi-plus-lg me-1"></i> أضافة مستخدم جديد
+        </a>
+      }
+    </div>
+  </div>
+
+
+
+
+
+
+
+
+
+
+<div class="table-responsive justify-content-center  m-2">
+
+
+
+  <table class="table table-hover blog-table">
+    <thead class="table-light">
+      <tr>
+        <th>#</th>
+        <th>اسم الموظف</th>
+        <th>الوظيفة</th>
+        <th>اسم الوحدة</th>
+         <th>حالة الحساب</th>
+        <th>الإجراءات</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let user of users; let i = index">
+         <td>#</td>
+
+        <td>{{ user.displayName }}</td>
+<td>{{ user.role }}</td>
+<td>{{ user.unitname }}</td>
+<td>
+ 
+    {{ user.isActive ? 'مفعل' : 'غير مفعل' }}
+
+</td>
+
+        <td>
+          <div class="d-flex gap-2">
+            <label class="switch">
+  <input type="checkbox" [checked]="user.isActive" (change)="toggleUserStatus(user)">
+  <span class="slider round"></span>
+</label>
+            <a class="btn btn-sm btn-outline-info" [routerLink]="['/settings/user-view-data', user.id]"><i class="bi bi-eye"></i></a>
+            <a class="btn btn-sm btn-outline-success"[routerLink]="['/settings/user-update-data', user.id] "><i class="bi bi-pencil"></i></a>
+            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+          </div>
+        </td>
+      <tr>
+     <td>
+      <!-- ممكن تضيف ثوابت أخرى بنفس الطريقة -->
+    </tbody>
+  </table>
+</div>
+<nav aria-label="Page navigation">
+  <ul class="pagination justify-content-center">
+    <!-- Previous Button -->
+    <li class="page-item" [class.disabled]="currentPage === 1">
+      <button class="page-link" (click)="changePage(currentPage - 1)">
+        &laquo;
+      </button>
+    </li>
+
+    <!-- Visible Page Numbers -->
+    <li
+      *ngFor="let page of visiblePages"
+      class="page-item"
+      [class.active]="page === currentPage"
+    >
+      <button class="page-link" (click)="changePage(page)">
+        {{ page }}
+      </button>
+    </li>
+
+    <!-- Next Button -->
+    <li class="page-item" [class.disabled]="currentPage === totalPages">
+      <button class="page-link" (click)="changePage(currentPage + 1)">
+        &raquo;
+      </button>
+    </li>
+  </ul>
+</nav>

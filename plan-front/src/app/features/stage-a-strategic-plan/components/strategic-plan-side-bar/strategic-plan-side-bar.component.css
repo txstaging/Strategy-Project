@@ -1,0 +1,52 @@
+.header {
+  background: url('/assets/Background.png');
+  height: 400px;
+  color: white;
+  padding: 2rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-bottom-left-radius: 40px;
+  border-bottom-right-radius: 40px;
+}
+
+.sidebar {
+  background-color: #fff;
+  border-right: 1px solid #fff;
+  border-radius: 15px;
+  height: 400px;
+  padding: 1.5rem;
+}
+
+:host {
+  direction: rtl;
+  font-family: 'Rubik', sans-serif;
+}
+
+.sidebar a {
+  display: block;
+  padding: 10px 15px;
+  color: #000;
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.sidebar a.active {
+  color: #00a05a;
+}
+
+.nav-link {
+  color: #000;
+  font-weight: 700;
+}
+
+.nav-link.active {
+  color: #00a05a;
+  border-bottom: 2px solid #00a05a;
+}
+
+.sidebar a.disabled {
+  pointer-events: none;
+  color: #6c757d;
+}

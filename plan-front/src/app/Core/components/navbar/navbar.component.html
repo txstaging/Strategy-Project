@@ -1,0 +1,292 @@
+<!-- Navbar -->
+<header class="header">
+  <nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+      <a routerLink="/home">
+        <img
+          src="/assets/images/Logo.png"
+          alt=""
+          style="width: 100px; height: 100px"
+          class="me-5"
+        />
+      </a>
+     
+      
+
+
+
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mb-2 mb-lg-0">
+          <li class="nav-item notification-nav-item">
+            <div class="notification-bell-container" (click)="togglePopup(); $event.stopPropagation()">
+              <div class="notification-bell-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2C10.9 2 10 2.9 10 4C10 4.1 10 4.19 10.02 4.28C7.58 5.07 6 7.36 6 10V15L4 17V18H20V17L18 15V10C18 7.36 16.42 5.07 13.98 4.28C14 4.19 14 4.1 14 4C14 2.9 13.1 2 12 2ZM12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22Z" fill="white"/>
+                </svg>
+                <span *ngIf="count > 0" class="notification-badge">{{ count > 99 ? '99+' : count }}</span>
+              </div>
+            </div>
+
+            <div class="notification-popup" [class.notification-popup--open]="isOpen" (click)="$event.stopPropagation()">
+              <div class="notification-popup__header">
+                <span class="notification-popup__title">الإشعارات</span>
+                <div class="notification-popup__header-actions">
+                  <button *ngIf="unreadCount > 0"
+                          class="notification-popup__mark-read-btn"
+                          (click)="markAllAsRead()">
+                    تحديد الكل كمقروء
+                  </button>
+                  <span *ngIf="notificationsMessages.notifications.length > 0" class="notification-popup__count">
+                    {{ notificationsMessages.notifications.length }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="notification-tabs">
+                <button class="notification-tab"
+                        [class.notification-tab--active]="activeFilter === 'all'"
+                        (click)="activeFilter = 'all'">
+                  الكل
+                </button>
+                <button class="notification-tab"
+                        [class.notification-tab--active]="activeFilter === 'unread'"
+                        (click)="activeFilter = 'unread'">
+                  غير مقروءة
+                  <span *ngIf="unreadCount > 0" class="notification-tab__badge">{{ unreadCount }}</span>
+                </button>
+                <button class="notification-tab"
+                        [class.notification-tab--active]="activeFilter === 'read'"
+                        (click)="activeFilter = 'read'">
+                  مقروءة
+                </button>
+              </div>
+
+              <div class="notification-popup__body">
+                <div *ngIf="filteredNotifications.length === 0" class="notification-popup__empty">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C10.9 2 10 2.9 10 4C10 4.1 10 4.19 10.02 4.28C7.58 5.07 6 7.36 6 10V15L4 17V18H20V17L18 15V10C18 7.36 16.42 5.07 13.98 4.28C14 4.19 14 4.1 14 4C14 2.9 13.1 2 12 2ZM12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22Z" fill="#d1d5db"/>
+                  </svg>
+                  <p *ngIf="activeFilter === 'all'">لا توجد إشعارات</p>
+                  <p *ngIf="activeFilter === 'unread'">لا توجد إشعارات غير مقروءة</p>
+                  <p *ngIf="activeFilter === 'read'">لا توجد إشعارات مقروءة</p>
+                </div>
+
+                <div class="notification-item"
+                     [class.notification-item--unread]="!n.isRead"
+                     *ngFor="let n of filteredNotifications"
+                     (click)="onNotificationClick(n)">
+                  <div class="notification-item__dot" *ngIf="!n.isRead"></div>
+                  <div class="notification-item__content">
+                    <p class="notification-item__message">{{ n.message }}</p>
+                    <span class="notification-item__form" *ngIf="n.formNameToReturnToFront">{{ n.formNameToReturnToFront }}</span>
+                  </div>
+                  <svg class="notification-item__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M14.71 6.71a1 1 0 0 0-1.42 1.42L17.17 12l-3.88 3.88a1 1 0 0 0 1.42 1.42l4.59-4.59a1 1 0 0 0 0-1.42l-4.59-4.58Z" fill="#9ca3af"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </li>
+
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              [class.active]="router.url === '/home'"
+              style="color: #fff"
+              routerLink="/home"
+              >الرئيسية</a
+            >
+          </li>
+         
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              [class.active]="router.url === '/blogs'"
+              style="color: #fff"
+              routerLink="/blogs"
+              >الاخبار</a
+            >
+          </li>
+
+          
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              [class.active]="router.url.startsWith('/awareness')"
+              style="color: #fff"
+              routerLink="/awareness"
+              >التوعية</a
+            >
+          </li>
+          
+        </ul>
+        <form class="d-flex me-auto" role="search" style="position: relative">
+          <img
+            src="/assets/images/search.png"
+            alt=""
+            style="position: absolute; top: 13px; right: 19px"
+          />
+          <input
+            class="form-control me-2"
+            type="search"
+            placeholder="اكتب ما تبحث عنه"
+            aria-label="Search"
+            style="
+              border-radius: 50px;
+              background-clip: border-box;
+              padding-right: 30px;
+            "
+          />
+        </form>
+        @if (showLoginButton) {
+          <button
+            (click)="login()"
+            class="btn btn-success login-button me-4"
+            style="cursor: pointer"
+          >
+            <i class="bi bi-person"></i>
+            تسجيل الدخول
+          </button>
+        }
+        @if (!showLoginButton) {
+          <div
+            class="me-3 user-container"
+            tabindex="0"
+            (click)="toggleProfilePopupSection()"
+            style="cursor: pointer"
+            role="button"
+          >
+            <div>
+              <div>
+                {{ userInfo['name'] || '-' }}
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 13 13"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M6.10156 10.1484L1.60156 5.64844C1.36719 5.4375 1.36719 5.08594 1.60156 4.85156C1.8125 4.64062 2.16406 4.64062 2.39844 4.85156L6.5 8.97656L10.6016 4.875C10.8125 4.64062 11.1641 4.64062 11.3984 4.875C11.6094 5.08594 11.6094 5.4375 11.3984 5.64844L6.875 10.1484C6.66406 10.3828 6.3125 10.3828 6.10156 10.1484Z"
+                    fill="white"
+                  />
+                </svg>
+              </div>
+              <div class="branch text-end">
+                {{ userInfo['email'] || '-' }}
+              </div>
+            </div>
+            <div class="icon">
+              <svg
+                width="35"
+                height="37"
+                viewBox="0 0 35 37"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  x="0.5"
+                  y="0.75"
+                  width="34"
+                  height="36"
+                  rx="17"
+                  fill="#F0F3F5"
+                />
+                <path
+                  d="M17.5 18.75C15.2812 18.75 13.5 16.9688 13.5 14.75C13.5 12.5625 15.2812 10.75 17.5 10.75C19.6875 10.75 21.5 12.5625 21.5 14.75C21.5 16.9688 19.6875 18.75 17.5 18.75ZM19.0625 20.25C22.0625 20.25 24.5 22.6875 24.5 25.6875C24.5 26.2812 24 26.75 23.4062 26.75H11.5625C10.9688 26.75 10.5 26.2812 10.5 25.6875C10.5 22.6875 12.9062 20.25 15.9062 20.25H19.0625Z"
+                  fill="#00A05A"
+                />
+              </svg>
+            </div>
+          </div>
+          @if (showProfilePopupSection()) {
+            <div
+              class="profile-popup-section"
+              style="position: absolute; top: 85px; left: 30px"
+            >
+              <div
+                style="
+                  width: 140px;
+                  background: white;
+                  box-shadow: 0px 2px 14px rgba(0, 0, 0, 0.08);
+                  border-radius: 8px;
+                "
+                class="d-flex align-items-center justify-content-center py-2"
+              >
+                <div class="d-flex flex-column w-100">
+                  @if (isHighManagement) {
+                    <div
+                      class="d-flex w-100 pe-3 py-2"
+                      style="cursor: pointer"
+                      tabindex="0"
+                      onmouseover="this.style.backgroundColor='#f0f0f0';"
+                      onmouseout="this.style.backgroundColor='white';"
+                      (click)="navigateToSettings()"
+                    >
+                      <div class="w-25">
+                        <i class="bi bi-gear" style="color: #727272"></i>
+                      </div>
+                      <div
+                        style="
+                          text-align: right;
+                          color: #727272;
+                          font-size: 12px;
+                          font-family: FS Albert Arabic Web;
+                          font-weight: 400;
+                          line-height: 20px;
+                          word-wrap: break-word;
+                        "
+                      >
+                        الاعدادات
+                      </div>
+                    </div>
+                  }
+                  <div
+                    class="d-flex w-100 pe-3 py-2"
+                    style="cursor: pointer"
+                    tabindex="0"
+                    onmouseover="this.style.backgroundColor='#f0f0f0';"
+                    onmouseout="this.style.backgroundColor='white';"
+                    (click)="logout()"
+                    (keydown)="handleKeydown($event)"
+                  >
+                    <div class="w-25">
+                      <i
+                        class="bi bi-box-arrow-right"
+                        style="color: #727272"
+                      ></i>
+                    </div>
+                    <div
+                      style="
+                        text-align: right;
+                        color: #727272;
+                        font-size: 12px;
+                        font-family: FS Albert Arabic Web;
+                        font-weight: 400;
+                        line-height: 20px;
+                        word-wrap: break-word;
+                      "
+                    >
+                      تسجيل خروج
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </nav>
+</header>

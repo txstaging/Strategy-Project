@@ -1,0 +1,160 @@
+<form [formGroup]="initiativeForm" (ngSubmit)="onSubmit($event)">
+  <div class="row">
+    <!-- Initiative Name -->
+    <div class="mb-3 col-md-6">
+      <div class="d-flex justify-content-between">
+        <label for="initiative" class="form-label">اسم المبادرة <span class="text-danger">*</span></label>
+        @if (initiativeForm.get('name')?.invalid && initiativeForm.get('name')?.touched) {
+          <small class="text-danger">برجاء ادخال اسم المبادرة</small>
+        }
+      </div>
+      <textarea
+        class="form-control"
+        [class.is-invalid]="initiativeForm.get('name')?.invalid && initiativeForm.get('name')?.touched"
+        id="initiative"
+        formControlName="name"
+        placeholder="ادخل اسم المبادرة"
+        rows="3"
+      ></textarea>
+    </div>
+
+    <!-- Initiative Weight -->
+    <div class="mb-3 col-md-6">
+      <div class="d-flex justify-content-between">
+        <label for="initiativeWeight" class="form-label">وزن المبادرة <span class="text-danger">*</span></label>
+        @if (initiativeForm.get('initiativeWeight')?.invalid && initiativeForm.get('initiativeWeight')?.touched) {
+          <small class="text-danger">برجاء ادخال وزن المبادرة</small>
+        }
+      </div>
+      <input
+        type="number"
+        class="form-control"
+        [class.is-invalid]="initiativeForm.get('initiativeWeight')?.invalid && initiativeForm.get('initiativeWeight')?.touched"
+        id="initiativeWeight"
+        formControlName="initiativeWeight"
+        placeholder="مثال: 1"
+        min="1"
+      />
+    </div>
+  </div>
+
+  <!-- Dynamic KPIs Section -->
+  <div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="mb-0">مؤشرات الأداء الرئيسية (KPIs)</h6>
+      <button
+        type="button"
+        class="btn btn-outline-primary btn-sm"
+        (click)="addKPI()"
+      >
+        <i class="bi bi-plus-circle"></i> إضافة مؤشر
+      </button>
+    </div>
+
+    <div formArrayName="initiativeKPIs">
+      @for (kpi of kpis.controls; track i; let i = $index) {
+        <div [formGroupName]="i" class="mb-3">
+          <div class="d-flex gap-2">
+            <div class="flex-grow-1">
+              <textarea
+                class="form-control"
+                [class.is-invalid]="kpi.get('value')?.invalid && kpi.get('value')?.touched"
+                formControlName="value"
+                [placeholder]="'مؤشر الأداء ' + (i + 1)"
+                rows="2"
+              ></textarea>
+            </div>
+            @if (kpis.length > 1) {
+              <button
+                type="button"
+                class="btn btn-outline-danger btn-sm"
+                (click)="removeKPI(i)"
+                title="حذف المؤشر"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Dynamic Initiative Items Section -->
+  <div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="mb-0">عناصر المبادرة</h6>
+      <button
+        type="button"
+        class="btn btn-outline-primary btn-sm"
+        (click)="addInitiativeItem()"
+      >
+        <i class="bi bi-plus-circle"></i> إضافة عنصر
+      </button>
+    </div>
+
+    <div formArrayName="initiativeItem">
+      @for (item of items.controls; track i; let i = $index) {
+        <div [formGroupName]="i" class="mb-3">
+          <div class="row">
+            <div class="col-md-4">
+              <label class="form-label" for="itemType{{i}}">نوع العنصر</label>
+              <select
+                class="form-select"
+                formControlName="type"
+                id="itemType{{i}}"
+              >
+                @for (type of initiativeItemTypes; track type.value) {
+                  <option [value]="type.value">{{ type.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-7">
+              <label class="form-label" for="itemValue{{i}}">القيمة</label>
+    <input
+      type="text"
+      class="form-control"
+                [class.is-invalid]="item.get('value')?.invalid && item.get('value')?.touched"
+                formControlName="value"
+                [placeholder]="getInitiativeItemTypeLabel(item.get('type')?.value)"
+                id="itemValue{{i}}"
+    />
+  </div>
+            <div class="col-md-1 d-flex align-items-end">
+              @if (items.length > 1) {
+                <button
+                  type="button"
+                  class="btn btn-outline-danger btn-sm"
+                  (click)="removeInitiativeItem(i)"
+                  title="حذف العنصر"
+                >
+                  <i class="bi bi-trash"></i>
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Submit Button -->
+  <div class="d-flex justify-content-center gap-3">
+  @if (isModal) {
+      <button type="button" class="btn btn-secondary" (click)="closeModal()">
+        إلغاء
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="!initiativeForm.valid">
+        @if (isEdit) {
+          <i class="bi bi-pencil"></i> تحديث المبادرة
+        } @else {
+          <i class="bi bi-plus-circle"></i> إضافة المبادرة
+        }
+      </button>
+  } @else {
+      <button type="submit" class="btn btn-success" [disabled]="!initiativeForm.valid">
+        <i class="bi bi-save"></i> حفظ
+      </button>
+  }
+  </div>
+</form>

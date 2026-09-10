@@ -1,0 +1,20 @@
+<ul class="nav nav-underline" style="padding: 0">
+  @for (tab of navTabs; track $index) {
+    <li class="nav-item p-3">
+      <a
+        class="nav-link"
+        [routerLink]="
+          tab.path
+            ? ['/plans', planId, 'analysis-stage', tab.path]
+            : ['/plans', planId, 'analysis-stage']
+        "
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="
+          tab.isDynamic ? { exact: true } : { exact: false }
+        "
+      >
+        {{ tab.label }}
+      </a>
+    </li>
+  }
+</ul>

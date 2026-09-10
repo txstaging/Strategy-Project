@@ -1,0 +1,37 @@
+<div class="d-flex align-items-center gap-3 mt-4">
+  <app-year-filter></app-year-filter>
+  <app-branch-filter [paramKey]="'unit'"></app-branch-filter>
+</div>
+
+<div class="container mt-4 p-0">
+  <div class="table-wrapper">
+    <table class="table table-bordered text-center">
+      <thead style="background-color: #f0f3f5; color: #9faab0; font-size: 15px">
+        <tr>
+          <th>اسم الهدف</th>
+          <th>الفرع</th>
+          <th>التاريخ</th>
+          <th>الحالة</th>
+        </tr>
+      </thead>
+      <tbody style="background-color: #fff; vertical-align: middle">
+        @for (objective of ObjectivesList(); track $index) {
+          <tr>
+            <td>{{ objective.name?.value }}</td>
+            <td>{{ objective.unitName }}</td>
+            <td>{{ objective.date }}</td>
+            <td class="status-waiting">
+              <app-status-action [status]="objective.status"></app-status-action>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    <app-pagination
+      [currentPage]="currentPage"
+      [totalPages]="totalPages"
+      (pageChange)="onPageChange($event)"
+    >
+    </app-pagination>
+  </div>
+</div>

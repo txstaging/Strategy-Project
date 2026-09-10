@@ -1,0 +1,154 @@
+@if (isOpen) {
+  <div
+    class="modal"
+    [class.show]="isOpen"
+    [style.display]="isOpen ? 'block' : 'none'"
+    tabindex="-1"
+  >
+    <div class="add-update-modal-container">
+      <div class="modal_dialog--content">
+        <div class="form-container">
+          <button class="close-btn" (click)="onClose()" aria-label="Close">
+            &times;
+          </button>
+          <div class="text-center">
+            <img src="/assets/v7-icon.png" alt="" />
+            <div class="form-title">{{ title }}</div>
+          </div>
+          <form [formGroup]="objectiveForm" (ngSubmit)="onSubmit()">
+            <!-- <div
+              class="mb-3"
+              style="border-bottom: 1px solid #e8ecee; padding-bottom: 50px"
+            >
+              <h6>
+                <i class="bi bi-exclamation-circle text-danger"></i> التعليق من
+                المسؤول
+              </h6>
+              <div class="comment">{{detailsData?.comment}}</div>
+            </div> -->
+            <h6 class="text-muted">أهم العناصر للهدف</h6>
+            <div class="mt-3">
+              <div class="d-flex justify-content-between">
+                <label for="">نقاط القوة</label>
+              </div>
+              <ng-select
+                [items]="strengthPoints"
+                [multiple]="true"
+                [closeOnSelect]="false"
+                bindLabel="name"
+                placeholder="اختر نقاط القوة (اختياري)"
+                formControlName="selectedStrengthPoints"
+              >
+              </ng-select>
+            </div>
+            <div class="mt-3">
+              <div class="d-flex justify-content-between">
+                <label for="">نقاط الفرص</label>
+              </div>
+              <ng-select
+                [items]="opportunityPoints"
+                [multiple]="true"
+                [closeOnSelect]="false"
+                bindLabel="name"
+                placeholder="اختر نقاط الفرص (اختياري)"
+                formControlName="selectedOpportunityPoints"
+              >
+              </ng-select>
+            </div>
+            <div class="mt-3">
+              <div class="d-flex justify-content-between">
+                <label for="">نقاط الضعف</label>
+              </div>
+              <ng-select
+                [items]="riskPoints"
+                [multiple]="true"
+                [closeOnSelect]="false"
+                bindLabel="name"
+                placeholder="اختر نقاط الضعف (اختياري)"
+                formControlName="selectedRiskPoints"
+              >
+              </ng-select>
+            </div>
+            <div class="mt-3">
+              <div class="d-flex justify-content-between">
+                <label for="">نقاط التهديد</label>
+              </div>
+              <ng-select
+                [items]="threatPoints"
+                [multiple]="true"
+                [closeOnSelect]="false"
+                bindLabel="name"
+                placeholder="اختر نقاط التهديد (اختياري)"
+                formControlName="selectedThreatPoints"
+              >
+              </ng-select>
+            </div>
+            <div class="mt-3">
+              <div class="d-flex justify-content-between">
+                <label for="title" class="form-label">الهدف *</label>
+                @if (objectiveForm.get('objectiveTitle')?.invalid && objectiveForm.get('objectiveTitle')?.touched) {
+                  <small class="text-danger">
+                    @if (objectiveForm.get('objectiveTitle')?.errors?.['required']) {
+                      برجاء ادخال الهدف
+                    } @else if (objectiveForm.get('objectiveTitle')?.errors?.['minlength']) {
+                      يجب أن يكون الهدف 3 أحرف على الأقل
+                    }
+                  </small>
+                }
+              </div>
+              <textarea
+                [class.is-invalid]="objectiveForm.get('objectiveTitle')?.invalid && objectiveForm.get('objectiveTitle')?.touched"
+                formControlName="objectiveTitle"
+                placeholder="اضف اسم الهدف"
+              ></textarea>
+            </div>
+            <div class="row mt-3">
+              <div class="mb-3 col-6">
+                <div class="d-flex justify-content-between">
+                  <label for="content" class="form-label">وصف الهدف *</label>
+                  @if (objectiveForm.get('objectiveDescription')?.invalid && objectiveForm.get('objectiveDescription')?.touched) {
+                    <small class="text-danger">
+                      @if (objectiveForm.get('objectiveDescription')?.errors?.['required']) {
+                        برجاء ادخال وصف الهدف
+                      } @else if (objectiveForm.get('objectiveDescription')?.errors?.['minlength']) {
+                        يجب أن يكون الوصف 10 أحرف على الأقل
+                      }
+                    </small>
+                  }
+                </div>
+                <textarea
+                  [class.is-invalid]="objectiveForm.get('objectiveDescription')?.invalid && objectiveForm.get('objectiveDescription')?.touched"
+                  formControlName="objectiveDescription"
+                  placeholder="وصف الهدف"
+                ></textarea>
+              </div>
+              <div class="mb-3 col-6">
+                <div class="d-flex justify-content-between">
+                  <label for="content" class="form-label">المؤشر الرئيسي *</label>
+                  @if (objectiveForm.get('mainIndicator')?.invalid && objectiveForm.get('mainIndicator')?.touched) {
+                    <small class="text-danger">
+                      @if (objectiveForm.get('mainIndicator')?.errors?.['required']) {
+                        برجاء ادخال المؤشر الرئيسي
+                      } @else if (objectiveForm.get('mainIndicator')?.errors?.['minlength']) {
+                        يجب أن يكون المؤشر 3 أحرف على الأقل
+                      }
+                    </small>
+                  }
+                </div>
+                <textarea
+                  [class.is-invalid]="objectiveForm.get('mainIndicator')?.invalid && objectiveForm.get('mainIndicator')?.touched"
+                  formControlName="mainIndicator"
+                  placeholder="المؤشر الرئيسي"
+                ></textarea>
+              </div>
+            </div>
+            <div class="text-center mt-4">
+              <button type="submit" class="btn btn-primary w-25">تأكيد</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show" *ngIf="isOpen"></div>
+}

@@ -1,0 +1,140 @@
+:host {
+  display: block;
+}
+body {
+  background-color: #f8f9fa;
+  font-family: 'Rubik', sans-serif;
+}
+
+.sidebar {
+  background-color: #fff;
+  border-right: 1px solid #fff;
+  border-radius: 15px;
+  height: 300px;
+  padding: 1.5rem;
+}
+v.progress-bar-filll {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.progress-low {
+  background-color: #dc3545; /* red */
+}
+
+.progress-medium {
+  background-color: #ffc107; /* yellow */
+}
+
+.progress-high {
+  background-color: #28a745; /* green */
+}
+
+.sidebar a {
+  display: block;
+  padding: 10px 15px;
+  color: #000;
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.sidebar a.active {
+  color: #00a05a;
+}
+
+.nav-link {
+  color: #000;
+  font-weight: 700;
+}
+
+.nav-link.active {
+  color: #00a05a;
+  border-bottom: 2px solid #00a05a;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+  color: #6c757d;
+}
+
+th {
+  background-color: #e9ecef;
+  font-weight: bold;
+}
+
+.section-header {
+  background-color: #f4f4f4;
+  font-weight: bold;
+  text-align: center;
+  padding: 10px;
+}
+
+.priority {
+  font-weight: bold;
+  text-align: center;
+  background-color: #f7f7f7;
+}
+
+.text-rotate {
+  writing-mode: vertical-rl;
+  height: 320px;
+  transform: rotate(180deg);
+}
+
+/* Print Styles */
+@media print {
+  .d-print-none {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    font-size: 12px !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 0 !important;
+  }
+
+  th, td {
+    border: 1px solid #000 !important;
+    padding: 5px !important;
+    font-size: 11px !important;
+    color: #000 !important;
+  }
+
+  th {
+    background-color: #f0f0f0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Page breaks */
+  tr {
+    page-break-inside: avoid;
+  }
+
+  table {
+    page-break-after: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+}
+
+.form-select {
+  background-position: right .75rem center !important;
+}
