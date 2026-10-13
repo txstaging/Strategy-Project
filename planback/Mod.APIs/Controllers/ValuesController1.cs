@@ -4,6 +4,7 @@ using Mod.Core.Entities.Initiative;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using System.Globalization;
 using static Mod.APIs.FullReport;
 
 namespace Mod.APIs.Controllers
@@ -40,8 +41,8 @@ namespace Mod.APIs.Controllers
                             initiative = initiative.Name.Value,
                             project = project.Name.Value,
                             priority = project.Priority.Value,
-                            startdate = DateOnly.FromDateTime(project.StartDate).ToString(),
-                            enddate = DateOnly.FromDateTime(project.EndDate).ToString(),
+                            startdate = project.StartDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture),
+                            enddate = project.EndDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture),
                             percentage = project.Percentage?.Value ?? "0",
                         };
                         list.Add(x);
@@ -876,16 +877,20 @@ namespace Mod.APIs.Controllers
                         header.Cell().Element(c => HeaderCell(c, "نسبة الإنجاز"));
                     });
 
+                    // Width of one relative unit: landscape A4 less the 1.5cm margins,
+                    // shared by the 37 units defined above.
+                    const float unit = (842f - 2 * 42.5f) / 37f;
+
                     var rowIndex = 0;
                     foreach (var row in data)
                     {
                         var isAlt = rowIndex % 2 == 1;
-                        table.Cell().Element(c => StyledBodyCell(c, row.goal, isAlt));
-                        table.Cell().Element(c => StyledBodyCell(c, row.initiative, isAlt));
-                        table.Cell().Element(c => StyledBodyCell(c, row.project, isAlt));
-                        table.Cell().Element(c => StyledBodyCell(c, row.priority, isAlt));
-                        table.Cell().Element(c => StyledBodyCell(c, row.startdate, isAlt));
-                        table.Cell().Element(c => StyledBodyCell(c, row.enddate, isAlt));
+                        table.Cell().Element(c => StyledBodyCell(c, row.goal, isAlt, 6 * unit));
+                        table.Cell().Element(c => StyledBodyCell(c, row.initiative, isAlt, 6 * unit));
+                        table.Cell().Element(c => StyledBodyCell(c, row.project, isAlt, 6 * unit));
+                        table.Cell().Element(c => StyledBodyCell(c, row.priority, isAlt, 4 * unit));
+                        table.Cell().Element(c => StyledBodyCell(c, row.startdate, isAlt, 5 * unit));
+                        table.Cell().Element(c => StyledBodyCell(c, row.enddate, isAlt, 5 * unit));
                         table.Cell().Element(c => PercentageBarCell(c, row.percentage));
                         rowIndex++;
                     }
@@ -924,8 +929,9 @@ namespace Mod.APIs.Controllers
                     .DirectionFromRightToLeft();
         }
 
-        void StyledBodyCell(IContainer container, string text, bool alternate)
+        void StyledBodyCell(IContainer container, string text, bool alternate, float columnWidth)
         {
+            var value = SpaceAfterSeparators(text);
             container
                 .Background(alternate ? SurfaceGrey : Colors.White)
                 .BorderBottom(1)
@@ -935,9 +941,45 @@ namespace Mod.APIs.Controllers
                 .MinHeight(40)
                 .AlignCenter()
                 .AlignMiddle()
-                .Text(text ?? "-")
-                    .FontSize(11).FontColor(TextDark)
+                .Text(value)
+                    .FontSize(FitFontSize(value, columnWidth - 16, 11)).FontColor(TextDark)
                     .DirectionFromRightToLeft();
+        }
+
+        // ========================== TEXT FITTING ==========================
+        //
+        // «حجم النص يكون دايما تلقائي»: table cells used a fixed font size, so a
+        // long word in a narrow column was cut in the middle ("المستفيدو / ن",
+        // "الطائ / ف") and the data was hard to read. Each cell now picks the
+        // largest size, up to its normal one, at which its longest word still
+        // fits the column; longer values wrap between words as usual.
+
+        // Cairo's glyphs average a little over half the font size in width.
+        const float GlyphWidthPerPoint = 0.58f;
+
+        static float FitFontSize(string text, float availableWidth, float baseSize, float minSize = 7f)
+        {
+            if (string.IsNullOrWhiteSpace(text) || availableWidth <= 0) return baseSize;
+
+            var longestWord = text
+                .Split(new[] { ' ', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(w => w.Length)
+                .DefaultIfEmpty(1)
+                .Max();
+
+            var fitting = availableWidth / (longestWord * GlyphWidthPerPoint);
+            return Math.Clamp(fitting, minSize, baseSize);
+        }
+
+        // Lists typed as "الخرج،الرياض،القصيم" have nowhere to wrap, so the
+        // whole list was treated as one long word. A space after each comma lets
+        // it wrap between names.
+        static string SpaceAfterSeparators(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return "-";
+
+            var spaced = text.Replace("،", "، ").Replace(",", ", ").Replace("؛", "؛ ");
+            return string.Join(" ", spaced.Split(' ', StringSplitOptions.RemoveEmptyEntries));
         }
 
         void PercentageBarCell(IContainer container, string percentageText)
@@ -1002,36 +1044,56 @@ namespace Mod.APIs.Controllers
 
         void BuildProjectsTable(ColumnDescriptor col, List<StrategicProject> projects)
         {
+            // An initiative without projects used to print the table header with
+            // no rows under it, which read as missing data.
+            if (projects == null || projects.Count == 0)
+            {
+                col.Item().AlignRight().Text("لا توجد مشاريع مرتبطة بهذه المبادرة")
+                    .FontSize(11).Italic().FontColor(TextMuted)
+                    .DirectionFromRightToLeft();
+                return;
+            }
+
+            // Column weights, right to left. The header «المستفيدون» and lists of
+            // places no longer fit the old 2-unit columns.
+            float[] weights = { 3, 4, 2, 4, 3 };
+            // Width of one unit: portrait A4 less the 2cm margins, the card's
+            // 4pt accent and its 14pt padding on both sides.
+            var unit = (595f - 2 * 56.7f - 4 - 2 * 14) / weights.Sum();
+            const float cellPadding = 2 * 6;
+
             col.Item().ContentFromRightToLeft().Table(t =>
             {
                 // RTL order: right = الجهة المشرفة, left = رمز المشروع
                 t.ColumnsDefinition(c =>
                 {
-                    c.RelativeColumn(4);   // الجهة المشرفة
-                    c.RelativeColumn(2);   // المستفيدون
-                    c.RelativeColumn(2);   // المدة
-                    c.RelativeColumn(4);   // اسم المشروع
-                    c.RelativeColumn(2);   // رمز المشروع
+                    foreach (var w in weights) c.RelativeColumn(w);
                 });
 
+                string[] headers = { "الجهة المشرفة", "المستفيدون", "المدة", "اسم المشروع", "رمز المشروع" };
                 t.Header(h =>
                 {
-                    ProjectHeaderCell(h.Cell()).Text("الجهة المشرفة");
-                    ProjectHeaderCell(h.Cell()).Text("المستفيدون");
-                    ProjectHeaderCell(h.Cell()).Text("المدة");
-                    ProjectHeaderCell(h.Cell()).Text("اسم المشروع");
-                    ProjectHeaderCell(h.Cell()).Text("رمز المشروع");
+                    for (var i = 0; i < headers.Length; i++)
+                    {
+                        var width = weights[i] * unit - cellPadding;
+                        ProjectHeaderCell(h.Cell()).Text(headers[i])
+                            .FontSize(FitFontSize(headers[i], width, 10));
+                    }
                 });
 
                 var pIndex = 0;
                 foreach (var p in projects)
                 {
                     var isAlt = pIndex % 2 == 1;
-                    ProjectBodyCell(t.Cell(), isAlt).Text(p.Auth);
-                    ProjectBodyCell(t.Cell(), isAlt).Text(p.Beneficiaries);
-                    ProjectBodyCell(t.Cell(), isAlt).Text(p.Duration);
-                    ProjectBodyCell(t.Cell(), isAlt).Text(p.Name);
-                    ProjectBodyCell(t.Cell(), isAlt).Text(p.Code);
+                    string[] values = { p.Auth, p.Beneficiaries, p.Duration, p.Name, p.Code };
+                    for (var i = 0; i < values.Length; i++)
+                    {
+                        var value = SpaceAfterSeparators(values[i]);
+                        var width = weights[i] * unit - cellPadding;
+                        ProjectBodyCell(t.Cell(), isAlt).Text(value)
+                            .FontSize(FitFontSize(value, width, 10))
+                            .DirectionFromRightToLeft();
+                    }
                     pIndex++;
                 }
             });

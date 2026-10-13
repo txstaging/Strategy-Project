@@ -446,3 +446,22 @@ tr {
     display: none !important;
   }
 }
+
+/* «مشاركة نسبة الإنجاز» — a small send button beside each figure. Kept quiet
+   so it does not compete with the percentage it sits next to. */
+.share-btn {
+  border: none;
+  background: transparent;
+  color: #0e5a34;
+  padding: 2px 6px;
+  margin-right: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.share-btn:hover {
+  opacity: 1;
+  background: #ecfdf5;
+}

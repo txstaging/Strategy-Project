@@ -1,4 +1,4 @@
-using Mod.Core.Services.Contract;
+﻿using Mod.Core.Services.Contract;
 using Mod.Core.Utils;
 
 namespace Mod.APIs.Controllers
@@ -135,8 +135,8 @@ namespace Mod.APIs.Controllers
                 NotificationAction.Submit,
                 ModulesNamesOnArabic.Project,
                 unit,
-                FormNameToReturnToFront.project,
-                ProjectId,
+                FormNameToReturnToFront.reports,
+                project.PlanId,
                 RoleEnum.UnitEmployee);
 
             return Ok(new { message = "ok", historyId = pending.Id, filePath });
@@ -245,8 +245,8 @@ namespace Mod.APIs.Controllers
                 notifAction,
                 ModulesNamesOnArabic.Project,
                 unit,
-                FormNameToReturnToFront.project,
-                ProjectId,
+                FormNameToReturnToFront.reports,
+                project.PlanId,
                 actingRole);
 
             return Ok(new { message = "ok", status = live.Status.ToString() });
@@ -298,8 +298,8 @@ namespace Mod.APIs.Controllers
                 NotificationAction.Reject,
                 ModulesNamesOnArabic.Project,
                 unit,
-                FormNameToReturnToFront.project,
-                ProjectId,
+                FormNameToReturnToFront.reports,
+                project.PlanId,
                 actingRole);
 
             return Ok(new { message = "ok" });
@@ -351,8 +351,8 @@ namespace Mod.APIs.Controllers
                 NotificationAction.Return,
                 ModulesNamesOnArabic.Project,
                 unit,
-                FormNameToReturnToFront.project,
-                ProjectId,
+                FormNameToReturnToFront.reports,
+                project.PlanId,
                 actingRole);
 
             return Ok(new { message = "ok" });

@@ -1,4 +1,10 @@
 <form [formGroup]="initiativeForm" (ngSubmit)="onSubmit($event)">
+  @if (hasElementsToEdit()) {
+    <div class="alert alert-warning text-end">
+      <i class="bi bi-exclamation-triangle me-1"></i>
+      العناصر المحددة باللون الأحمر تمت إعادتها أو رفضها وتحتاج إلى تعديل قبل إعادة الإرسال.
+    </div>
+  }
   <div class="row">
     <!-- Initiative Name -->
     <div class="mb-3 col-md-6">
@@ -15,7 +21,13 @@
         formControlName="name"
         placeholder="ادخل اسم المبادرة"
         rows="3"
+        [class.border-danger]="isEdit && isSentBack(details?.name?.status)"
       ></textarea>
+      @if (isEdit && isSentBack(details?.name?.status)) {
+        <small class="text-danger d-block mt-1">
+          <i class="bi bi-arrow-counterclockwise"></i> {{ sentBackNote(details?.name?.status, details?.name?.comment) }}
+        </small>
+      }
     </div>
 
     <!-- Initiative Weight -->
@@ -62,7 +74,13 @@
                 formControlName="value"
                 [placeholder]="'مؤشر الأداء ' + (i + 1)"
                 rows="2"
+                [class.border-danger]="isSentBack(kpi.get('status')?.value)"
               ></textarea>
+              @if (isSentBack(kpi.get('status')?.value)) {
+                <small class="text-danger d-block mt-1">
+                  <i class="bi bi-arrow-counterclockwise"></i> {{ sentBackNote(kpi.get('status')?.value, kpi.get('comment')?.value) }}
+                </small>
+              }
             </div>
             @if (kpis.length > 1) {
               <button
@@ -118,7 +136,13 @@
                 formControlName="value"
                 [placeholder]="getInitiativeItemTypeLabel(item.get('type')?.value)"
                 id="itemValue{{i}}"
+                [class.border-danger]="isSentBack(item.get('status')?.value)"
     />
+              @if (isSentBack(item.get('status')?.value)) {
+                <small class="text-danger d-block mt-1">
+                  <i class="bi bi-arrow-counterclockwise"></i> {{ sentBackNote(item.get('status')?.value, item.get('comment')?.value) }}
+                </small>
+              }
   </div>
             <div class="col-md-1 d-flex align-items-end">
               @if (items.length > 1) {

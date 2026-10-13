@@ -64,20 +64,17 @@
     }
 
     <div class="d-flex justify-content-end gap-3">
-      <!-- Show submission button if user can approve the stage (first time) -->
-      @if (showDirectionSubmissionBtn && directionStatusService.isDirectionDataLoaded()) {
+      <!-- One confirmation button.
+           There used to be two, a blue "تأكيد" for a first send and a yellow
+           "إعادة إرسال المرحلة" for a later one. Both called the same action,
+           but only one was ever visible, so after ticking the last item a
+           manager could be shown the resubmit wording on what was really their
+           first send and could not find the button they expected. The label
+           already says what pressing it does, per role. -->
+      @if (showSendButton && directionStatusService.isDirectionDataLoaded()) {
         <button class="btn btn-primary px-4 py-2" (click)="approveDirection()" [disabled]="isLoading">
           <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
           {{ approveButtonText }}
-        </button>
-      }
-
-      <!-- Show resubmit button if new items were added after approval -->
-      @if (showDirectionResubmitBtn && directionStatusService.isDirectionDataLoaded()) {
-        <button class="btn btn-warning px-4 py-2" (click)="approveDirection()" [disabled]="isLoading">
-          <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-          <i class="bi bi-arrow-repeat me-1"></i>
-          {{ resubmitButtonText }}
         </button>
       }
 
@@ -96,13 +93,6 @@
       </a>
       }
 
-      <!-- Debug button for development environment -->
-      @if (isDevelopment) {
-        <button class="btn btn-outline-secondary btn-sm" (click)="debugStatus()" [disabled]="isLoading">
-          <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-          Debug Status
-        </button>
-      }
     </div>
   </div>
 </div>

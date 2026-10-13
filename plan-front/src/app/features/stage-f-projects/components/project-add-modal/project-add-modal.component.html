@@ -68,7 +68,7 @@
                       @if (loadingInitiatives) {
                         <option disabled>جار التحميل...</option>
                       } @else {
-                        @for (initiative of initiatives; track initiative.id) {
+                        @for (initiative of initiativesForSelectedGoal; track initiative.id) {
                           <option [value]="initiative.id">{{ initiative.name }}</option>
                         }
                       }
@@ -256,9 +256,12 @@
                         id="startDate"
                         class="form-control"
                         formControlName="startDate"
+                        [min]="today"
                         [class.is-invalid]="projectForm.get('startDate')?.invalid && projectForm.get('startDate')?.touched"
                       />
-                      @if (projectForm.get('startDate')?.invalid && projectForm.get('startDate')?.touched) {
+                      @if (projectForm.get('startDate')?.touched && projectForm.get('startDate')?.hasError('beforeToday')) {
+                        <div class="invalid-feedback">لا يمكن أن يكون تاريخ البداية قبل تاريخ اليوم</div>
+                      } @else if (projectForm.get('startDate')?.invalid && projectForm.get('startDate')?.touched) {
                         <div class="invalid-feedback">يرجى إدخال تاريخ البداية</div>
                       }
                     </div>
@@ -270,9 +273,14 @@
                         id="endDate"
                         class="form-control"
                         formControlName="endDate"
-                        [class.is-invalid]="projectForm.get('endDate')?.invalid && projectForm.get('endDate')?.touched"
+                        [min]="projectForm.get('startDate')?.value || today"
+                        [class.is-invalid]="(projectForm.get('endDate')?.invalid || projectForm.hasError('endBeforeStart')) && projectForm.get('endDate')?.touched"
                       />
-                      @if (projectForm.get('endDate')?.invalid && projectForm.get('endDate')?.touched) {
+                      @if (projectForm.get('endDate')?.touched && projectForm.get('endDate')?.hasError('beforeToday')) {
+                        <div class="invalid-feedback">لا يمكن أن يكون تاريخ النهاية قبل تاريخ اليوم</div>
+                      } @else if (projectForm.get('endDate')?.touched && projectForm.hasError('endBeforeStart')) {
+                        <div class="invalid-feedback">لا يمكن أن يكون تاريخ النهاية قبل تاريخ البداية</div>
+                      } @else if (projectForm.get('endDate')?.invalid && projectForm.get('endDate')?.touched) {
                         <div class="invalid-feedback">يرجى إدخال تاريخ النهاية</div>
                       }
                     </div>

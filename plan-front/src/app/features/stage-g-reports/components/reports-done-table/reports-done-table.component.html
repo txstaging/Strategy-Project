@@ -33,6 +33,9 @@
               ></div>
             </div>
             <span>{{ unit.unitPercentage !== null && unit.unitPercentage !== undefined ? unit.unitPercentage + '%' : '' }}</span>
+            <button type="button" class="share-btn d-print-none" title="مشاركة نسبة الإنجاز" (click)="shareUnit(unit, $event)">
+              <i class="bi bi-send"></i>
+            </button>
           </div>
         </td>
       </tr>
@@ -107,6 +110,9 @@
 }"></div>
                       </div>
                       <span>{{ initiative.initiativePercentage !== null && initiative.initiativePercentage !== undefined ? initiative.initiativePercentage + '%' : '' }}</span>
+                      <button type="button" class="share-btn d-print-none" title="مشاركة نسبة الإنجاز" (click)="shareInitiative(unit, initiative, $event)">
+                        <i class="bi bi-send"></i>
+                      </button>
                     </div>
                   </div>
                 </td>
@@ -188,6 +194,9 @@
                               ></div>
                             </div>
                             <span>{{ project.percentage !== null && project.percentage !== undefined ? project.percentage + '%' : '' }}</span>
+                            <button type="button" class="share-btn d-print-none" title="مشاركة نسبة الإنجاز" (click)="shareProject(unit, project, $event)">
+                              <i class="bi bi-send"></i>
+                            </button>
                           </div>
                           @if (project.percentageFilePath) {
                             <a [href]="fileUrl(project.percentageFilePath)" target="_blank" rel="noopener" class="small text-decoration-none">
@@ -328,4 +337,12 @@
       </div>
     </div>
   </div>
+}
+
+@if (shareTarget) {
+  <app-progress-share-modal
+    [preset]="shareTarget"
+    (closed)="shareTarget = null"
+    (shared)="shareTarget = null"
+  ></app-progress-share-modal>
 }

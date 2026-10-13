@@ -24,9 +24,11 @@ namespace Mod.APIs.Controllers
                 if(i.Status==ApprovalStatus.SavedAsDraft)
                 {
                     i.Status = ApprovalStatus.Pending;
-                    context.SaveChanges();
                 }
             }
+            // One awaited save for the whole batch, rather than a blocking
+            // SaveChanges() per point inside the loop.
+            await context.SaveChangesAsync();
             await _notification.NotifyAsync(NotificationAction.Submit, ModulesNamesOnArabic.Analsis, unit, FormNameToReturnToFront.analysisstage, PlanId, RoleEnum.UnitEmployee);
 
             return Ok(new { PlanID = PlanId });
@@ -87,6 +89,17 @@ namespace Mod.APIs.Controllers
         {
             var user = await _currentUser.GetCurrentUserAsync(); 
             var result = await _analysisPointsService.Approve(PlanId, pointId, user);
+
+            // Approving used to notify nobody, so an employee heard back only
+            // when their point was refused, never when it was accepted.
+            var actingRole = Enum.Parse<RoleEnum>(user!.Role!);
+            var plan = await context.Plans.FirstOrDefaultAsync(i => i.Id == PlanId);
+            if (plan != null)
+            {
+                var unit = await context.Units.FirstOrDefaultAsync(i => i.Id == plan.UnitId)
+                           ?? await context.Units.FirstOrDefaultAsync(i => i.Id == user.UnitId);
+                await _notification.NotifyAsync(NotificationAction.Approve, ModulesNamesOnArabic.Analsis, unit, FormNameToReturnToFront.analysisstage, PlanId, actingRole);
+            }
             return Ok(result);
         }
         

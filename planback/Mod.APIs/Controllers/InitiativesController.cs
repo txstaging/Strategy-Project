@@ -32,12 +32,25 @@ namespace Mod.APIs.Controllers
             var initiatives = await _context.PlanInitiatives.Where(i => i.PlanId == PlanId).ToListAsync();
             var user = await _currentUser.GetCurrentUserAsync();
             var unit = user.Units;
+            var submittedAny = false;
             foreach (var i in initiatives)
             {
                 if (i.Status == ApprovalStatus.SavedAsDraft)
                 {
                     i.Status = ApprovalStatus.Pending;
                     _context.PlanInitiatives.Update(i);
+                    submittedAny = true;
+                }
+            }
+
+            // New initiatives start with the unit manager, so the stage has to as
+            // well. Same rule as the direction and goals stages.
+            if (submittedAny)
+            {
+                var plan = await _context.Plans.FirstOrDefaultAsync(p => p.Id == PlanId);
+                if (plan?.planInitiativeStepId != null)
+                {
+                    ReopenStage(await _context.PlanInitiativeStep.FirstOrDefaultAsync(s => s.Id == plan.planInitiativeStepId));
                 }
             }
             await _context.SaveChangesAsync();
@@ -116,6 +129,11 @@ namespace Mod.APIs.Controllers
             }
 
             initiative.Comment = updateInitiativesDto.Comment;
+
+            // Read before the resets below clear them.
+            var elementWasSentBack = Utils.IsRejectedOrReturned(initiative.Name?.Status)
+                || initiative.InitiativeItems.Any(x => Utils.IsRejectedOrReturned(x.Status))
+                || initiative.InitiativeKpis.Any(x => Utils.IsRejectedOrReturned(x.Status));
             foreach (var item in updateInitiativesDto.InitiativeItem)
             {
                 var existingItem = initiative.InitiativeItems.FirstOrDefault(i => i.Id == item.Id);
@@ -170,6 +188,16 @@ namespace Mod.APIs.Controllers
                 initiative.PlanInitiativeStep.Status = ApprovalStatus.Pending;
                 _context.PlanInitiativeStep.Update(initiative.PlanInitiativeStep);
             }
+            else if (elementWasSentBack)
+            {
+                // An element was returned while the initiative itself had already
+                // been approved over it. The reworked element starts again with the
+                // unit manager, so the initiative and the stage have to as well,
+                // exactly as when the whole initiative was returned.
+                initiative.Status = ApprovalStatus.Pending;
+                initiative.Comment = null;
+                ReopenStage(initiative.PlanInitiativeStep);
+            }
             if(initiative.Name.Status == ApprovalStatus.ReturnedByHighManagement || initiative.Name.Status == ApprovalStatus.ReturnedByRegionManager || initiative.Name.Status == ApprovalStatus.ReturnedByUnitManager
                 || initiative.Name.Status == ApprovalStatus.RejectedByHighManagement || initiative.Name.Status == ApprovalStatus.RejectedByRegionManager || initiative.Name.Status == ApprovalStatus.RejectedByUnitManager)
             {
@@ -190,6 +218,12 @@ namespace Mod.APIs.Controllers
                 .Include(i => i.InitiativeKpis)
                 .FirstOrDefaultAsync(i => i.Id == id);
             if (initiative == null) return NotFound("Initiative not found");
+            // Enforced server-side as well as in the UI, so it cannot be bypassed by
+            // calling the API directly.
+            if (!Utils.IsDeletable(initiative.Status))
+            {
+                return BadRequest(new { message = "لا يمكن حذف مبادرة تمت الموافقة عليها" });
+            }
             _context.PlanInitiatives.Remove(initiative);
             await _context.SaveChangesAsync();
             return Ok(new { message = "ok" });
@@ -281,7 +315,7 @@ namespace Mod.APIs.Controllers
             var AllGoalsAfterMapping = goals.Select(i => new GetAllInitiativesDto
             {
                 Id = i.Id,
-                Status = i.Status.ToString(),
+                Status = ListedStatus(i).ToString(),
                 Comment = i.Comment,
                 EmployeeName = i.User!.DisplayName,
                 GoalName = i.Goal.Name.Value,
@@ -303,22 +337,112 @@ namespace Mod.APIs.Controllers
 
             return Ok(AllGoalsAfterMapping);
         }
+        // The status the initiatives list shows for an initiative.
+        //
+        // The old approve endpoint let a manager approve an initiative over an
+        // element that was still returned, leaving rows that read "approved"
+        // while an element inside is returned: no edit button for the employee,
+        // nothing a manager could act on, and the stage send refused for good.
+        // Showing it as returned gives the employee the edit that reopens it.
+        private static ApprovalStatus? ListedStatus(PlanInitiative initiative)
+        {
+            if (Utils.IsRejectedOrReturned(initiative.Status)) return initiative.Status;
+
+            var elements = new List<ApprovalStatus?> { initiative.Name?.Status };
+            elements.AddRange(initiative.InitiativeItems.Select(x => (ApprovalStatus?)x.Status));
+            elements.AddRange(initiative.InitiativeKpis.Select(x => (ApprovalStatus?)x.Status));
+            var sentBack = elements.FirstOrDefault(s => Utils.IsRejectedOrReturned(s));
+            return sentBack ?? initiative.Status;
+        }
+
+        // Put the stage back with the unit manager because something in it has to
+        // be reviewed from the bottom again. A finally approved stage is left
+        // alone, since the plan has already moved on to the projects.
+        private void ReopenStage(PlanInitiativeStep? step)
+        {
+            if (step == null) return;
+            if (step.Status == ApprovalStatus.Pending || step.Status == ApprovalStatus.ApprovedByHighManagement) return;
+
+            step.Status = ApprovalStatus.Pending;
+            _context.PlanInitiativeStep.Update(step);
+        }
+
+        // The initiatives stage status of a plan, read the same way
+        // InitiativeStageStatus hands it to the frontend.
+        private async Task<ApprovalStatus?> GetStageStatusForPlan(int? planId)
+        {
+            if (planId == null) return null;
+            var stepId = await _context.Plans.Where(p => p.Id == planId).Select(p => p.planInitiativeStepId).FirstOrDefaultAsync();
+            if (stepId == null) return null;
+
+            return await _context.PlanInitiativeStep.Where(s => s.Id == stepId).Select(s => (ApprovalStatus?)s.Status).FirstOrDefaultAsync();
+        }
+
+        // Whether the acting role may act on this element at the current stage.
+        //
+        // The review card used to offer approve/reject/return on any element whose
+        // status did not name the current role. After a rework sent the stage back
+        // to the unit manager, every element already approved by the region
+        // manager or high management lit up again, and approving it rewrote the
+        // status down to the unit manager — the approvals really did start over.
+        // Utils.CanRoleActInStage is the rule the goals stage uses; the card now
+        // uses the same one (approval-ladder.ts).
+        private async Task<bool> CanActOn(ApprovalStatus? elementStatus, int? planId, RoleEnum actingRole)
+        {
+            return Utils.CanRoleActInStage(elementStatus, await GetStageStatusForPlan(planId), actingRole);
+        }
+
+        // Addresses a notification to the PLAN's unit, so an action taken by
+        // region or high management still reaches the employees who own the
+        // work rather than the approver's own unit.
+        private async Task NotifyOnInitiative(int? planId, NotificationAction action, AppUser user, RoleEnum actingRole)
+        {
+            if (planId == null) return;
+
+            var plan = await _context.Plans.FirstOrDefaultAsync(i => i.Id == planId);
+            if (plan == null) return;
+
+            var unit = await _context.Units.FirstOrDefaultAsync(i => i.Id == plan.UnitId)
+                       ?? await _context.Units.FirstOrDefaultAsync(i => i.Id == user.UnitId);
+
+            await _notification.NotifyAsync(action, ModulesNamesOnArabic.Init, unit, FormNameToReturnToFront.init, plan.Id, actingRole);
+        }
+
         [Authorize(Policy = "Initiative.Approve")]
         [HttpPost("ApproveInitiative/{id}")]
         public async Task<IActionResult> ApproveInitiaitev(int id)
         {
-            var initiative = await _context.PlanInitiatives.FindAsync(id);
-             if (initiative.Status == ApprovalStatus.ReturnedByUnitManager || initiative.Status == ApprovalStatus.ReturnedByHighManagement || initiative.Status == ApprovalStatus.ReturnedByRegionManager
-                || initiative.Status == ApprovalStatus.RejectedByUnitManager || initiative.Status == ApprovalStatus.RejectedByHighManagement || initiative.Status == ApprovalStatus.RejectedByRegionManager)
-            {
-                initiative.Status = ApprovalStatus.Pending;
-                initiative.Comment = null;
-            }
+            var initiative = await _context.PlanInitiatives
+                .Include(i => i.Name)
+                .Include(i => i.InitiativeItems)
+                .Include(i => i.InitiativeKpis)
+                .FirstOrDefaultAsync(i => i.Id == id);
             var user = await _currentUser.GetCurrentUserAsync();
             if (initiative == null) return NotFound("Initiative not found");
-            initiative.Status = Utils.GetApprovalStatus(ActionEnum.Approve, Enum.Parse<RoleEnum>(user!.Role!));
+            var actingRole = Enum.Parse<RoleEnum>(user!.Role!);
+
+            // An initiative sent back is reopened by the employee's edit, not by a
+            // manager approving over the top of it, and it is only approved once
+            // every element in its card is approved at this level or above.
+            if (!await CanActOn(initiative.Status, initiative.PlanId, actingRole))
+            {
+                return BadRequest(new { message = "لا يمكنك اتخاذ إجراء على هذه المبادرة في حالتها الحالية" });
+            }
+            var elementStatuses = new List<ApprovalStatus?> { initiative.Name?.Status };
+            elementStatuses.AddRange(initiative.InitiativeItems.Select(x => (ApprovalStatus?)x.Status));
+            elementStatuses.AddRange(initiative.InitiativeKpis.Select(x => (ApprovalStatus?)x.Status));
+            if (elementStatuses.Any(s => Utils.BlocksStageApproval(s, actingRole)))
+            {
+                return BadRequest(new { message = "يجب اتخاذ إجراء على جميع عناصر المبادرة قبل الموافقة عليها" });
+            }
+
+            initiative.Status = Utils.GetApprovalStatus(ActionEnum.Approve, actingRole);
             _context.PlanInitiatives.Update(initiative);
             await _context.SaveChangesAsync();
+
+            // Approving an item used to notify nobody, so an employee heard back
+            // only when their work was refused, never when it was accepted.
+            await NotifyOnInitiative(initiative.PlanId, NotificationAction.Approve, user, actingRole);
             return Ok(new { message = "ok" });
 
         }
@@ -329,9 +453,25 @@ namespace Mod.APIs.Controllers
             var initiativeItem = await _context.InitiativeItems.FindAsync(id);
             var user = await _currentUser.GetCurrentUserAsync();
             if (initiativeItem == null) return NotFound("Initiative Item not found");
-            initiativeItem.Status = Utils.GetApprovalStatus(ActionEnum.Approve, Enum.Parse<RoleEnum>(user!.Role!));
+            var actingRole = Enum.Parse<RoleEnum>(user!.Role!);
+
+            // InitiativeItem has no back-reference to its initiative (the foreign
+            // key is a shadow property), so reach the plan from the owning side.
+            // The initiative's name is an InitiativeItem too and is approved here.
+            var ownerPlanId = await _context.PlanInitiatives
+                .Where(i => i.NameId == initiativeItem.Id || i.InitiativeItems.Any(x => x.Id == initiativeItem.Id))
+                .Select(i => (int?)i.PlanId)
+                .FirstOrDefaultAsync();
+            if (!await CanActOn(initiativeItem.Status, ownerPlanId, actingRole))
+            {
+                return BadRequest(new { message = "لا يمكنك اتخاذ إجراء على هذا العنصر في حالته الحالية" });
+            }
+
+            initiativeItem.Status = Utils.GetApprovalStatus(ActionEnum.Approve, actingRole);
             _context.InitiativeItems.Update(initiativeItem);
             await _context.SaveChangesAsync();
+
+            await NotifyOnInitiative(ownerPlanId, NotificationAction.Approve, user, actingRole);
             return Ok(new { message = "ok" });
         }
         [Authorize(Policy = "Initiative.Reject")]
@@ -342,6 +482,11 @@ namespace Mod.APIs.Controllers
             var initiative = await _context.PlanInitiatives.FindAsync(InitiativeId);
             var user = await _currentUser.GetCurrentUserAsync();
             if (initiativeItem == null) return NotFound("Initiative Item not found");
+            if (initiative == null) return NotFound("Initiative not found");
+            if (!await CanActOn(initiativeItem.Status, initiative.PlanId, Enum.Parse<RoleEnum>(user!.Role!)))
+            {
+                return BadRequest(new { message = "لا يمكنك اتخاذ إجراء على هذا العنصر في حالته الحالية" });
+            }
             initiativeItem.Status = Utils.GetApprovalStatus(ActionEnum.Reject, Enum.Parse<RoleEnum>(user!.Role!));
             initiative.Status = Utils.GetApprovalStatus(ActionEnum.Reject, Enum.Parse<RoleEnum>(user!.Role!));
             initiative.Comment = comment.Comments;
@@ -365,6 +510,11 @@ namespace Mod.APIs.Controllers
             var initiative = await _context.PlanInitiatives.FindAsync(InitiativeId);
             var user = await _currentUser.GetCurrentUserAsync();
             if (initiativeItem == null) return NotFound("Initiative Item not found");
+            if (initiative == null) return NotFound("Initiative not found");
+            if (!await CanActOn(initiativeItem.Status, initiative.PlanId, Enum.Parse<RoleEnum>(user!.Role!)))
+            {
+                return BadRequest(new { message = "لا يمكنك اتخاذ إجراء على هذا العنصر في حالته الحالية" });
+            }
             initiativeItem.Status = Utils.GetApprovalStatus(ActionEnum.Return, Enum.Parse<RoleEnum>(user!.Role!));
             initiative.Status = Utils.GetApprovalStatus(ActionEnum.Return, Enum.Parse<RoleEnum>(user!.Role!));
             initiative.Comment = comment.Comments;
@@ -387,9 +537,19 @@ namespace Mod.APIs.Controllers
             var initiativeItem = await _context.InitiativeKpis.FindAsync(id);
             var user = await _currentUser.GetCurrentUserAsync();
             if (initiativeItem == null) return NotFound("Initiative Item not found");
-            initiativeItem.Status = Utils.GetApprovalStatus(ActionEnum.Approve, Enum.Parse<RoleEnum>(user!.Role!));
+            var actingRole = Enum.Parse<RoleEnum>(user!.Role!);
+            var kpiOwner = await _context.PlanInitiatives.FindAsync(initiativeItem.InitiativeId);
+            if (!await CanActOn(initiativeItem.Status, kpiOwner?.PlanId, actingRole))
+            {
+                return BadRequest(new { message = "لا يمكنك اتخاذ إجراء على هذا العنصر في حالته الحالية" });
+            }
+
+            initiativeItem.Status = Utils.GetApprovalStatus(ActionEnum.Approve, actingRole);
             _context.InitiativeKpis.Update(initiativeItem);
             await _context.SaveChangesAsync();
+
+            // KPI actions were silent, unlike the initiative items beside them.
+            await NotifyOnInitiative(kpiOwner?.PlanId, NotificationAction.Approve, user, actingRole);
             return Ok(new { message = "ok" });
         }
         [Authorize(Policy = "Initiative.Reject")]
@@ -400,13 +560,21 @@ namespace Mod.APIs.Controllers
             var initiative = await _context.PlanInitiatives.FindAsync(InitiativeId);
             var user = await _currentUser.GetCurrentUserAsync();
             if (initiativeItem == null) return NotFound("Initiative Item not found");
-            initiativeItem.Status = Utils.GetApprovalStatus(ActionEnum.Reject, Enum.Parse<RoleEnum>(user!.Role!));
-            initiative.Status = Utils.GetApprovalStatus(ActionEnum.Reject, Enum.Parse<RoleEnum>(user!.Role!));
+            if (initiative == null) return NotFound("Initiative not found");
+            var actingRole = Enum.Parse<RoleEnum>(user!.Role!);
+            if (!await CanActOn(initiativeItem.Status, initiative.PlanId, actingRole))
+            {
+                return BadRequest(new { message = "لا يمكنك اتخاذ إجراء على هذا العنصر في حالته الحالية" });
+            }
+            initiativeItem.Status = Utils.GetApprovalStatus(ActionEnum.Reject, actingRole);
+            initiative.Status = Utils.GetApprovalStatus(ActionEnum.Reject, actingRole);
             initiative.Comment = comment.Comments;
             _context.PlanInitiatives.Update(initiative);
             initiativeItem.Comment = comment.Comments;
             _context.InitiativeKpis.Update(initiativeItem);
             await _context.SaveChangesAsync();
+
+            await NotifyOnInitiative(initiative.PlanId, NotificationAction.Reject, user, actingRole);
             return Ok(new { message = "ok" });
         }
         [Authorize(Policy = "Initiative.Return")]
@@ -417,13 +585,21 @@ namespace Mod.APIs.Controllers
             var initiative = await _context.PlanInitiatives.FindAsync(InitiativeId);
             var user = await _currentUser.GetCurrentUserAsync();
             if (initiativeItem == null) return NotFound("Initiative Item not found");
-            initiativeItem.Status = Utils.GetApprovalStatus(ActionEnum.Return, Enum.Parse<RoleEnum>(user!.Role!));
-            initiative.Status = Utils.GetApprovalStatus(ActionEnum.Return, Enum.Parse<RoleEnum>(user!.Role!));
+            if (initiative == null) return NotFound("Initiative not found");
+            var actingRole = Enum.Parse<RoleEnum>(user!.Role!);
+            if (!await CanActOn(initiativeItem.Status, initiative.PlanId, actingRole))
+            {
+                return BadRequest(new { message = "لا يمكنك اتخاذ إجراء على هذا العنصر في حالته الحالية" });
+            }
+            initiativeItem.Status = Utils.GetApprovalStatus(ActionEnum.Return, actingRole);
+            initiative.Status = Utils.GetApprovalStatus(ActionEnum.Return, actingRole);
             initiative.Comment = comment.Comments;
             _context.PlanInitiatives.Update(initiative);
             initiativeItem.Comment = comment.Comments;
             _context.InitiativeKpis.Update(initiativeItem);
             await _context.SaveChangesAsync();
+
+            await NotifyOnInitiative(initiative.PlanId, NotificationAction.Return, user, actingRole);
             return Ok(new { message = "ok" });
         }
 
@@ -559,7 +735,8 @@ namespace Mod.APIs.Controllers
                 }
 
             }
-            if (user.Role == RoleEnum.HighManagement.ToString())
+            // Never pull a plan that is already further on back to projects.
+            if (user.Role == RoleEnum.HighManagement.ToString() && plan.CurrentStage < StrategicPlanLevels.ProjectsStage)
             {
                 plan.CurrentStage = StrategicPlanLevels.ProjectsStage;
                 _context.Plans.Update(plan);
@@ -569,6 +746,14 @@ namespace Mod.APIs.Controllers
             await _context.SaveChangesAsync();
             var notifAction = actingRole == RoleEnum.HighManagement ? NotificationAction.FinalApprove : NotificationAction.Approve;
             await _notification.NotifyAsync(notifAction, ModulesNamesOnArabic.Init, unit, FormNameToReturnToFront.init, plan.Id, actingRole);
+
+            // «إشعارات بمدى التقدم» — tell everyone the plan has entered the next
+            // stage. Separate from the approval above, which only says the current
+            // stage was accepted.
+            if (actingRole == RoleEnum.HighManagement)
+            {
+                await _notification.NotifyAsync(NotificationAction.StageProgress, ModulesNamesOnArabic.Project, unit, FormNameToReturnToFront.project, plan.Id, actingRole, plan.Name);
+            }
             return Ok(new { message = "ok" });
 
 

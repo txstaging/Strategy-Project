@@ -1,4 +1,4 @@
-namespace Mod.Core.Enums
+﻿namespace Mod.Core.Enums
 {
     public enum NotificationAction
     {
@@ -7,6 +7,13 @@ namespace Mod.Core.Enums
         FinalApprove,
         Reject,
         Return,
-        BroadcastPlan
+        BroadcastPlan,
+
+        // «طلب مرئيات» and its answer.
+        FeedbackRequest,
+        FeedbackResponse,
+
+        // The plan moved on to the next stage.
+        StageProgress
     }
 }

@@ -109,9 +109,10 @@ export class PlanProjectsService {
    * Delete a project
    */
   deletePlanProject(projectId: string): Observable<void> {
-    return this.http
-      .delete<void>(`/Project/${projectId}`)
-      .pipe(catchError(this.handleError<void>('deletePlanProject')));
+    // No catchError here on purpose. Swallowing the failure meant a refused or
+    // failed delete looked exactly like a successful one, which is how the
+    // missing backend endpoint went unnoticed. The caller handles the error.
+    return this.http.delete<void>(`/Project/${projectId}`);
   }
 
   /**

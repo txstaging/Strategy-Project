@@ -51,6 +51,27 @@ namespace Mod.APIs.Controllers
             {
                 return BadRequest(new { message = "لا يمكن اعتماد المرحلة لوجود عناصر مرفوضة أو مُرجعة أو لم يتم اتخاذ إجراء عليها بعد" });
             }
+
+            // Every item and element has to have been approved by the acting role
+            // before the stage can move on. Without this the stage could be sent up
+            // while items were still sitting a level below, and item and stage then
+            // drifted apart until no role's send button matched either of them.
+            // Utils.BlocksStageApproval was written for exactly this and had never
+            // been called anywhere.
+            var notYetHandled = directionStatuses.Count(s => Utils.BlocksStageApproval(s, actingRole));
+            if (notYetHandled > 0)
+            {
+                return BadRequest(new
+                {
+                    message = $"يوجد {notYetHandled} عنصر لم يتم اتخاذ إجراء عليه بعد، يرجى مراجعة جميع العناصر قبل الإرسال"
+                });
+            }
+
+            if (!Utils.HasSomethingToSend(result.Status, directionStatuses, actingRole))
+            {
+                return BadRequest(new { message = "تم إرسال المرحلة مسبقاً ولا توجد عناصر جديدة بانتظار الإرسال" });
+            }
+
             result.Status = Utils.GetApprovalStatusV2(ActionEnum.Approve, Enum.Parse<RoleEnum>(user!.Role!));
             _context.PlanDirection.Update(result);
             if (result.Status == ApprovalStatus.ApprovedByHighManagement)
@@ -139,7 +160,36 @@ namespace Mod.APIs.Controllers
             await _context.SaveChangesAsync();
             var notifAction = actingRole == RoleEnum.HighManagement ? NotificationAction.FinalApprove : NotificationAction.Approve;
             await _notification.NotifyAsync(notifAction, ModulesNamesOnArabic.Direction, unit, FormNameToReturnToFront.directionstage, result.PlanId, actingRole);
+
+            // «إشعارات بمدى التقدم» — the plan has entered the objectives stage.
+            if (actingRole == RoleEnum.HighManagement)
+            {
+                var advancedPlan = await _context.Plans.FindAsync(result.PlanId);
+                await _notification.NotifyAsync(NotificationAction.StageProgress, ModulesNamesOnArabic.Objectives, unit, FormNameToReturnToFront.Goals, result.PlanId, actingRole, advancedPlan?.Name);
+            }
             return Ok(new {Message="ok"});
+        }
+
+        // Cheap read of just the stage status, matching GoalsController's
+        // GetGoalStageStatus. Every other stage has one; direction made the client
+        // fetch the whole item tree to read a single enum.
+        [HttpGet("StageStatus")]
+        [Authorize(Policy = "Direction.GetOne")]
+        public async Task<IActionResult> GetStageStatus(int PlanId)
+        {
+            var plan = await _context.Plans.FirstOrDefaultAsync(p => p.Id == PlanId);
+            if (plan?.PlanDirectionId == null)
+            {
+                return NotFound(new { message = "التوجه الاستراتيجي غير موجود لهذه الخطة" });
+            }
+
+            var direction = await _context.PlanDirection.FirstOrDefaultAsync(d => d.Id == plan.PlanDirectionId);
+            if (direction == null)
+            {
+                return NotFound(new { message = "التوجه الاستراتيجي غير موجود لهذه الخطة" });
+            }
+
+            return Ok(new { id = direction.Id, status = direction.Status.ToString() });
         }
 
         [HttpGet]
@@ -153,20 +203,11 @@ namespace Mod.APIs.Controllers
             if (planDirection == null)
                 return NotFound(new APIsGenralResponseDto<PlanDirectionDto>("PlanDirection not found", null));
             var user = await _currentUser.GetCurrentUserAsync();
-            if(user.Role == RoleEnum.UnitManager.ToString())
-            {
-               directionitem = directionitem.Where(p => p.Status !=ApprovalStatus.SavedAsDraft).ToList();
-            }
-            else if (user.Role == RoleEnum.RegionManager.ToString())
-            {
-                directionitem=directionitem.Where(p => p.Status == ApprovalStatus.ApprovedByUnitManager || p.Status == ApprovalStatus.ReturnedByRegionManager || p.Status == ApprovalStatus.RejectedByRegionManager || p.Status == ApprovalStatus.ApprovedByRegionManager || p.Status == ApprovalStatus.ApprovedByHighManagement || p.Status == ApprovalStatus.ApprovedByHighManagementPartially || p.Status == ApprovalStatus.ReturnedByHighManagement || p.Status == ApprovalStatus.RejectedByHighManagement || p.Status == ApprovalStatus.ApprovedByRegionManagerPartially).ToList();
-
-            }
-            else if (user.Role == RoleEnum.HighManagement.ToString())
-            {
-               directionitem=directionitem.Where(i => i.Status != ApprovalStatus.Pending && i.Status != ApprovalStatus.RejectedByRegionManager && i.Status != ApprovalStatus.ReturnedByRegionManager && i.Status != ApprovalStatus.ApprovedByRegionManagerPartially && i.Status != ApprovalStatus.ApprovedByUnitManager && i.Status != ApprovalStatus.ApprovedByUnitManagerPartially && i.Status! != ApprovalStatus.ReturnedByUnitManager && i.Status != ApprovalStatus.RejectedByUnitManager).ToList();
-                
-            }
+            // Same visibility rule as every other stage listing. This used to be a
+            // hand-copied duplicate of the old whitelists in func.cs, which hid
+            // rejected and returned items from the managers who had to clear them.
+            var role = Enum.Parse<RoleEnum>(user!.Role!);
+            directionitem = directionitem.Where(p => Utils.IsVisibleTo(p.Status, role)).ToList();
 
             var response = new PlanDirectionDto
             {

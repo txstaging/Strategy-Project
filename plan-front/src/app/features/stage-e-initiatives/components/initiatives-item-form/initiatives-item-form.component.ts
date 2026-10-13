@@ -22,6 +22,10 @@ import { IUpdateInitiativesBody } from '../../interfaces/IUpdateInitiativesBody'
 import { IAddInitiativesBody } from '../../interfaces/IAddInitiativesBody';
 import { IGetInitiativesById } from '../../interfaces/IGetInitiativesById';
 import { InitiativeItemType } from '../../interfaces/IinitiativeItemEnum';
+import {
+  RejectionStatuses,
+  ReturnedStatuses,
+} from '../../../../Core/utilities/consts';
 
 @Component({
   selector: 'app-initiatives-item-form',
@@ -99,7 +103,10 @@ export class InitiativesItemFormComponent implements OnInit {
           const formData = {
             goalId: initiative.goal?.id || 0,
             name: initiative.name?.value || '',
-            initiativeWeight: 1, // Default value since not in interface yet
+            // The API does return the weight; this used to be hardcoded to 1,
+            // so reopening an initiative silently reset whatever weight the
+            // employee had entered.
+            initiativeWeight: initiative.initiativeWeight ?? 1,
           };
 
           console.log('Form data to patch:', formData);
@@ -210,6 +217,36 @@ export class InitiativesItemFormComponent implements OnInit {
     if (this.items.length > 1) {
       this.items.removeAt(index);
     }
+  }
+
+  /**
+   * Whether a manager rejected or returned this element. The edit form used to
+   * show every element the same way, so after a return the employee could not
+   * tell which ones had been refused or why.
+   */
+  isSentBack(status: string | null | undefined): boolean {
+    return (
+      ReturnedStatuses.includes(status as any) ||
+      RejectionStatuses.includes(status as any)
+    );
+  }
+
+  // The note shown under an element that was sent back, with the reason.
+  sentBackNote(status: string | null | undefined, comment: string | null | undefined): string {
+    const what = RejectionStatuses.includes(status as any)
+      ? 'تم رفض هذا العنصر'
+      : 'تمت إعادة هذا العنصر';
+    return comment
+      ? `${what} ويحتاج إلى تعديل: ${comment}`
+      : `${what} ويحتاج إلى تعديل`;
+  }
+
+  hasElementsToEdit(): boolean {
+    if (!this.isEdit) return false;
+    if (this.isSentBack(this.details?.name?.status)) return true;
+    return [...this.kpis.controls, ...this.items.controls].some((control) =>
+      this.isSentBack(control.get('status')?.value)
+    );
   }
 
   getInitiativeItemTypeLabel(type: number): string {

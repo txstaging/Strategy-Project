@@ -1,0 +1,75 @@
+<div class="ps-backdrop" (click)="cancel()"></div>
+<div class="ps-modal" role="dialog">
+  <div class="ps-modal__head">
+    <h3>مشاركة نسبة الإنجاز</h3>
+    <button type="button" class="btn-close" (click)="cancel()"></button>
+  </div>
+
+  <div class="ps-modal__body">
+    <!-- What is being shared -->
+    @if (selected) {
+      <div class="ps-selected">
+        <span class="ps-chip">{{ scopeLabel(selected.scope) }}</span>
+        <strong class="ps-selected__name">{{ selected.name }}</strong>
+        <span class="ps-selected__pct">{{ selected.percentage | number: '1.0-2' }}%</span>
+        <button
+          *ngIf="!preset"
+          type="button"
+          class="ps-selected__change"
+          (click)="selected = null"
+        >
+          تغيير
+        </button>
+      </div>
+    } @else {
+      <label class="form-label">اختر ما تريد مشاركته</label>
+      <div class="ps-filter">
+        <select class="form-select form-select-sm" [(ngModel)]="scopeFilter">
+          <option value="all">الكل</option>
+          <option [value]="2">الوحدات</option>
+          <option [value]="1">المبادرات</option>
+          <option [value]="0">المشاريع</option>
+        </select>
+        <input
+          class="form-control form-control-sm"
+          [(ngModel)]="search"
+          placeholder="بحث بالاسم أو الوحدة"
+        />
+      </div>
+      <div class="ps-picker ps-picker--tall">
+        @for (o of filteredOptions; track o.scope + '-' + o.scopeId) {
+          <button type="button" class="ps-option" [class.ps-option--on]="isSame(o)" (click)="pick(o)">
+            <span class="ps-chip">{{ scopeLabel(o.scope) }}</span>
+            <span class="ps-option__name">{{ o.name }}</span>
+            <small *ngIf="o.scope !== 2 && o.unitName">{{ o.unitName }}</small>
+            <span class="ps-option__pct">{{ o.percentage | number: '1.0-2' }}%</span>
+          </button>
+        }
+        <p *ngIf="filteredOptions.length === 0" class="ps-picker__empty">لا توجد عناصر</p>
+      </div>
+    }
+
+    <!-- Who receives it -->
+    <label class="form-label mt-3">المستلمون <span class="text-danger">*</span></label>
+    <div class="ps-picker">
+      @for (u of users; track u.id) {
+        <label class="ps-row">
+          <input type="checkbox" [checked]="isUserPicked(u.id)" (change)="toggleUser(u.id)" />
+          <span>{{ u.displayName }}</span>
+          <small *ngIf="u.unitName">{{ u.unitName }}</small>
+        </label>
+      }
+      <p *ngIf="users.length === 0" class="ps-picker__empty">لا يوجد مستخدمون</p>
+    </div>
+
+    <label class="form-label mt-3">ملاحظة (اختياري)</label>
+    <textarea class="form-control" rows="2" [(ngModel)]="note" placeholder="رسالة مرفقة مع نسبة الإنجاز"></textarea>
+  </div>
+
+  <div class="ps-modal__foot">
+    <button type="button" class="btn btn-secondary" (click)="cancel()">إلغاء</button>
+    <button type="button" class="btn btn-success" [disabled]="!canSubmit" (click)="submit()">
+      {{ saving ? 'جارٍ الإرسال…' : 'إرسال' }}
+    </button>
+  </div>
+</div>

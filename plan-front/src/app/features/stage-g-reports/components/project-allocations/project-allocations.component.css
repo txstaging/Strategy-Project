@@ -1,0 +1,242 @@
+.pa {
+  /* Standalone page now, so it carries the same breathing room the other
+     plan screens have instead of relying on the reports header above it. */
+  padding: 24px 16px 32px;
+}
+
+.pa__head {
+  margin-bottom: 16px;
+}
+
+.pa__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0e5a34;
+  margin: 0 0 4px;
+}
+
+.pa__subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ---- Filters ------------------------------------------------------------ */
+
+.pa-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.pa-filter {
+  min-width: 200px;
+}
+
+.pa-filter--grow {
+  flex: 1;
+  min-width: 220px;
+}
+
+.pa-filter--actions {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pa-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  font-size: 13px;
+  color: #374151;
+  padding: 0 4px 10px;
+}
+
+.pa-totals strong {
+  color: #0e5a34;
+}
+
+/* ---- Table -------------------------------------------------------------- */
+
+.pa-sheet {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.pa-table th {
+  background: #0e5a34;
+  color: #fff;
+  font-weight: 600;
+  text-align: right;
+  padding: 10px 12px;
+}
+
+.pa-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: top;
+}
+
+.pa-empty {
+  text-align: center;
+  color: #9ca3af;
+  padding: 28px 12px !important;
+}
+
+.pa-project strong {
+  display: block;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.pa-project__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 11.5px;
+  color: #6b7280;
+}
+
+.pa-project__pct {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pa-project__pct small {
+  color: #0e5a34;
+  font-weight: 600;
+  font-size: 11.5px;
+}
+
+.pa-bar {
+  flex: 1;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.pa-bar__fill {
+  height: 100%;
+  background: #0e5a34;
+}
+
+/* Each allocation cell lists its lines, then the add control. */
+.pa-cell {
+  min-width: 200px;
+}
+
+.pa-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  margin-bottom: 4px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.pa-line__name {
+  flex: 1;
+  color: #111827;
+}
+
+.pa-line__amount {
+  font-weight: 600;
+  color: #0e5a34;
+  white-space: nowrap;
+}
+
+.pa-line__remove {
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  padding: 0 2px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.pa-line__remove:hover {
+  color: #b91c1c;
+}
+
+.pa-cell__total {
+  font-size: 12px;
+  color: #6b7280;
+  padding: 2px 8px 6px;
+}
+
+.pa-add {
+  border: 1px dashed #d1d5db;
+  background: transparent;
+  color: #6b7280;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+  text-align: right;
+}
+
+.pa-add:hover {
+  border-color: #0e5a34;
+  color: #0e5a34;
+  background: #f0fdf4;
+}
+
+.pa-draft {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  background: #f0fdf4;
+  border-radius: 6px;
+}
+
+.pa-draft__actions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-start;
+}
+
+.pa-btn {
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.pa-btn:hover {
+  background: #e5e7eb;
+}
+
+.pa-btn--ok {
+  color: #0e5a34;
+}
+
+.pa-btn--ok:hover {
+  background: #dcfce7;
+}
+
+.pa-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

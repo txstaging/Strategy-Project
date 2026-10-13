@@ -4,6 +4,7 @@ import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../features/auth/services/auth.service';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { NotificationModel } from '../notification-model';
+import { environment } from '../../environments/environment';
 
 interface ServerNotificationDto {
   id?: number;
@@ -33,10 +34,26 @@ export class SignalrService {
 
 
 
+  // The hub lives next to the API, not under /api, so drop that suffix from the
+  // configured backend URL. This used to be the literal string
+  // "http://localhost:5063/notificationHub", so live notifications only ever
+  // worked on a developer machine and were silently dead in every deployment.
+  private get hubUrl(): string {
+    return `${environment.BACKEND_URL.replace(/\/api\/?$/, '')}/notificationHub`;
+  }
+
   startConnection() {
+    // Starting twice leaks the first connection and delivers every notification
+    // twice, so reuse a connection that is already up or on its way up.
+    if (
+      this.hubConnection &&
+      this.hubConnection.state !== signalR.HubConnectionState.Disconnected
+    ) {
+      return;
+    }
+
     this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl('http://localhost:5063/notificationHub', {
-      // .withUrl('https://localhost:7175/notificationHub', {
+      .withUrl(this.hubUrl, {
         accessTokenFactory: () => localStorage.getItem('token') ?? ''
       })
       .withAutomaticReconnect()

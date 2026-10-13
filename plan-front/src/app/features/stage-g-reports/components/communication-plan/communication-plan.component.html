@@ -1,0 +1,167 @@
+<div class="cp">
+  <div class="cp__head">
+    <div>
+      <h3 class="cp__title">خطة التواصل والمجازفات</h3>
+      <p class="cp__subtitle">سجل التواصل مع المعنيين والإجراءات المتخذة، ثم إرساله لأخذ المرئيات</p>
+    </div>
+    <div class="cp__plan">
+      <label class="form-label mb-1">الخطة</label>
+      <select class="form-select form-select-sm" [(ngModel)]="planId" (ngModelChange)="load()">
+        @for (p of plans; track p.id) {
+          <option [ngValue]="p.id">{{ p.name }}<ng-container *ngIf="p.unitName"> — {{ p.unitName }}</ng-container></option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- The sheet -->
+  <div class="cp-sheet">
+    <table class="cp-table">
+      <thead>
+        <tr>
+          <th style="width: 40px">#</th>
+          <th style="width: 130px">التاريخ</th>
+          <th>قناة التواصل</th>
+          <th style="width: 150px">طريقة التواصل</th>
+          <th>الضابط المسؤول</th>
+          <th>الإجراء المتخذ</th>
+          <th style="width: 110px" class="d-print-none"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr><td colspan="7" class="cp-empty">جارٍ التحميل…</td></tr>
+        } @else if (rows().length === 0 && !adding) {
+          <tr><td colspan="7" class="cp-empty">لا توجد سجلات بعد. اضغط «إضافة سطر» للبدء.</td></tr>
+        }
+
+        @for (row of rows(); track row.id; let i = $index) {
+          @if (editingId === row.id) {
+            <tr class="cp-row--editing">
+              <td>{{ i + 1 }}</td>
+              <td><input type="date" class="form-control form-control-sm" [(ngModel)]="draft.date" /></td>
+              <td><input class="form-control form-control-sm" [(ngModel)]="draft.channel" placeholder="الجهة أو القناة" /></td>
+              <td>
+                <select class="form-select form-select-sm" [(ngModel)]="draft.method">
+                  @for (m of methods; track m.value) {
+                    <option [ngValue]="m.value">{{ m.label }}</option>
+                  }
+                </select>
+              </td>
+              <td><input class="form-control form-control-sm" [(ngModel)]="draft.responsibleOfficer" placeholder="الاسم" /></td>
+              <td><input class="form-control form-control-sm" [(ngModel)]="draft.actionTaken" placeholder="ما تم اتخاذه" /></td>
+              <td class="cp-actions d-print-none">
+                <button type="button" class="cp-btn cp-btn--ok" [disabled]="!draftValid || saving" (click)="saveDraft()" title="حفظ"><i class="bi bi-check-lg"></i></button>
+                <button type="button" class="cp-btn" (click)="cancelEdit()" title="إلغاء"><i class="bi bi-x-lg"></i></button>
+              </td>
+            </tr>
+          } @else {
+            <tr>
+              <td>{{ i + 1 }}</td>
+              <td>{{ row.date | date: 'yyyy-MM-dd' }}</td>
+              <td>{{ row.channel }}</td>
+              <td><span class="cp-chip">{{ methodLabel(row.method) }}</span></td>
+              <td>{{ row.responsibleOfficer }}</td>
+              <td>{{ row.actionTaken }}</td>
+              <td class="cp-actions d-print-none">
+                <button type="button" class="cp-btn" (click)="startEdit(row)" title="تعديل"><i class="bi bi-pencil"></i></button>
+                <button type="button" class="cp-btn cp-btn--danger" (click)="remove(row)" title="حذف"><i class="bi bi-trash3"></i></button>
+              </td>
+            </tr>
+          }
+        }
+
+        @if (adding) {
+          <tr class="cp-row--editing">
+            <td>{{ rows().length + 1 }}</td>
+            <td><input type="date" class="form-control form-control-sm" [(ngModel)]="draft.date" /></td>
+            <td><input class="form-control form-control-sm" [(ngModel)]="draft.channel" placeholder="الجهة أو القناة" /></td>
+            <td>
+              <select class="form-select form-select-sm" [(ngModel)]="draft.method">
+                @for (m of methods; track m.value) {
+                  <option [ngValue]="m.value">{{ m.label }}</option>
+                }
+              </select>
+            </td>
+            <td><input class="form-control form-control-sm" [(ngModel)]="draft.responsibleOfficer" placeholder="الاسم" /></td>
+            <td><input class="form-control form-control-sm" [(ngModel)]="draft.actionTaken" placeholder="ما تم اتخاذه" (keydown.enter)="saveDraft()" /></td>
+            <td class="cp-actions d-print-none">
+              <button type="button" class="cp-btn cp-btn--ok" [disabled]="!draftValid || saving" (click)="saveDraft()" title="حفظ"><i class="bi bi-check-lg"></i></button>
+              <button type="button" class="cp-btn" (click)="cancelEdit()" title="إلغاء"><i class="bi bi-x-lg"></i></button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="cp-sheet__foot d-print-none">
+      <button type="button" class="btn btn-outline-success btn-sm" [disabled]="adding || !planId" (click)="startAdd()">
+        <i class="bi bi-plus-lg ms-1"></i> إضافة سطر
+      </button>
+      <span class="cp-count" *ngIf="rows().length">{{ rows().length }} سجل</span>
+    </div>
+  </div>
+
+  <!-- Send for feedback -->
+  <div class="cp-send d-print-none">
+    <h4 class="cp-send__title">إرسال الخطة لأخذ المرئيات</h4>
+    <p class="cp-send__hint">
+      يصل هذا الطلب إلى من تختارهم في قائمة الإشعارات، ويمكنهم فتح الخطة وإرسال مرئياتهم، وتصلك إجاباتهم في «المرئيات».
+    </p>
+
+    <label class="form-label">تعليق على الخطة <span class="text-danger">*</span></label>
+    <textarea
+      class="form-control"
+      rows="3"
+      [(ngModel)]="comment"
+      placeholder="مثال: يرجى مراجعة قنوات التواصل المقترحة وإبداء الرأي حول كفايتها"
+    ></textarea>
+
+    <div class="row g-3 mt-1">
+      <div class="col-md-6">
+        <label class="form-label">
+          وحدات كاملة
+          <span class="cp-badge" *ngIf="unitIds.length">{{ unitIds.length }}</span>
+        </label>
+        <input class="form-control form-control-sm mb-2" [(ngModel)]="unitSearch" placeholder="بحث عن وحدة" />
+        <div class="cp-picker">
+          @for (u of filteredUnits; track u.id) {
+            <label class="cp-picker__row" [class.cp-picker__row--on]="isUnitPicked(u.id)">
+              <input type="checkbox" [checked]="isUnitPicked(u.id)" (change)="toggleUnit(u.id)" />
+              <span>{{ u.name }}</span>
+            </label>
+          }
+          <p *ngIf="filteredUnits.length === 0" class="cp-picker__empty">لا توجد وحدات مطابقة</p>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">
+          أشخاص بعينهم
+          <span class="cp-badge" *ngIf="userIds.length">{{ userIds.length }}</span>
+        </label>
+        <input class="form-control form-control-sm mb-2" [(ngModel)]="userSearch" placeholder="بحث بالاسم أو الوحدة" />
+        <div class="cp-picker">
+          @for (u of filteredUsers; track u.id) {
+            <label class="cp-picker__row" [class.cp-picker__row--on]="isUserPicked(u.id)">
+              <input type="checkbox" [checked]="isUserPicked(u.id)" (change)="toggleUser(u.id)" />
+              <span>{{ u.displayName }}</span>
+              <small *ngIf="u.unitName">{{ u.unitName }}</small>
+            </label>
+          }
+          <p *ngIf="filteredUsers.length === 0" class="cp-picker__empty">لا يوجد مستخدمون مطابقون</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cp-send__foot">
+      <div class="cp-summary" [class.cp-summary--empty]="!recipientSummary">
+        <i class="bi" [class.bi-send-check]="recipientSummary" [class.bi-info-circle]="!recipientSummary"></i>
+        {{ recipientSummary || (rows().length === 0 ? 'أضف سطراً واحداً على الأقل قبل الإرسال' : 'اختر وحدة واحدة على الأقل أو شخصاً واحداً على الأقل') }}
+      </div>
+      <button type="button" class="btn btn-success" [disabled]="!canSend" (click)="send()">
+        <i class="bi bi-send ms-1"></i> {{ sending ? 'جارٍ الإرسال…' : 'إرسال لأخذ المرئيات' }}
+      </button>
+    </div>
+  </div>
+</div>

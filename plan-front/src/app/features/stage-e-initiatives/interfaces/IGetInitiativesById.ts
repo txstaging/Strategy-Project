@@ -36,6 +36,7 @@ export interface IGetInitiativesById {
   goal: Goal;
   planId: number;
   unitId: number;
+  initiativeWeight?: number;
   initiativeItem: InitiativeItem[];
   initiativeKPIs: InitiativeKPI[];
 }

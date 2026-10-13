@@ -33,6 +33,7 @@ export class NotifcationService {
         isRead: n.isRead ?? n.IsRead ?? false,
         formNameToReturnToFront: n.formNameToReturnToFront ?? n.FormNameToReturnToFront ?? '',
         planId: n.planId ?? n.PlanId ?? 0,
+        createdAt: n.createdAt ?? n.CreatedAt ?? undefined,
       })
     );
     return {

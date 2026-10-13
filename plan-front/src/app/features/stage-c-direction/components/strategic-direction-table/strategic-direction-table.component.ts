@@ -47,6 +47,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { PdfService } from '../../../../pdf.service';
 import { ApproveAllService } from '../../../../approve-all.service';
+import { PermissionsService } from '../../../../Core/Service/permissions.service';
 
 @Component({
   selector: 'app-strategic-direction-table',
@@ -66,6 +67,7 @@ import { ApproveAllService } from '../../../../approve-all.service';
   styleUrl: './strategic-direction-table.component.css',
 })
 export class StrategicDirectionTableComponent implements OnInit, OnDestroy {
+  private permissionsService = inject(PermissionsService);
   isFormVisible = signal(false);
   isViewModeEnabled = signal(false);
   currentFormType = '';
@@ -1413,23 +1415,12 @@ export class StrategicDirectionTableComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Check if user can delete a direction item
-   * Unit employees can delete any pending items
-   * @param item Direction item to check
+   * Whether the current user can delete a direction item.
+   * Who may delete comes from the Delete permission; what may be deleted comes
+   * from the item's status. See PermissionsService.canDeleteItem.
    */
   canDeleteItem(item: any): boolean {
-    const userRole = this.authService.getUserRole();
-
-    // Only unit employees can delete items
-    if (userRole !== RolesEnums.UnitEmployee) return false;
-
-    // Deletable while the item is not yet approved at any level (same rule as edit).
-    const isDraft = item.status === ApprovalStatusEnum.SavedAsDraft;
-    const isPending = PendingStatuses.includes(item.status);
-    const isReturned = ReturnedStatuses.includes(item.status);
-    const isRejected = RejectionStatuses.includes(item.status);
-
-    return isDraft || isPending || isReturned || isRejected;
+    return this.permissionsService.canDeleteItem('Direction', item);
   }
 
   /**
@@ -1460,30 +1451,25 @@ export class StrategicDirectionTableComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    let canTake = false;
-
-    // Explicitly check for the 'Pending' status which means initial state
-    if (status === 'Pending') {
-      // Only Unit Manager can take actions on 'Pending' status
-      canTake = userRole === RolesEnums.UnitManager;
+    // A role may only act once the level below has pressed send.
+    //
+    // The "Partially" status is what a single item gets when it is ticked on its
+    // own; the full status is written for every item when someone approves the
+    // whole stage. Accepting "Partially" here is what made the work look as if it
+    // travelled upward by itself: the next manager's accept, reject and return
+    // icons appeared the moment the last point was confirmed, before anyone had
+    // pressed the send button. Requiring the full status means the button is the
+    // only thing that hands work on.
+    if (userRole === RolesEnums.UnitManager) {
+      return status === ApprovalStatusEnum.Pending;
     }
-    // Unit Manager can take actions on items in Pending status
-    else if (userRole === RolesEnums.UnitManager) {
-      canTake = status === ApprovalStatusEnum.Pending;
+    if (userRole === RolesEnums.RegionManager) {
+      return status === ApprovalStatusEnum.ApprovedByUnitManager;
     }
-    // Region Manager can take action on items approved by Unit Manager
-    else if (userRole === RolesEnums.RegionManager) {
-      canTake =
-        status === ApprovalStatusEnum.ApprovedByUnitManager ||
-        status === ApprovalStatusEnum.ApprovedByUnitManagerPartially;
+    if (userRole === RolesEnums.HighManagement) {
+      return status === ApprovalStatusEnum.ApprovedByRegionManager;
     }
-    // High Management can take action on items approved by Region Manager
-    else if (userRole === RolesEnums.HighManagement) {
-      canTake =
-        status === ApprovalStatusEnum.ApprovedByRegionManager ||
-        status === ApprovalStatusEnum.ApprovedByRegionManagerPartially;
-    }
-    return canTake;
+    return false;
   }
 
   /**
@@ -1897,18 +1883,42 @@ console.log(id);
 }
 
 
+// The employee sends their drafts up for review.
+//
+// isSending hides the button for the whole round trip, because it had no
+// disabled binding at all and a second click fired a second POST.
+isSending = false;
+
 Approve() {
   const id = Number(this.planId);
-console.log(id);
-  if (!id) {
-    console.error('planId مش موجود في الـ URL');
+  if (!id || this.isSending) {
     return;
   }
 
-  this.app.ApproveDirection(id).subscribe(blob => {
-    window.location.reload();
-    
+  this.isSending = true;
+  this.app.ApproveDirection(id).subscribe({
+    next: () => {
+      window.location.reload();
+    },
+    // The backend refuses while an item is still returned or rejected, and the
+    // global interceptor shows that Arabic message. Releasing the button lets
+    // the employee fix the item and try again.
+    error: () => {
+      this.isSending = false;
+      this.cdr.detectChanges();
+    },
   });
+}
+
+// Only the employee who owns the content sends it up, and only while the stage
+// is still open. The button used to be gated on `isAdmin == false`, which also
+// showed it to admins and to any unrecognised role, and kept showing it after
+// the stage had been finally approved.
+get canSendToManager(): boolean {
+  return (
+    this.authService.getUserRole() === RolesEnums.UnitEmployee &&
+    !this.directionStatusService.isDirectionApproved()
+  );
 }
  
 }

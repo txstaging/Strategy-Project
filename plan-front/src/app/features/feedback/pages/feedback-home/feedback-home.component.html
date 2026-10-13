@@ -1,0 +1,197 @@
+<div class="feedback-page">
+  <div class="feedback-page__head">
+    <div>
+      <h2 class="feedback-page__title">المرئيات والتغذية الراجعة</h2>
+      <p class="feedback-page__subtitle">
+        طلب إبداء المرئيات على محتويات الخطة الاستراتيجية وتلقّي الإجابات
+      </p>
+    </div>
+    @if (canRequest) {
+      <button class="btn btn-success" (click)="openComposer()">
+        <i class="bi bi-plus-circle ms-1"></i> طلب مرئيات جديد
+      </button>
+    }
+  </div>
+
+  <div class="feedback-tabs">
+    <button
+      class="feedback-tab"
+      [class.feedback-tab--active]="activeTab === 'inbox'"
+      (click)="activeTab = 'inbox'"
+    >
+      واردة إليّ
+      <span class="feedback-tab__badge" *ngIf="inbox().length">{{ inbox().length }}</span>
+    </button>
+    <button
+      class="feedback-tab"
+      [class.feedback-tab--active]="activeTab === 'sent'"
+      (click)="activeTab = 'sent'"
+    >
+      طلباتي
+      <span class="feedback-tab__badge" *ngIf="sent().length">{{ sent().length }}</span>
+    </button>
+  </div>
+
+  @if (loading()) {
+    <p class="feedback-empty">جارٍ التحميل…</p>
+  } @else if (visibleList.length === 0) {
+    <p class="feedback-empty">
+      {{ activeTab === 'inbox' ? 'لا توجد طلبات مرئيات موجهة إليك' : 'لم ترسل أي طلب مرئيات بعد' }}
+    </p>
+  } @else {
+    <div class="feedback-list">
+      @for (item of visibleList; track item.id) {
+        <button type="button" class="feedback-card" (click)="open(item)">
+          <div class="feedback-card__top">
+            <span class="feedback-card__subject">{{ subjectLabel(item.subject) }}</span>
+            <span class="feedback-card__item" *ngIf="item.subjectName">{{ item.subjectName }}</span>
+            @if (item.isClosed) {
+              <span class="feedback-card__state feedback-card__state--closed">مغلق</span>
+            } @else {
+              <span class="feedback-card__state">مفتوح</span>
+            }
+          </div>
+
+          <p class="feedback-card__message">{{ item.message }}</p>
+
+          <div class="feedback-card__meta">
+            <span *ngIf="item.planName">الخطة: {{ item.planName }}</span>
+            <span *ngIf="activeTab === 'inbox' && item.requestedByName">
+              من: {{ item.requestedByName }}
+            </span>
+            <span *ngIf="activeTab === 'sent'">
+              أجاب {{ answeredCount(item) }} من {{ item.recipients.length }}
+            </span>
+            <span *ngIf="item.dueDate">الموعد: {{ item.dueDate | date: 'yyyy-MM-dd' }}</span>
+          </div>
+        </button>
+      }
+    </div>
+  }
+</div>
+
+@if (showComposer) {
+  <div class="feedback-modal-backdrop" (click)="closeComposer()"></div>
+  <div class="feedback-modal" role="dialog">
+    <div class="feedback-modal__head">
+      <h3>طلب إبداء مرئيات</h3>
+      <button type="button" class="btn-close" (click)="closeComposer()"></button>
+    </div>
+
+    <div class="feedback-modal__body">
+
+      <!-- Step 1: what is the question about -->
+      <p class="feedback-step">١. ما الذي تريد أخذ المرئيات عليه؟</p>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">الخطة <span class="text-danger">*</span></label>
+          <select class="form-select" [(ngModel)]="form.planId" (ngModelChange)="reloadSubjectItems()">
+            <option [ngValue]="0" disabled>اختر الخطة</option>
+            @for (p of plans; track p.id) {
+              <option [ngValue]="p.id">{{ p.name }}<ng-container *ngIf="p.unitName"> — {{ p.unitName }}</ng-container></option>
+            }
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">المرحلة أو النموذج <span class="text-danger">*</span></label>
+          <select class="form-select" [(ngModel)]="form.subject" (ngModelChange)="reloadSubjectItems()">
+            @for (s of subjects; track s.value) {
+              <option [ngValue]="s.value">{{ s.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">عنصر محدد</label>
+          <select class="form-select" [(ngModel)]="form.subjectId" [disabled]="!subjectHasItems || !form.planId">
+            <option [ngValue]="0">
+              {{ subjectHasItems ? 'المرحلة كاملة' : 'لا توجد عناصر داخل هذه المرحلة' }}
+            </option>
+            @for (it of subjectItems; track it.id) {
+              <option [ngValue]="it.id">{{ it.name }}</option>
+            }
+          </select>
+          <small class="feedback-help" *ngIf="loadingSubjects">جارٍ تحميل العناصر…</small>
+          <small class="feedback-help" *ngIf="!loadingSubjects && subjectHasItems && form.planId && subjectItems.length === 0">
+            لا توجد عناصر بعد في هذه المرحلة، سيكون الطلب على المرحلة كاملة
+          </small>
+        </div>
+      </div>
+
+      <!-- Step 2: the question -->
+      <p class="feedback-step">٢. اكتب طلبك</p>
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="form-label">نص الطلب <span class="text-danger">*</span></label>
+          <textarea
+            class="form-control"
+            rows="3"
+            [(ngModel)]="form.message"
+            placeholder="مثال: يرجى إبداء مرئياتكم على نسب الإنجاز الحالية وما يلزم لتسريعها"
+          ></textarea>
+          <small class="feedback-help">هذا النص هو ما سيظهر للمستلمين في قائمة الإشعارات</small>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الموعد النهائي للرد</label>
+          <input type="date" class="form-control" [(ngModel)]="form.dueDate" />
+          <small class="feedback-help">اختياري</small>
+        </div>
+      </div>
+
+      <!-- Step 3: who answers -->
+      <p class="feedback-step">٣. من تريد أن يجيب؟</p>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">
+            وحدات كاملة
+            <span class="feedback-count" *ngIf="form.unitIds.length">{{ form.unitIds.length }}</span>
+          </label>
+          <input class="form-control form-control-sm mb-2" [(ngModel)]="unitSearch" placeholder="بحث عن وحدة" />
+          <div class="feedback-picker">
+            @for (u of filteredUnits; track u.id) {
+              <label class="feedback-picker__row" [class.feedback-picker__row--on]="isUnitPicked(u.id)">
+                <input type="checkbox" [checked]="isUnitPicked(u.id)" (change)="toggleUnit(u.id)" />
+                <span>{{ u.name }}</span>
+              </label>
+            }
+            <p *ngIf="filteredUnits.length === 0" class="feedback-picker__empty">لا توجد وحدات مطابقة</p>
+          </div>
+          <small class="feedback-help">تصل إلى جميع موظفي الوحدة ومديرها</small>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">
+            أشخاص بعينهم
+            <span class="feedback-count" *ngIf="form.userIds.length">{{ form.userIds.length }}</span>
+          </label>
+          <input class="form-control form-control-sm mb-2" [(ngModel)]="userSearch" placeholder="بحث بالاسم أو الوحدة" />
+          <div class="feedback-picker">
+            @for (u of filteredUsers; track u.id) {
+              <label class="feedback-picker__row" [class.feedback-picker__row--on]="isUserPicked(u.id)">
+                <input type="checkbox" [checked]="isUserPicked(u.id)" (change)="toggleUser(u.id)" />
+                <span>{{ u.displayName }}</span>
+                <small *ngIf="u.unitName">{{ u.unitName }}</small>
+              </label>
+            }
+            <p *ngIf="filteredUsers.length === 0" class="feedback-picker__empty">لا يوجد مستخدمون مطابقون</p>
+          </div>
+          <small class="feedback-help">يمكن الجمع بين وحدات وأشخاص</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="feedback-modal__foot">
+      <div class="feedback-summary" [class.feedback-summary--empty]="!recipientSummary">
+        <i class="bi" [class.bi-send-check]="recipientSummary" [class.bi-info-circle]="!recipientSummary"></i>
+        {{ recipientSummary || 'اختر وحدة واحدة على الأقل أو شخصاً واحداً على الأقل' }}
+      </div>
+      <div class="feedback-modal__buttons">
+        <button type="button" class="btn btn-secondary" (click)="closeComposer()">إلغاء</button>
+        <button type="button" class="btn btn-success" [disabled]="!canSubmit" (click)="submit()">
+          {{ saving ? 'جارٍ الإرسال…' : 'إرسال الطلب' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

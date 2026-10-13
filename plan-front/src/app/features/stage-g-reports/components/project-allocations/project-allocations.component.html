@@ -1,0 +1,138 @@
+<div class="pa">
+  <div class="pa__head">
+    <div>
+      <h3 class="pa__title">إدارة الموارد والميزانيات والعقود</h3>
+      <p class="pa__subtitle">لكل مشروع الموارد المخصصة له وبنود ميزانيته والعقود المرتبطة به</p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="pa-filters d-print-none">
+    <div class="pa-filter">
+      <label class="form-label mb-1">الوحدة</label>
+      <select class="form-select form-select-sm" [(ngModel)]="unitId" (ngModelChange)="load()">
+        <option [ngValue]="0">جميع الوحدات</option>
+        @for (u of units; track u.id) {
+          <option [ngValue]="u.id">{{ u.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="pa-filter">
+      <label class="form-label mb-1">الخطة</label>
+      <select class="form-select form-select-sm" [(ngModel)]="planId" (ngModelChange)="load()">
+        <option [ngValue]="0">جميع الخطط</option>
+        @for (p of plans; track p.id) {
+          <option [ngValue]="p.id">{{ p.name }}<ng-container *ngIf="p.unitName"> — {{ p.unitName }}</ng-container></option>
+        }
+      </select>
+    </div>
+
+    <div class="pa-filter pa-filter--grow">
+      <label class="form-label mb-1">بحث</label>
+      <input
+        class="form-control form-control-sm"
+        [(ngModel)]="search"
+        (keydown.enter)="load()"
+        placeholder="اسم المشروع أو الكود"
+      />
+    </div>
+
+    <div class="pa-filter pa-filter--actions">
+      <button type="button" class="btn btn-success btn-sm" (click)="load()">
+        <i class="bi bi-search ms-1"></i> تطبيق
+      </button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" *ngIf="hasFilter" (click)="clearFilters()">
+        <i class="bi bi-x-circle ms-1"></i> مسح
+      </button>
+    </div>
+  </div>
+
+  <!-- Totals across what is shown -->
+  <div class="pa-totals" *ngIf="rows().length">
+    <span>{{ rows().length }} مشروع</span>
+    <span>إجمالي الميزانيات: <strong>{{ budgetTotal | number: '1.0-2' }}</strong></span>
+    <span>إجمالي العقود: <strong>{{ contractTotal | number: '1.0-2' }}</strong></span>
+  </div>
+
+  <!-- The table -->
+  <div class="pa-sheet">
+    <table class="pa-table">
+      <thead>
+        <tr>
+          <th style="width: 26%">المشروع</th>
+          <th>الموارد</th>
+          <th>الميزانيات</th>
+          <th>العقود المرتبطة</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr><td colspan="4" class="pa-empty">جارٍ التحميل…</td></tr>
+        } @else if (rows().length === 0) {
+          <tr><td colspan="4" class="pa-empty">
+            {{ hasFilter ? 'لا توجد مشاريع مطابقة للفلتر' : 'لا توجد مشاريع بعد' }}
+          </td></tr>
+        }
+
+        @for (row of rows(); track row.projectId) {
+          <tr>
+            <!-- Project -->
+            <td class="pa-project">
+              <strong>{{ row.projectName }}</strong>
+              <div class="pa-project__meta">
+                <span *ngIf="row.code">الكود: {{ row.code }}</span>
+                <span *ngIf="row.unitName">{{ row.unitName }}</span>
+                <span *ngIf="row.planName">{{ row.planName }}</span>
+              </div>
+              <div class="pa-project__pct" *ngIf="row.percentage !== null && row.percentage !== undefined">
+                <div class="pa-bar"><div class="pa-bar__fill" [style.width.%]="row.percentage"></div></div>
+                <small>{{ row.percentage }}%</small>
+              </div>
+            </td>
+
+            <!-- One cell per kind, same markup, different list -->
+            @for (k of kinds; track k.value) {
+              <td class="pa-cell">
+                @for (line of linesOf(row, k.value); track line.id) {
+                  <div class="pa-line" [title]="line.notes || ''">
+                    <span class="pa-line__name">{{ line.name }}</span>
+                    <span class="pa-line__amount" *ngIf="line.amount !== null && line.amount !== undefined">
+                      {{ line.amount | number: '1.0-2' }}
+                    </span>
+                    <button type="button" class="pa-line__remove d-print-none" title="حذف" (click)="remove(row, line)">
+                      <i class="bi bi-x"></i>
+                    </button>
+                  </div>
+                }
+
+                @if (k.value === Kind.Budget && row.budgets.length > 1) {
+                  <div class="pa-cell__total">المجموع: {{ row.budgetTotal | number: '1.0-2' }}</div>
+                }
+                @if (k.value === Kind.Contract && row.contracts.length > 1) {
+                  <div class="pa-cell__total">المجموع: {{ row.contractTotal | number: '1.0-2' }}</div>
+                }
+
+                @if (isDrafting(row, k.value)) {
+                  <div class="pa-draft">
+                    <input class="form-control form-control-sm" [(ngModel)]="draft!.name" [placeholder]="'اسم ' + kindLabel(k.value)" (keydown.enter)="saveDraft()" />
+                    <input *ngIf="hasAmount(k.value)" type="number" min="0" class="form-control form-control-sm" [(ngModel)]="draft!.amount" placeholder="المبلغ" (keydown.enter)="saveDraft()" />
+                    <input class="form-control form-control-sm" [(ngModel)]="draft!.notes" placeholder="ملاحظة (اختياري)" (keydown.enter)="saveDraft()" />
+                    <div class="pa-draft__actions">
+                      <button type="button" class="pa-btn pa-btn--ok" [disabled]="!draftValid || saving" (click)="saveDraft()" title="حفظ"><i class="bi bi-check-lg"></i></button>
+                      <button type="button" class="pa-btn" (click)="cancelAdd()" title="إلغاء"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                  </div>
+                } @else {
+                  <button type="button" class="pa-add d-print-none" (click)="startAdd(row, k.value)">
+                    <i class="bi bi-plus"></i> إضافة {{ kindLabel(k.value) }}
+                  </button>
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,184 @@
+<div class="sp">
+  <div class="sp__head">
+    <div>
+      <h3 class="sp__title">قائمة المشاريع المشتركة</h3>
+      <p class="sp__subtitle">المشاريع التي تشترك فيها أكثر من جهة، ومن يشترك في كل مشروع وما الإجراء الذي سيقوم به</p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="sp-filters d-print-none">
+    <div class="sp-filter">
+      <label class="form-label mb-1">الوحدة</label>
+      <select class="form-select form-select-sm" [(ngModel)]="unitId" (ngModelChange)="load()">
+        <option [ngValue]="0">جميع الوحدات</option>
+        @for (u of units; track u.id) {
+          <option [ngValue]="u.id">{{ u.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="sp-filter">
+      <label class="form-label mb-1">الخطة</label>
+      <select class="form-select form-select-sm" [(ngModel)]="planId" (ngModelChange)="load()">
+        <option [ngValue]="0">جميع الخطط</option>
+        @for (p of plans; track p.id) {
+          <option [ngValue]="p.id">{{ p.name }}<ng-container *ngIf="p.unitName"> — {{ p.unitName }}</ng-container></option>
+        }
+      </select>
+    </div>
+
+    <div class="sp-filter sp-filter--grow">
+      <label class="form-label mb-1">بحث</label>
+      <input class="form-control form-control-sm" [(ngModel)]="search" (keydown.enter)="load()" placeholder="اسم مشروع أو جهة مشتركة أو إجراء" />
+    </div>
+
+    <div class="sp-filter">
+      <label class="form-label mb-1">العرض</label>
+      <select class="form-select form-select-sm" [(ngModel)]="onlyShared" (ngModelChange)="load()">
+        <option [ngValue]="true">المشاريع المشتركة فقط</option>
+        <option [ngValue]="false">جميع المشاريع</option>
+      </select>
+    </div>
+
+    <div class="sp-filter sp-filter--actions">
+      <button type="button" class="btn btn-success btn-sm" (click)="load()"><i class="bi bi-search ms-1"></i> تطبيق</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" *ngIf="hasFilter" (click)="clearFilters()"><i class="bi bi-x-circle ms-1"></i> مسح</button>
+    </div>
+  </div>
+
+  <div class="sp-totals" *ngIf="rows().length">
+    <span>{{ rows().length }} مشروع</span>
+    <span>{{ participantCount }} مشترك</span>
+    <span *ngIf="budgetTotal">إجمالي المساهمات المالية: <strong>{{ budgetTotal | number: '1.0-2' }}</strong></span>
+  </div>
+
+  @if (loading()) {
+    <p class="sp-empty">جارٍ التحميل…</p>
+  } @else if (rows().length === 0) {
+    <div class="sp-empty">
+      @if (onlyShared && !hasFilter) {
+        لا توجد مشاريع مشتركة بعد.
+        <button type="button" class="sp-link" (click)="onlyShared = false; load()">اعرض جميع المشاريع</button>
+        لإضافة أول مشترك.
+      } @else {
+        لا توجد مشاريع مطابقة للفلتر
+      }
+    </div>
+  }
+
+  <!-- One card per project -->
+  @for (row of rows(); track row.projectId) {
+    <div class="sp-card">
+      <div class="sp-card__head">
+        <div>
+          <strong class="sp-card__name">{{ row.projectName }}</strong>
+          <div class="sp-card__meta">
+            <span *ngIf="row.code">الكود: {{ row.code }}</span>
+            <span *ngIf="row.unitName">الوحدة المالكة: {{ row.unitName }}</span>
+            <span *ngIf="row.planName">{{ row.planName }}</span>
+            <span *ngIf="row.percentage !== null && row.percentage !== undefined">الإنجاز: {{ row.percentage }}%</span>
+          </div>
+        </div>
+        <span class="sp-card__count">{{ row.participants.length }} مشترك</span>
+      </div>
+
+      <table class="sp-table">
+        <thead>
+          <tr>
+            <th style="width: 20%">المشترك</th>
+            <th style="width: 12%">نوع المشاركة</th>
+            <th>الإجراء</th>
+            <th style="width: 11%">المبلغ</th>
+            <th style="width: 10%">الحالة</th>
+            <th style="width: 80px" class="d-print-none"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (row.participants.length === 0 && !isDraftingFor(row)) {
+            <tr><td colspan="6" class="sp-table__empty">لا يوجد مشتركون بعد</td></tr>
+          }
+
+          @for (p of row.participants; track p.id) {
+            @if (isEditing(p)) {
+              <ng-container *ngTemplateOutlet="editor"></ng-container>
+            } @else {
+              <tr>
+                <td>
+                  <i class="bi" [class.bi-building]="p.unitId" [class.bi-person-vcard]="!p.unitId"></i>
+                  {{ p.displayName }}
+                  <small class="sp-external" *ngIf="!p.unitId">جهة خارجية</small>
+                </td>
+                <td><span class="sp-chip sp-chip--type">{{ typeLabel(p.contributionType) }}</span></td>
+                <td>
+                  {{ p.contribution }}
+                  <small class="sp-notes" *ngIf="p.notes">{{ p.notes }}</small>
+                </td>
+                <td>{{ p.amount !== null && p.amount !== undefined ? (p.amount | number: '1.0-2') : '—' }}</td>
+                <td>
+                  <span class="sp-chip" [class.sp-chip--planned]="p.status === Status.Planned" [class.sp-chip--progress]="p.status === Status.InProgress" [class.sp-chip--done]="p.status === Status.Done">
+                    {{ statusLabel(p.status) }}
+                  </span>
+                </td>
+                <td class="sp-actions d-print-none">
+                  <button type="button" class="sp-btn" title="تعديل" (click)="startEdit(row, p)"><i class="bi bi-pencil"></i></button>
+                  <button type="button" class="sp-btn sp-btn--danger" title="إزالة" (click)="remove(row, p)"><i class="bi bi-trash3"></i></button>
+                </td>
+              </tr>
+            }
+          }
+
+          @if (isDraftingFor(row)) {
+            <ng-container *ngTemplateOutlet="editor"></ng-container>
+          }
+        </tbody>
+      </table>
+
+      <div class="sp-card__foot d-print-none">
+        <button type="button" class="btn btn-outline-success btn-sm" [disabled]="!!draft" (click)="startAdd(row)">
+          <i class="bi bi-plus-lg ms-1"></i> إضافة مشترك
+        </button>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Shared editor row, used for both adding and editing -->
+<ng-template #editor>
+  <tr class="sp-row--editing" *ngIf="draft">
+    <td>
+      <select class="form-select form-select-sm mb-1" [(ngModel)]="draft.unitId">
+        <option [ngValue]="0">جهة خارجية…</option>
+        @for (u of units; track u.id) {
+          <option [ngValue]="u.id">{{ u.name }}</option>
+        }
+      </select>
+      <input *ngIf="!(+draft.unitId > 0)" class="form-control form-control-sm" [(ngModel)]="draft.partyName" placeholder="اسم الجهة" />
+    </td>
+    <td>
+      <select class="form-select form-select-sm" [(ngModel)]="draft.contributionType">
+        @for (t of types; track t.value) {
+          <option [ngValue]="t.value">{{ t.label }}</option>
+        }
+      </select>
+    </td>
+    <td>
+      <input class="form-control form-control-sm mb-1" [(ngModel)]="draft.contribution" placeholder="ماذا سيفعل هذا المشترك؟" (keydown.enter)="save()" />
+      <input class="form-control form-control-sm" [(ngModel)]="draft.notes" placeholder="ملاحظة (اختياري)" (keydown.enter)="save()" />
+    </td>
+    <td>
+      <input type="number" min="0" class="form-control form-control-sm" [(ngModel)]="draft.amount" [disabled]="!draftIsBudget" [placeholder]="draftIsBudget ? 'المبلغ' : '—'" />
+    </td>
+    <td>
+      <select class="form-select form-select-sm" [(ngModel)]="draft.status">
+        @for (s of statuses; track s.value) {
+          <option [ngValue]="s.value">{{ s.label }}</option>
+        }
+      </select>
+    </td>
+    <td class="sp-actions d-print-none">
+      <button type="button" class="sp-btn sp-btn--ok" [disabled]="!draftValid || saving" (click)="save()" title="حفظ"><i class="bi bi-check-lg"></i></button>
+      <button type="button" class="sp-btn" (click)="cancel()" title="إلغاء"><i class="bi bi-x-lg"></i></button>
+    </td>
+  </tr>
+</ng-template>

@@ -1,0 +1,95 @@
+<div class="fb-detail">
+  <button type="button" class="fb-detail__back" (click)="back()">
+    <i class="bi bi-arrow-right"></i> رجوع إلى المرئيات
+  </button>
+
+  @if (loading()) {
+    <p class="fb-detail__empty">جارٍ التحميل…</p>
+  } @else if (!request()) {
+    <p class="fb-detail__empty">الطلب غير موجود أو ليس لديك صلاحية لعرضه</p>
+  } @else {
+    <ng-container *ngIf="request() as r">
+    <div class="fb-card">
+      <div class="fb-card__top">
+        <span class="fb-chip fb-chip--subject">{{ subjectLabel(r.subject) }}</span>
+        <strong class="fb-card__item" *ngIf="r.subjectName">{{ r.subjectName }}</strong>
+        @if (r.isClosed) {
+          <span class="fb-chip fb-chip--closed">مغلق</span>
+        } @else {
+          <span class="fb-chip fb-chip--open">مفتوح</span>
+        }
+        <button type="button" class="fb-card__link" (click)="openSubject()">
+          عرض المرحلة <i class="bi bi-box-arrow-left"></i>
+        </button>
+      </div>
+
+      <p class="fb-card__message">{{ r.message }}</p>
+
+      <div class="fb-card__meta">
+        <span *ngIf="r.requestedByName">من: {{ r.requestedByName }}</span>
+        <span *ngIf="r.planName">الخطة: {{ r.planName }}</span>
+        <span *ngIf="r.subjectName">العنصر: {{ r.subjectName }}</span>
+        <span *ngIf="r.dueDate">الموعد النهائي: {{ r.dueDate | date: 'yyyy-MM-dd' }}</span>
+        <span *ngIf="r.createdAt">التاريخ: {{ r.createdAt | date: 'yyyy-MM-dd' }}</span>
+      </div>
+
+      @if (r.isMine && !r.isClosed) {
+        <button type="button" class="btn btn-outline-secondary btn-sm mt-3" (click)="close()">
+          إغلاق الطلب
+        </button>
+      }
+    </div>
+
+    <h4 class="fb-section">
+      المعنيون
+      <small>أجاب {{ answeredCount(r) }} من {{ r.recipients.length }}</small>
+    </h4>
+    <div class="fb-recipients">
+      @for (p of r.recipients; track $index) {
+        <span class="fb-recipient" [class.fb-recipient--done]="p.hasResponded">
+          <i class="bi" [class.bi-check-circle]="p.hasResponded" [class.bi-clock]="!p.hasResponded"></i>
+          {{ p.userName || p.unitName }}
+        </span>
+      }
+    </div>
+
+    <h4 class="fb-section">المرئيات المستلمة <small>{{ r.responses.length }}</small></h4>
+    @if (r.responses.length === 0) {
+      <p class="fb-detail__empty">لم يتم استلام أي مرئيات بعد</p>
+    } @else {
+      <div class="fb-responses">
+        @for (res of r.responses; track res.id) {
+          <div class="fb-response">
+            <div class="fb-response__head">
+              <strong>{{ res.respondedByName }}</strong>
+              <span *ngIf="res.unitName">{{ res.unitName }}</span>
+              <span *ngIf="res.createdAt">{{ res.createdAt | date: 'yyyy-MM-dd' }}</span>
+            </div>
+            <p class="fb-response__body">{{ res.message }}</p>
+          </div>
+        }
+      </div>
+    }
+
+    @if (canReply) {
+      <h4 class="fb-section">إبداء المرئيات</h4>
+      <textarea
+        class="form-control"
+        rows="4"
+        [(ngModel)]="reply"
+        placeholder="اكتب مرئياتك هنا"
+      ></textarea>
+      <button
+        type="button"
+        class="btn btn-success mt-2"
+        [disabled]="sending || reply.trim().length === 0"
+        (click)="submitReply()"
+      >
+        {{ sending ? 'جارٍ الإرسال…' : 'إرسال المرئيات' }}
+      </button>
+    } @else if (r.isClosed && !r.isMine) {
+      <p class="fb-detail__empty">تم إغلاق هذا الطلب ولا يمكن إضافة مرئيات جديدة</p>
+    }
+    </ng-container>
+  }
+</div>

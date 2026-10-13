@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import {
   ApprovalStatusEnum,
-  PendingStatuses,
+  DeletableStatuses,
   RejectionStatuses,
   ReturnedStatuses,
   RolesEnums,
@@ -139,24 +139,24 @@ export class PopupComponent {
   });
 
   hasDeletePermission = computed(() => {
-    // Simple check: only unit employees can delete pending items
-    const userRole = this.authService.getUserRole();
+    const page = this._pageName();
+    if (!page) return false;
 
-    // Must be a unit employee
-    if (userRole !== RolesEnums.UnitEmployee) {
+    // Who may delete is decided by the Delete permission granted in the admin
+    // matrix, exactly as Update is handled above. This used to be hardcoded to
+    // the unit employee, so granting الحذف to any other role had no effect on
+    // the UI and the client's configured permissions were ignored.
+    if (!this.permissionsService.isAllowedToAccess(page, ['Delete'])) {
       return false;
     }
 
-    // Must have an item with pending status
+    // What may be deleted is decided by the item's own status: anything that has
+    // not been finally approved yet.
     if (!this.item || !this.item['status']) {
       return false;
     }
 
-    const itemStatus = this.item['status'] as ApprovalStatusEnum;
-    const isPending = PendingStatuses.includes(itemStatus);
-    const isDraft = itemStatus === ApprovalStatusEnum.SavedAsDraft;
-
-    return isPending || isDraft;
+    return DeletableStatuses.includes(this.item['status'] as ApprovalStatusEnum);
   });
 
   constructor(
@@ -187,33 +187,6 @@ export class PopupComponent {
     const isDraft = itemStatus === ApprovalStatusEnum.SavedAsDraft;
 
     return isReturned || isRejected || isDraft;
-  }
-
-  /**
-   * Checks if the current user can delete the item based on its status
-   * Unit employees can delete any pending items
-   */
-  canDeleteBasedOnStatus(): boolean {
-    // If item is null or doesn't have status, return false
-    if (!this.item || !this.item['status']) {
-      return false;
-    }
-
-    // Get the current user role
-    const userRole = this.authService.getUserRole();
-    if (!userRole) {
-      return false;
-    }
-
-    // If user is not an employee, this function is not relevant
-    if (userRole !== RolesEnums.UnitEmployee) {
-      return false;
-    }
-
-    const itemStatus = this.item['status'] as ApprovalStatusEnum;
-    const isDraft = itemStatus === ApprovalStatusEnum.SavedAsDraft;
-
-    return isDraft;
   }
 
   togglePopup(event: MouseEvent) {

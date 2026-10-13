@@ -250,7 +250,7 @@
       (click)="handleApproveProjectsStep()"
     >
       <i class="bi bi-check-circle me-2"></i>
-      اعتماد مرحلة المشاريع
+      {{ getSubmissionButtonText() }}
     </button>
   }
   @if (isProjectsApproved() && isReportsStageActive()) {

@@ -1,0 +1,11 @@
+**/bin
+**/obj
+**/publish-output
+.git
+.github
+.vs
+.claude
+*.rar
+*.user
+Dockerfile
+.dockerignore

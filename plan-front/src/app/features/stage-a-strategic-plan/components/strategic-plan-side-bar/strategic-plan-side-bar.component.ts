@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { PlanStatusService } from '../../services/PlanStatus.service';
 import { IGetPlanStatus } from '../../../stage-b-analysis/interfaces/IGetPlanStatus';
@@ -25,6 +25,7 @@ export class StrategicPlanSideBarComponent implements OnInit, OnDestroy {
     goalsStage: false,
     initiativesStage: false,
     projectsStage: false,
+    reportStage: false,
   };
 
   private subscription: Subscription | null = null;
@@ -33,8 +34,18 @@ export class StrategicPlanSideBarComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // Extract plan ID from URL (assumes URL pattern like /strategy-plan/:planId/...)
-    this.subscription = this.router.events.subscribe(() => {
+    this.subscription = this.router.events.subscribe((event) => {
+      const planIdBefore = this.planId;
       this.extractPlanIdFromUrl();
+
+      // A stage unlocks when the stage before it is finally approved, which
+      // happens on the page itself and does not change the plan id. Re-read the
+      // status after each navigation within the same plan, or a newly unlocked
+      // stage stayed greyed out here until a full page reload — e.g. after the
+      // final approval of the goals, «المبادرات» stayed locked.
+      if (event instanceof NavigationEnd && this.planId && this.planId === planIdBefore) {
+        this.fetchPlanStatus();
+      }
     });
 
     // Initial extraction
@@ -95,6 +106,7 @@ export class StrategicPlanSideBarComponent implements OnInit, OnDestroy {
       goalsStage: false,
       initiativesStage: false,
       projectsStage: false,
+      reportStage: false,
     };
   }
 
@@ -118,6 +130,9 @@ export class StrategicPlanSideBarComponent implements OnInit, OnDestroy {
         break;
       case 'projects':
         targetStage = Stages.Projects;
+        break;
+      case 'reports':
+        targetStage = Stages.Reports;
         break;
       default:
         targetStage = Stages.Analysis;

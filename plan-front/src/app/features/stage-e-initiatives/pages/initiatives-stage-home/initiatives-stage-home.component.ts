@@ -37,6 +37,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { ApproveAllService } from '../../../../approve-all.service';
 import { PageTitleService } from '../../../page-titles/services/page-title.service';
+import { PermissionsService } from '../../../../Core/Service/permissions.service';
 
 @Component({
   selector: 'app-initiatives-stage-home',
@@ -55,6 +56,7 @@ import { PageTitleService } from '../../../page-titles/services/page-title.servi
   styleUrl: './initiatives-stage-home.component.css',
 })
 export class InitiativesStageHomeComponent implements OnInit {
+  private permissionsService = inject(PermissionsService);
   // Make enum available in template
   ApprovalStatusEnum = ApprovalStatusEnum;
 
@@ -943,20 +945,7 @@ export class InitiativesStageHomeComponent implements OnInit {
   }
 
   canDeleteInitiative(initiative: any): boolean {
-    const userRole = this.authService.getUserRole();
-
-    // Only Unit employees can delete initiatives
-    if (userRole !== RolesEnums.UnitEmployee) {
-      return false;
-    }
-
-    // Deletable while the initiative is not yet approved at any level (same rule as edit).
-    const isDraft = initiative.status === ApprovalStatusEnum.SavedAsDraft;
-    const isPending = PendingStatuses.includes(initiative.status);
-    const isReturned = ReturnedStatuses.includes(initiative.status);
-    const isRejected = RejectionStatuses.includes(initiative.status);
-
-    return isDraft || isPending || isReturned || isRejected;
+    return this.permissionsService.canDeleteItem('Initiative', initiative);
   }
 
   /**

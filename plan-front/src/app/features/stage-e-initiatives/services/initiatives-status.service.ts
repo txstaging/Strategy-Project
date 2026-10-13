@@ -136,33 +136,35 @@ export class InitiativesStatusService {
     return this.dataLoaded();
   }
 
+  getStageStatus(): ApprovalStatusEnum {
+    return this.stageStatus();
+  }
+
   // Private helper methods
   private canApproveStageBasedOnRole(): boolean {
     const userRole = this.authService.getUserRole();
     const stageStatus = this.stageStatus();
 
-    // Unit Manager can approve when stage is Pending
-    if (userRole === RolesEnums.UnitManager) {
-      return stageStatus === ApprovalStatusEnum.Pending;
+    if (
+      userRole !== RolesEnums.UnitManager &&
+      userRole !== RolesEnums.RegionManager &&
+      userRole !== RolesEnums.HighManagement
+    ) {
+      return false;
     }
 
-    // Region Manager can approve when stage is approved (fully or partially) by Unit Manager
-    if (userRole === RolesEnums.RegionManager) {
-      return (
-        stageStatus === ApprovalStatusEnum.ApprovedByUnitManager ||
-        stageStatus === ApprovalStatusEnum.ApprovedByUnitManagerPartially
-      );
-    }
-
-    // High Management can approve when stage is approved (fully or partially) by Region Manager
-    if (userRole === RolesEnums.HighManagement) {
-      return (
-        stageStatus === ApprovalStatusEnum.ApprovedByRegionManager ||
-        stageStatus === ApprovalStatusEnum.ApprovedByRegionManagerPartially
-      );
-    }
-
-    return false;
+    // Already approved at this role's level or beyond, so there is nothing left
+    // for this role to approve.
+    //
+    // The ladder itself is enforced by the initiatives, not by the step: the
+    // caller pairs this with allInitiativesActedUpon, which only passes once
+    // every initiative sits at this role's level or above. Requiring the *step*
+    // to sit exactly at the previous level as well used to deadlock the stage,
+    // because the step only moves on a whole-stage approval while the per-item
+    // endpoints apply the acting role's status whatever level the item is at.
+    // Once the two drift apart, no role's button matched and nobody could
+    // approve the stage.
+    return !this.isInitiativeActedUponByRole(stageStatus, userRole);
   }
 
   private allInitiativesActedUpon(): boolean {

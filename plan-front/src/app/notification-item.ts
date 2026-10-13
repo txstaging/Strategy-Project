@@ -4,6 +4,7 @@ export interface NotificationItem {
     isRead: boolean;
     formNameToReturnToFront: string;
     planId: number;
+    createdAt?: string;
   }
   
   export interface NotificationResponse {

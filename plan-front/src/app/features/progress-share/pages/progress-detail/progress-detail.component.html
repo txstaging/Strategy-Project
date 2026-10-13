@@ -1,0 +1,67 @@
+<div class="pd">
+  <button type="button" class="pd__back" (click)="back()">
+    <i class="bi bi-arrow-right"></i> رجوع إلى المشاركات
+  </button>
+
+  @if (loading()) {
+    <p class="pd__empty">جارٍ التحميل…</p>
+  } @else if (!share()) {
+    <p class="pd__empty">المشاركة غير موجودة أو ليس لديك صلاحية لعرضها</p>
+  } @else {
+    <ng-container *ngIf="share() as s">
+      <div class="pd-card">
+        <div class="pd-card__figure">
+          <div class="pd-card__pct">{{ s.percentage | number: '1.0-2' }}%</div>
+          <div class="pd-card__caption">نسبة الإنجاز عند المشاركة</div>
+        </div>
+
+        <div class="pd-card__body">
+          <div class="pd-card__top">
+            <span class="pd-chip">{{ scopeLabel(s.scope) }}</span>
+            <h3 class="pd-card__name">{{ s.scopeName }}</h3>
+          </div>
+
+          <div class="pd-bar">
+            <div class="pd-bar__fill" [style.width.%]="s.percentage"></div>
+          </div>
+
+          <p class="pd-card__note" *ngIf="s.note">{{ s.note }}</p>
+
+          <div class="pd-card__meta">
+            <span *ngIf="s.sentByName">أرسلها: {{ s.sentByName }}</span>
+            <span *ngIf="s.createdAt">بتاريخ: {{ s.createdAt | date: 'yyyy-MM-dd HH:mm' }}</span>
+          </div>
+
+          @if (s.livePercentage !== null && s.livePercentage !== undefined) {
+            <div class="pd-live">
+              <span>النسبة الآن:</span>
+              <strong>{{ s.livePercentage | number: '1.0-2' }}%</strong>
+              @if (delta(s) !== null && delta(s) !== 0) {
+                <span class="pd-live__delta" [class.pd-live__delta--up]="delta(s)! > 0" [class.pd-live__delta--down]="delta(s)! < 0">
+                  {{ delta(s)! > 0 ? '+' : '' }}{{ delta(s) | number: '1.0-2' }}%
+                </span>
+              } @else if (delta(s) === 0) {
+                <span class="pd-live__same">لم تتغير</span>
+              }
+            </div>
+          }
+
+          <button type="button" class="btn btn-outline-success btn-sm mt-3" (click)="openReports()">
+            <i class="bi bi-bar-chart ms-1"></i> عرض التقرير الكامل
+          </button>
+        </div>
+      </div>
+
+      <h4 class="pd-section">المستلمون <small>{{ s.recipients.length }}</small></h4>
+      <div class="pd-recipients">
+        @for (r of s.recipients; track r.userId) {
+          <span class="pd-recipient">
+            <i class="bi bi-person"></i>
+            {{ r.userName }}
+            <small *ngIf="r.unitName">{{ r.unitName }}</small>
+          </span>
+        }
+      </div>
+    </ng-container>
+  }
+</div>

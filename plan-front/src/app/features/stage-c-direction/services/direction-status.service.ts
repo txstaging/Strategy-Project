@@ -505,482 +505,200 @@ export class DirectionStatusService {
     return allActedUpon;
   });
 
+  // True for the per-item "Partially" statuses, which are written when a single
+  // item is ticked. The full status only arrives when that role presses send.
+  private isPartialStatus(status: string | null | undefined): boolean {
+    return (
+      status === ApprovalStatusEnum.ApprovedByUnitManagerPartially ||
+      status === ApprovalStatusEnum.ApprovedByRegionManagerPartially ||
+      status === ApprovalStatusEnum.ApprovedByHighManagementPartially
+    );
+  }
+
+  private roleName(rank: number): string {
+    switch (rank) {
+      case 1:
+        return 'مدير الوحدة';
+      case 2:
+        return 'مدير المنطقة';
+      case 3:
+        return 'الإدارة العليا';
+      default:
+        return '';
+    }
+  }
+
+  // Why the send button is not on screen.
+  //
+  // This replaces a three-hundred-line computed whose branches did not cover
+  // every state, so in some of them it returned nothing at all and the screen
+  // showed a blank space where the button should have been, with no clue what
+  // to do next. The rule now mirrors canShowSubmitButton exactly, so the two
+  // can never disagree: whatever stops the button produces the sentence that
+  // explains it.
   readonly buttonDisabledReason: Signal<string> = computed(() => {
     const userRole = this.currentUserRole();
-    const canApprove = this.canApproveBasedOnRole();
-    const allItemsActed = this.allItemsActedUpon();
     const points = this._points();
+    const items = this._items();
     const stageStatus = this._stageStatus();
-    const items = this._items(); // Main items
+    const all = [...items, ...points];
 
-    if (!this._isDirectionDataLoaded()) {
-      return 'جاري تحميل البيانات...';
+    if (!this._isDirectionDataLoaded()) return 'جارٍ تحميل البيانات…';
+
+    if (stageStatus === ApprovalStatusEnum.ApprovedByHighManagement) {
+      return 'تم اعتماد التوجه الاستراتيجي نهائياً، ويمكنك الانتقال إلى الأهداف';
     }
 
-    // Check if direction is already fully approved
-    if (
-      stageStatus === ApprovalStatusEnum.ApprovedByHighManagement ||
-      stageStatus === ApprovalStatusEnum.ApprovedByHighManagementPartially
-    ) {
-      return 'تم الموافقة على التوجه الاستراتيجي بنجاح';
+    const myRank = this.roleRank(userRole);
+    if (myRank === 0) {
+      return 'بعد الانتهاء من إضافة عناصر التوجه الاستراتيجي، سيقوم مدير الوحدة بمراجعتها';
     }
 
-    if (!userRole || userRole === RolesEnums.UnitEmployee) {
-      return 'بعد الانتهاء من إضافة جميع عناصر التوجه الاستراتيجي، سيقوم مدير الوحدة بمراجعتها';
+    if (all.length === 0) return 'لا توجد عناصر للتوجه الاستراتيجي بعد';
+
+    const sentBack = all.filter(
+      (x) =>
+        RejectionStatuses.includes(x.status) || ReturnedStatuses.includes(x.status)
+    );
+    if (sentBack.length > 0) {
+      return `يوجد ${sentBack.length} عنصر تمت إعادته أو رفضه ويجب تعديله من قبل الوحدة قبل متابعة المرحلة`;
     }
 
-    if (points.length === 0 && items.length === 0) {
-      return 'لا توجد عناصر للتوجه الاستراتيجي. يرجى إضافة عناصر جديدة.';
+    // Items that have not reached my level yet. Those whose holder is me are
+    // mine to review; the rest are still with someone further down.
+    const behind = all.filter((x) => this.approvalRank(x.status) < myRank);
+    if (behind.length > 0) {
+      const mine = behind.filter((x) => this.holderRank(x.status) === myRank);
+      if (mine.length > 0) {
+        return `يوجد ${mine.length} عنصر بانتظار مراجعتك، يرجى اتخاذ إجراء على جميع العناصر قبل الإرسال`;
+      }
+      const holder = Math.min(...behind.map((x) => this.holderRank(x.status)));
+      return `بانتظار مراجعة وإرسال ${this.roleName(holder)}`;
     }
 
-    // Check for returned items/points that need editing
-    if (userRole === RolesEnums.UnitManager) {
-      const returnedItems = items.filter(
-        (i) => i.status === ApprovalStatusEnum.ReturnedByUnitManager
-      );
-      const returnedPoints = points.filter(
-        (p) => p.status === ApprovalStatusEnum.ReturnedByUnitManager
-      );
+    if (this.hasSomethingToSend(stageStatus, all, myRank)) return '';
 
-      if (returnedItems.length > 0 || returnedPoints.length > 0) {
-        const totalReturned = returnedItems.length + returnedPoints.length;
-        return `يوجد ${totalReturned} ${totalReturned === 1 ? 'عنصر تم إعادته' : 'عناصر تم إعادتها'} وتحتاج للتعديل من قبل الموظفين قبل استكمال الإجراءات`;
-      }
-
-      // Special message for stage returned by Region Manager or High Management
-      if (
-        stageStatus === ApprovalStatusEnum.ReturnedByRegionManager ||
-        stageStatus === ApprovalStatusEnum.ReturnedByHighManagement
-      ) {
-        const pendingItemsCount = items.filter(
-          (i) =>
-            i.status === ApprovalStatusEnum.Pending || i.status === 'Pending'
-        ).length;
-        const pendingPointsCount = points.filter(
-          (p) =>
-            p.status === ApprovalStatusEnum.Pending || p.status === 'Pending'
-        ).length;
-        const totalPending = pendingItemsCount + pendingPointsCount;
-
-        if (totalPending > 0) {
-          return `يجب اتخاذ إجراء على ${totalPending} ${totalPending === 1 ? 'عنصر متبقي' : 'عناصر متبقية'} قبل إعادة الإرسال إلى المستوى التالي`;
-        }
-
-        // If button is visible (all items acted upon) - no need for a message
-        if (this.canShowSubmitButton()) {
-          return '';
-        }
-
-        return 'يمكنك إعادة إرسال المرحلة بعد معالجة العناصر المُعادة';
-      }
-    } else if (userRole === RolesEnums.RegionManager) {
-      const returnedItems = items.filter(
-        (i) => i.status === ApprovalStatusEnum.ReturnedByRegionManager
-      );
-      const returnedPoints = points.filter(
-        (p) => p.status === ApprovalStatusEnum.ReturnedByRegionManager
-      );
-
-      if (returnedItems.length > 0 || returnedPoints.length > 0) {
-        const totalReturned = returnedItems.length + returnedPoints.length;
-        return `يوجد ${totalReturned} ${totalReturned === 1 ? 'عنصر تم إعادته' : 'عناصر تم إعادتها'} وتحتاج للتعديل من قبل الموظفين قبل استكمال الإجراءات`;
-      }
-
-      // Special message for stage returned by High Management
-      if (stageStatus === ApprovalStatusEnum.ReturnedByHighManagement) {
-        const pendingItemsCount = items.filter(
-          (i) =>
-            i.status === ApprovalStatusEnum.Pending || i.status === 'Pending'
-        ).length;
-        const pendingPointsCount = points.filter(
-          (p) =>
-            p.status === ApprovalStatusEnum.Pending || p.status === 'Pending'
-        ).length;
-        const totalPending = pendingItemsCount + pendingPointsCount;
-
-        if (totalPending > 0) {
-          return `يجب اتخاذ إجراء على ${totalPending} ${totalPending === 1 ? 'عنصر متبقي' : 'عناصر متبقية'} قبل إعادة الإرسال إلى الإدارة العليا`;
-        }
-
-        // If button is visible (all items acted upon) - no need for a message
-        if (this.canShowSubmitButton()) {
-          return '';
-        }
-
-        return 'يمكنك إعادة إرسال المرحلة بعد معالجة العناصر المُعادة من الإدارة العليا';
-      }
-    } else if (userRole === RolesEnums.HighManagement) {
-      const returnedItems = items.filter(
-        (i) => i.status === ApprovalStatusEnum.ReturnedByHighManagement
-      );
-      const returnedPoints = points.filter(
-        (p) => p.status === ApprovalStatusEnum.ReturnedByHighManagement
-      );
-
-      if (returnedItems.length > 0 || returnedPoints.length > 0) {
-        const totalReturned = returnedItems.length + returnedPoints.length;
-        return `يوجد ${totalReturned} ${totalReturned === 1 ? 'عنصر تم إعادته' : 'عناصر تم إعادتها'} وتحتاج للتعديل من قبل الموظفين قبل استكمال الإجراءات`;
-      }
-    }
-
-    if (!canApprove) {
-      // Provide more specific messages based on the current stage status
-      if (stageStatus === ApprovalStatusEnum.Pending) {
-        if (
-          userRole === RolesEnums.RegionManager ||
-          userRole === RolesEnums.HighManagement
-        ) {
-          return 'المرحلة الحالية: في انتظار موافقة مدير الوحدة';
-        }
-      } else if (
-        stageStatus === ApprovalStatusEnum.ApprovedByUnitManager ||
-        stageStatus === ApprovalStatusEnum.ApprovedByUnitManagerPartially
-      ) {
-        if (userRole === RolesEnums.UnitManager) {
-          return 'تم الموافقة من قبل مدير الوحدة وفي انتظار موافقة مدير المنطقة';
-        } else if (userRole === RolesEnums.HighManagement) {
-          return 'المرحلة الحالية: في انتظار موافقة مدير المنطقة';
-        }
-      } else if (
-        stageStatus === ApprovalStatusEnum.ApprovedByRegionManager ||
-        stageStatus === ApprovalStatusEnum.ApprovedByRegionManagerPartially
-      ) {
-        if (
-          userRole === RolesEnums.UnitManager ||
-          userRole === RolesEnums.RegionManager
-        ) {
-          return 'تم الموافقة من قبل مدير المنطقة وفي انتظار موافقة الإدارة العليا';
-        }
-      } else if (stageStatus === ApprovalStatusEnum.RejectedByUnitManager) {
-        return 'تم رفض هذه المرحلة من قبل مدير الوحدة';
-      } else if (stageStatus === ApprovalStatusEnum.RejectedByRegionManager) {
-        return 'تم رفض هذه المرحلة من قبل مدير المنطقة';
-      } else if (stageStatus === ApprovalStatusEnum.RejectedByHighManagement) {
-        return 'تم رفض هذه المرحلة من قبل الإدارة العليا';
-      } else if (stageStatus === ApprovalStatusEnum.ReturnedByUnitManager) {
-        return 'تم إعادة هذه المرحلة من قبل مدير الوحدة';
-      } else if (stageStatus === ApprovalStatusEnum.ReturnedByRegionManager) {
-        if (userRole === RolesEnums.UnitManager) {
-          return 'بعد مراجعة العناصر المعادة، يمكنك إعادة إرسال المرحلة إلى مدير المنطقة';
-        } else {
-          return 'تم إعادة هذه المرحلة من قبل مدير المنطقة';
-        }
-      } else if (stageStatus === ApprovalStatusEnum.ReturnedByHighManagement) {
-        if (userRole === RolesEnums.UnitManager) {
-          return 'بعد مراجعة العناصر المعادة، يمكنك إعادة إرسال المرحلة';
-        } else if (userRole === RolesEnums.RegionManager) {
-          return 'بعد مراجعة العناصر المعادة، يمكنك إعادة إرسال المرحلة إلى الإدارة العليا';
-        } else {
-          return 'تم إعادة هذه المرحلة من قبل الإدارة العليا';
-        }
-      }
-
-      return 'لا يمكنك الموافقة على المرحلة في هذه الحالة';
-    }
-
-    if (!allItemsActed) {
-      // Find items that need action
-      const itemsNeedingAction = items.filter((item) => {
-        if (userRole === RolesEnums.UnitManager) {
-          // Unit Manager needs to act on pending items only
-          return (
-            item.status === ApprovalStatusEnum.Pending ||
-            item.status === 'Pending'
-          );
-        } else if (userRole === RolesEnums.RegionManager) {
-          // For Region Manager: Only items approved by Unit Manager need action
-          const isReadyForRegionManager =
-            item.status === ApprovalStatusEnum.ApprovedByUnitManager ||
-            item.status === ApprovalStatusEnum.ApprovedByUnitManagerPartially;
-
-          const isAlreadyActedUponByRegionManager =
-            item.status === ApprovalStatusEnum.ApprovedByRegionManager ||
-            item.status ===
-              ApprovalStatusEnum.ApprovedByRegionManagerPartially ||
-            item.status === ApprovalStatusEnum.RejectedByRegionManager ||
-            item.status === ApprovalStatusEnum.ApprovedByHighManagement ||
-            item.status ===
-              ApprovalStatusEnum.ApprovedByHighManagementPartially ||
-            item.status === ApprovalStatusEnum.RejectedByHighManagement;
-
-          return isReadyForRegionManager && !isAlreadyActedUponByRegionManager;
-        } else if (userRole === RolesEnums.HighManagement) {
-          return (
-            item.status !== ApprovalStatusEnum.ApprovedByHighManagement &&
-            item.status !==
-              ApprovalStatusEnum.ApprovedByHighManagementPartially &&
-            item.status !== ApprovalStatusEnum.RejectedByHighManagement &&
-            item.status !== ApprovalStatusEnum.RejectedByUnitManager &&
-            item.status !== ApprovalStatusEnum.RejectedByRegionManager
-          );
-        }
-        return false;
-      });
-
-      // Find elements that need action
-      const elementsNeedingAction = points.filter((point) => {
-        if (userRole === RolesEnums.UnitManager) {
-          // Unit Manager needs to act on pending points only
-          return (
-            point.status === ApprovalStatusEnum.Pending ||
-            point.status === 'Pending'
-          );
-        } else if (userRole === RolesEnums.RegionManager) {
-          // For Region Manager: Only items approved by Unit Manager need action
-          // Items rejected by Unit Manager are not actionable by Region Manager
-          const isReadyForRegionManager =
-            point.status === ApprovalStatusEnum.ApprovedByUnitManager ||
-            point.status === ApprovalStatusEnum.ApprovedByUnitManagerPartially;
-
-          const isAlreadyActedUponByRegionManager =
-            point.status === ApprovalStatusEnum.ApprovedByRegionManager ||
-            point.status ===
-              ApprovalStatusEnum.ApprovedByRegionManagerPartially ||
-            point.status === ApprovalStatusEnum.RejectedByRegionManager ||
-            point.status === ApprovalStatusEnum.ApprovedByHighManagement ||
-            point.status ===
-              ApprovalStatusEnum.ApprovedByHighManagementPartially ||
-            point.status === ApprovalStatusEnum.RejectedByHighManagement;
-
-          // Return true if this point needs action (ready but not acted upon)
-          return isReadyForRegionManager && !isAlreadyActedUponByRegionManager;
-        } else if (userRole === RolesEnums.HighManagement) {
-          return (
-            point.status !== ApprovalStatusEnum.ApprovedByHighManagement &&
-            point.status !==
-              ApprovalStatusEnum.ApprovedByHighManagementPartially &&
-            point.status !== ApprovalStatusEnum.RejectedByHighManagement &&
-            point.status !== ApprovalStatusEnum.RejectedByUnitManager &&
-            point.status !== ApprovalStatusEnum.RejectedByRegionManager
-          );
-        }
-        return false;
-      });
-
-      // Combine items and elements that need action
-      const allNeedingAction = [
-        ...itemsNeedingAction,
-        ...elementsNeedingAction,
-      ];
-
-      // Helper function to get a meaningful name for an element
-      const getElementName = (element: any): string => {
-        // Try different possible name fields
-        if (element.name && element.name.trim()) {
-          return element.name.trim();
-        }
-        if (element.value && element.value.trim()) {
-          return element.value.trim();
-        }
-        if (element.content && element.content.trim()) {
-          return element.content.trim();
-        }
-
-        // If it's a main item, use type-based naming
-        if (element.type) {
-          const typeNames: Record<string, string> = {
-            Vision: 'الرؤية',
-            Message: 'الرسالة',
-            Value: 'القيم',
-          };
-          return typeNames[element.type] || element.type;
-        }
-
-        // Last resort - use ID if available
-        if (element.id) {
-          return `عنصر رقم ${element.id}`;
-        }
-
-        return 'عنصر';
-      };
-
-      if (allNeedingAction.length === 0) {
-        return '';
-      }
-
-      const elementNames =
-        allNeedingAction.length <= 3
-          ? allNeedingAction.map(getElementName).join(', ')
-          : `${allNeedingAction.length} عناصر`;
-
-      return `يرجى اتخاذ إجراء على العناصر التالية: ${elementNames}`;
-    }
-
-    return '';
+    // Already sent, and nothing new has been ticked since.
+    const next = this.roleName(
+      Math.min(...all.map((x) => this.holderRank(x.status)))
+    );
+    return next ? `تم إرسال المرحلة، وهي الآن بانتظار ${next}` : 'تم إرسال المرحلة';
   });
 
+  // Whose move an item is waiting on: the role that ticked it but has not
+  // pressed send yet, or otherwise the next role up. Pending is the unit
+  // manager's; ApprovedByUnitManagerPartially is still the unit manager's too,
+  // until they send.
+  private holderRank(status: string | null | undefined): number {
+    const rank = this.approvalRank(status);
+    return this.isPartialStatus(status) ? rank : rank + 1;
+  }
+
+  // Whether pressing send would hand anything on: either the stage has not
+  // reached this role yet, or this role has ticked items it has not sent. The
+  // second half is what lets a reworked element through when the stage status
+  // is still ahead of it. Mirrors Utils.HasSomethingToSend on the server.
+  private hasSomethingToSend(
+    stageStatus: string | null,
+    all: any[],
+    myRank: number
+  ): boolean {
+    return (
+      this.approvalRank(stageStatus) < myRank ||
+      all.some(
+        (x) =>
+          this.isPartialStatus(x.status) && this.approvalRank(x.status) === myRank
+      )
+    );
+  }
+
+  // How far up the ladder a status has been approved: 1 unit manager,
+  // 2 region manager, 3 high management, 0 for anything not yet approved. The
+  // full and the "Partially" form of a level count the same. Mirrors
+  // Utils.ApprovalRank on the server.
+  private approvalRank(status: string | null | undefined): number {
+    switch (status) {
+      case ApprovalStatusEnum.ApprovedByUnitManager:
+      case ApprovalStatusEnum.ApprovedByUnitManagerPartially:
+        return 1;
+      case ApprovalStatusEnum.ApprovedByRegionManager:
+      case ApprovalStatusEnum.ApprovedByRegionManagerPartially:
+        return 2;
+      case ApprovalStatusEnum.ApprovedByHighManagement:
+      case ApprovalStatusEnum.ApprovedByHighManagementPartially:
+        return 3;
+      default:
+        return 0;
+    }
+  }
+
+  private roleRank(role: RolesEnums | null): number {
+    switch (role) {
+      case RolesEnums.UnitManager:
+        return 1;
+      case RolesEnums.RegionManager:
+        return 2;
+      case RolesEnums.HighManagement:
+        return 3;
+      default:
+        return 0;
+    }
+  }
+
+  // Whether this role can send the stage on.
+  //
+  // This used to be three near-identical branches, each demanding that every
+  // item and element read *exactly* its own role's status. Anything approved a
+  // level higher failed that equality, so a region manager looking at a stage
+  // where two elements had already been ticked by high management saw no button
+  // at all, with nothing on screen to say why. Comparing levels by rank instead
+  // means "approved at my level or above" counts as done, which is what the
+  // server now does too.
   readonly canShowSubmitButton: Signal<boolean> = computed(() => {
     const userRole = this.currentUserRole();
     const points = this._points();
     const items = this._items();
     const stageStatus = this._stageStatus();
 
-    // No items or points, no button
-    if (items.length === 0 && points.length === 0) {
-      return false;
-    }
+    if (!this._isDirectionDataLoaded()) return false;
 
-    // If direction is already fully approved, don't show the button
-    if (
-      stageStatus === ApprovalStatusEnum.ApprovedByHighManagement ||
-      stageStatus === ApprovalStatusEnum.ApprovedByHighManagementPartially
-    ) {
-      return false;
-    }
+    // Only the three reviewing roles ever send a stage on.
+    const myRank = this.roleRank(userRole);
+    if (myRank === 0) return false;
 
-    if (userRole === RolesEnums.UnitManager) {
-      // Unit Manager can submit only if:
-      // 1. There are items/points
-      // 2. All items/points have been approved by unit manager (or have partial approval statuses)
-      // 3. Stage hasn't been submitted yet by unit manager (original first-time approval logic)
+    if (items.length === 0 && points.length === 0) return false;
 
-      // If stage is already approved by unit manager or beyond, hide button (use resubmit button instead)
-      if (
-        stageStatus === ApprovalStatusEnum.ApprovedByUnitManager ||
-        stageStatus === ApprovalStatusEnum.ApprovedByUnitManagerPartially ||
-        stageStatus === ApprovalStatusEnum.ApprovedByRegionManager ||
-        stageStatus === ApprovalStatusEnum.ApprovedByRegionManagerPartially ||
-        stageStatus === ApprovalStatusEnum.ApprovedByHighManagement ||
-        stageStatus === ApprovalStatusEnum.ApprovedByHighManagementPartially
-      ) {
-        return false;
-      }
+    // Finished; there is nothing left to send.
+    if (stageStatus === ApprovalStatusEnum.ApprovedByHighManagement) return false;
 
-      // Check if all items are approved by unit manager
-      const allItemsApprovedByUnitManager = items.every(
-        (item) =>
-          item.status === ApprovalStatusEnum.ApprovedByUnitManager ||
-          item.status === ApprovalStatusEnum.ApprovedByUnitManagerPartially
-      );
+    // Anything sent back has to be reworked before the stage moves.
+    const blocked = [...items, ...points].some(
+      (x) =>
+        RejectionStatuses.includes(x.status) || ReturnedStatuses.includes(x.status)
+    );
+    if (blocked) return false;
 
-      // Check if all points are approved by unit manager
-      const allPointsApprovedByUnitManager = points.every(
-        (point) =>
-          point.status === ApprovalStatusEnum.ApprovedByUnitManager ||
-          point.status === ApprovalStatusEnum.ApprovedByUnitManagerPartially
-      );
+    // Every item and element has to have reached this role's level. Approved
+    // higher counts as reached.
+    const all = [...items, ...points];
+    if (!all.every((x) => this.approvalRank(x.status) >= myRank)) return false;
 
-      const result =
-        allItemsApprovedByUnitManager && allPointsApprovedByUnitManager;
-
-      // For partial approval scenario: Only show button if there are partial approvals
-      // AND all items/points have been acted upon (no pending items)
-      if (!result) {
-        const hasPartialApprovals = this.hasPartialApprovalStatuses();
-        const allItemsActedUpon = this.allItemsActedUpon();
-
-        // Show button only if there are partial approvals AND all items have been acted upon
-        if (hasPartialApprovals && allItemsActedUpon) {
-          console.log(
-            '[DirectionStatusService] Unit Manager button shown due to partial approvals with all items acted upon:',
-            {
-              hasPartialApprovals,
-              allItemsActedUpon,
-              stageStatus,
-            }
-          );
-          return true;
-        }
-      }
-
-      return result;
-    }
-
-    if (userRole === RolesEnums.RegionManager) {
-      // Region Manager can submit only if:
-      // 1. There are items/points
-      // 2. All items/points have been approved by region manager
-      // 3. Stage hasn't been submitted yet by region manager
-
-      // If stage is already approved by region manager or beyond, hide button
-      if (
-        stageStatus === ApprovalStatusEnum.ApprovedByRegionManager ||
-        stageStatus === ApprovalStatusEnum.ApprovedByRegionManagerPartially ||
-        stageStatus === ApprovalStatusEnum.ApprovedByHighManagement ||
-        stageStatus === ApprovalStatusEnum.ApprovedByHighManagementPartially
-      ) {
-        return false;
-      }
-
-      // Only show if stage is approved by unit manager and waiting for region manager
-      if (
-        stageStatus !== ApprovalStatusEnum.ApprovedByUnitManager &&
-        stageStatus !== ApprovalStatusEnum.ApprovedByUnitManagerPartially
-      ) {
-        return false;
-      }
-
-      // Check if all items are approved by region manager
-      const allItemsApprovedByRegionManager = items.every(
-        (item) =>
-          item.status === ApprovalStatusEnum.ApprovedByRegionManager ||
-          item.status === ApprovalStatusEnum.ApprovedByRegionManagerPartially
-      );
-
-      // Check if all points are approved by region manager
-      const allPointsApprovedByRegionManager = points.every(
-        (point) =>
-          point.status === ApprovalStatusEnum.ApprovedByRegionManager ||
-          point.status === ApprovalStatusEnum.ApprovedByRegionManagerPartially
-      );
-
-      return (
-        allItemsApprovedByRegionManager && allPointsApprovedByRegionManager
-      );
-    }
-
-    if (userRole === RolesEnums.HighManagement) {
-      // High Management can submit only if:
-      // 1. There are items/points
-      // 2. All items/points have been approved by high management
-      // 3. Stage hasn't been submitted yet by high management
-
-      // If stage is already approved by high management, hide button
-      if (
-        stageStatus === ApprovalStatusEnum.ApprovedByHighManagement ||
-        stageStatus === ApprovalStatusEnum.ApprovedByHighManagementPartially
-      ) {
-        return false;
-      }
-
-      // Only show if stage is approved by region manager and waiting for high management
-      if (
-        stageStatus !== ApprovalStatusEnum.ApprovedByRegionManager &&
-        stageStatus !== ApprovalStatusEnum.ApprovedByRegionManagerPartially
-      ) {
-        return false;
-      }
-
-      // Check if all items are approved by high management
-      const allItemsApprovedByHighManagement = items.every(
-        (item) =>
-          item.status === ApprovalStatusEnum.ApprovedByHighManagement ||
-          item.status === ApprovalStatusEnum.ApprovedByHighManagementPartially
-      );
-
-      // Check if all points are approved by high management
-      const allPointsApprovedByHighManagement = points.every(
-        (point) =>
-          point.status === ApprovalStatusEnum.ApprovedByHighManagement ||
-          point.status === ApprovalStatusEnum.ApprovedByHighManagementPartially
-      );
-
-      return (
-        allItemsApprovedByHighManagement && allPointsApprovedByHighManagement
-      );
-    }
-
-    // Default: no button for other roles
-    return false;
+    // And there has to be something to send. This replaces "the stage status is
+    // past me, so hide the button", which went wrong when one element was
+    // refused higher up and reworked: the stage status stayed high, the element
+    // came back through the unit manager, and neither they nor the region
+    // manager could ever send it again.
+    return this.hasSomethingToSend(stageStatus, all, myRank);
   });
 
   // Public accessors as computed signals
+  //
+  // Only the full status counts as approved. It used to accept the "Partially"
+  // one as well, which meant the stage looked closed and the "الي الاهداف" link
+  // appeared while high management had merely ticked an item — before the stage
+  // was approved and before the plan had actually advanced to الأهداف.
   readonly isDirectionApproved = computed(
-    () =>
-      this._isDirectionApproved() ||
-      this._stageStatus() === ApprovalStatusEnum.ApprovedByHighManagement ||
-      this._stageStatus() ===
-        ApprovalStatusEnum.ApprovedByHighManagementPartially
+    () => this._stageStatus() === ApprovalStatusEnum.ApprovedByHighManagement
   );
 
   readonly stageStatus = computed(() => this._stageStatus());
@@ -1180,10 +898,10 @@ export class DirectionStatusService {
         // Extract the status
         const { status } = response.data;
 
-        // Check if direction is fully approved
+        // Fully approved means the full status only; the "Partially" one is a
+        // single item being ticked, not the stage being closed.
         this._isDirectionApproved.set(
-          status === ApprovalStatusEnum.ApprovedByHighManagement ||
-            status === ApprovalStatusEnum.ApprovedByHighManagementPartially
+          status === ApprovalStatusEnum.ApprovedByHighManagement
         );
 
         this._stageStatus.set(status);

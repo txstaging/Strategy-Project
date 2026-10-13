@@ -67,6 +67,13 @@ namespace Mod.APIs.Controllers
 
             await _notification.NotifyAsync(notifAction, ModulesNamesOnArabic.Analsis, unit, FormNameToReturnToFront.analysisstage, PlanId, actingRole);
 
+            // «إشعارات بمدى التقدم» — the plan has entered the strategic direction
+            // stage, which the service advanced it to a moment ago.
+            if (actingRole == RoleEnum.HighManagement)
+            {
+                await _notification.NotifyAsync(NotificationAction.StageProgress, ModulesNamesOnArabic.Direction, unit, FormNameToReturnToFront.directionstage, PlanId, actingRole, plan?.Name);
+            }
+
             return Ok(result);
         }
     }

@@ -72,6 +72,13 @@
 
                 return $"Uploads/{subFolder}/{fileName}";
             }
+            catch (UnauthorizedAccessException)
+            {
+                // The site's application pool may not write to wwwroot/Uploads on
+                // this server. Say so plainly instead of showing the user a raw
+                // Windows path; the fix is a folder permission, not a retry.
+                return $"Error: تعذر حفظ المرفق على الخادم لعدم وجود صلاحية كتابة على مجلد المرفقات (Uploads/{subFolder}). يرجى التواصل مع مسؤول النظام.";
+            }
             catch (Exception ex)
             {
                 return $"Error: {ex.Message}";

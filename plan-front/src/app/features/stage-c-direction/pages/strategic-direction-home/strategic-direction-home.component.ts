@@ -214,20 +214,10 @@ export class StrategicDirectionHomeComponent implements OnInit, OnDestroy {
       this.loadUserInfo();
     }
 
-    // Monitor route parameters for action=approve
-    this.route.queryParams
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((params) => {
-        if (params['action'] === 'approve') {
-          this.approveDirection();
-          // Remove the query param to avoid reapproving on page refresh
-          this.router.navigate([], {
-            relativeTo: this.route,
-            queryParams: {},
-            replaceUrl: true,
-          });
-        }
-      });
+    // A ?action=approve query parameter used to pop the stage confirmation
+    // dialog on arrival, so a refresh, a bookmark or a back-navigation could
+    // start an approval nobody asked for. Approving is a deliberate act and now
+    // happens only from the button.
   }
 
   ngOnDestroy(): void {
@@ -308,6 +298,15 @@ export class StrategicDirectionHomeComponent implements OnInit, OnDestroy {
 
   get showDirectionResubmitBtn(): boolean {
     return this.directionStatusService.canShowResubmitButton();
+  }
+
+  // One rule decides this now. canShowSubmitButton already covers the resubmit
+  // case, because it allows a role to send whenever the stage has not travelled
+  // past them. Keeping the old resubmit gate in the condition would let two
+  // different pieces of logic disagree about the same button, which is how the
+  // yellow resubmit button came to replace the one the manager was looking for.
+  get showSendButton(): boolean {
+    return this.showDirectionSubmissionBtn;
   }
 
   get buttonDisabledReason(): string {

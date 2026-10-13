@@ -1,11 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RolesEnums } from '../../../../Core/utilities/consts';
 import { PlanProjectsService } from '../../services/plan-projects.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { ActionsAdminComponent } from '../../../../shared/components/app-admin-actions/app-admin-actions.component';
 import { StatusActionComponent } from '../../../../shared/components/status-action/status.component';
+import {
+  blocksApproval,
+  canRoleActInStage,
+} from '../../../../Core/utilities/approval-ladder';
 
 @Component({
   selector: 'app-project-view-modal',
@@ -19,7 +23,7 @@ import { StatusActionComponent } from '../../../../shared/components/status-acti
   templateUrl: './project-view-modal.component.html',
   styleUrl: './project-view-modal.component.css',
 })
-export class ProjectViewModalComponent {
+export class ProjectViewModalComponent implements OnInit {
   @Input() isOpen = false;
   @Input() project: any = null;
   @Input() planId = '';
@@ -35,10 +39,69 @@ export class ProjectViewModalComponent {
   currentActionItemId = '';
   currentActionType = '';
 
+  // The projects stage status. The card is opened both from the stage page and
+  // from each table row, so it reads the status itself rather than relying on
+  // whoever opened it. Nothing is actionable until it has arrived.
+  private stageStatus: string | null = null;
+  private stageStatusLoaded = false;
+
   constructor(
     private authService: AuthService,
     private projectsService: PlanProjectsService
   ) {}
+
+  ngOnInit(): void {
+    if (!this.planId) {
+      this.stageStatusLoaded = true;
+      return;
+    }
+    this.projectsService.getProjectStatus(this.planId).subscribe({
+      next: (response: any) => {
+        this.stageStatus = response?.status ?? null;
+        this.stageStatusLoaded = true;
+      },
+      error: () => {
+        this.stageStatusLoaded = true;
+      },
+    });
+  }
+
+  /**
+   * Whether the current manager may approve, reject or return a field (or the
+   * project) at this status. Same ladder as the backend
+   * (Utils.CanRoleActInStage).
+   *
+   * This used to be "the status does not name my role", so when another project
+   * was returned and the stage went back to the unit manager, a project the
+   * region manager had already approved offered all its buttons again, and
+   * approving a field wrote it back down to the unit manager.
+   */
+  canActOn(status: string | null | undefined): boolean {
+    if (this.isProjectsApproved || !this.isAllowToApprove) return false;
+    if (!this.stageStatusLoaded) return false;
+    return canRoleActInStage(
+      status,
+      this.stageStatus,
+      this.authService.getUserRole()
+    );
+  }
+
+  // A field is done for this role once it is approved at this level or above;
+  // an approval earned higher up before a rework still counts.
+  private isFieldDone(status: string | null | undefined): boolean {
+    return !blocksApproval(status, this.authService.getUserRole());
+  }
+
+  /**
+   * «يجب إنهاء جميع الإجراءات في بطاقة المشروع»: this card still has work for
+   * the current manager — fields to act on, or the project itself to approve
+   * once they are done. Shown at the foot of the card so nobody closes it
+   * thinking the project is finished; the stage cannot be sent until it is.
+   */
+  hasOpenActionsForMe(): boolean {
+    if (!this.project) return false;
+    return this.canActOn(this.project.status);
+  }
 
   get isAllowToApprove(): boolean {
     return this.authService.allowInRoles([
@@ -138,10 +201,7 @@ export class ProjectViewModalComponent {
     if (this.project.startDateItem) projectFields.push(this.project.startDateItem);
     if (this.project.endDateItem) projectFields.push(this.project.endDateItem);
 
-    return projectFields.every((field) => {
-      if (!field || !field.status) return false;
-      return this.isActionAlreadyTakenByTheCurrentManager(field.status);
-    });
+    return projectFields.every((field) => this.isFieldDone(field?.status));
   }
 
   /**
@@ -152,61 +212,49 @@ export class ProjectViewModalComponent {
 
     if (
       this.project?.name &&
-      !this.isActionAlreadyTakenByTheCurrentManager(this.project.name.status)
+      !this.isFieldDone(this.project.name.status)
     ) {
       pendingItems.push('اسم المشروع');
     }
     if (
       this.project?.priority &&
-      !this.isActionAlreadyTakenByTheCurrentManager(
-        this.project.priority.status
-      )
+      !this.isFieldDone(this.project.priority.status)
     ) {
       pendingItems.push('أولوية المشروع');
     }
     if (
       this.project?.duration &&
-      !this.isActionAlreadyTakenByTheCurrentManager(
-        this.project.duration.status
-      )
+      !this.isFieldDone(this.project.duration.status)
     ) {
       pendingItems.push('مدة المشروع');
     }
     if (
       this.project?.beneficiaries &&
-      !this.isActionAlreadyTakenByTheCurrentManager(
-        this.project.beneficiaries.status
-      )
+      !this.isFieldDone(this.project.beneficiaries.status)
     ) {
       pendingItems.push('المستفيدين');
     }
     if (
       this.project?.supervisingAuthority &&
-      !this.isActionAlreadyTakenByTheCurrentManager(
-        this.project.supervisingAuthority.status
-      )
+      !this.isFieldDone(this.project.supervisingAuthority.status)
     ) {
       pendingItems.push('الجهة المشرفة');
     }
     if (
       this.project?.weight &&
-      !this.isActionAlreadyTakenByTheCurrentManager(this.project.weight.status)
+      !this.isFieldDone(this.project.weight.status)
     ) {
       pendingItems.push('وزن المشروع');
     }
     if (
       this.project?.startDateItem &&
-      !this.isActionAlreadyTakenByTheCurrentManager(
-        this.project.startDateItem.status
-      )
+      !this.isFieldDone(this.project.startDateItem.status)
     ) {
       pendingItems.push('تاريخ البداية');
     }
     if (
       this.project?.endDateItem &&
-      !this.isActionAlreadyTakenByTheCurrentManager(
-        this.project.endDateItem.status
-      )
+      !this.isFieldDone(this.project.endDateItem.status)
     ) {
       pendingItems.push('تاريخ النهاية');
     }

@@ -6,6 +6,13 @@
       <div class="title">تعديل معلومات المشروع</div>
     </div>
 
+    @if (hasFieldsToEdit()) {
+      <div class="alert alert-warning mt-3 mb-0 text-end">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        العناصر المحددة باللون الأحمر تمت إعادتها أو رفضها وتحتاج إلى تعديل قبل إعادة الإرسال.
+      </div>
+    }
+
     <div class="mt-5">
       <div class="d-flex justify-content-between">
         <h6 class="text-success">الأولوية:</h6>
@@ -24,11 +31,17 @@
         [ngModel]="projectForm.get('priority')?.value"
         (ngModelChange)="projectForm.get('priority')?.setValue($event)"
         class="form-select"
+        [class.border-danger]="needsEdit('priority')"
       >
         <option value="أولوية أولى">أولوية أولى</option>
         <option value="أولوية ثانية">أولوية ثانية</option>
         <option value="أولوية ثالثة">أولوية ثالثة</option>
       </select>
+      @if (needsEdit('priority')) {
+        <small class="text-danger d-block mt-1">
+          <i class="bi bi-arrow-counterclockwise"></i> {{ reviewNote('priority') }}
+        </small>
+      }
 
       <form [formGroup]="projectForm" (ngSubmit)="onSubmit()" class="mt-5">
         <div class="row">
@@ -93,7 +106,13 @@
               id="projectName"
               formControlName="name"
               class="form-control"
+              [class.border-danger]="needsEdit('name')"
             ></textarea>
+            @if (needsEdit('name')) {
+              <small class="text-danger d-block mt-1">
+                <i class="bi bi-arrow-counterclockwise"></i> {{ reviewNote('name') }}
+              </small>
+            }
           </div>
           <div class="col-2">
             <div class="d-flex justify-content-between">
@@ -113,7 +132,13 @@
               id="projectDuration"
               formControlName="duration"
               class="form-control"
+              [class.border-danger]="needsEdit('duration')"
             ></textarea>
+            @if (needsEdit('duration')) {
+              <small class="text-danger d-block mt-1">
+                <i class="bi bi-arrow-counterclockwise"></i> {{ reviewNote('duration') }}
+              </small>
+            }
           </div>
           <div class="col-2">
             <div class="d-flex justify-content-between">
@@ -135,7 +160,13 @@
               id="projectBeneficiaries"
               formControlName="beneficiaries"
               class="form-control"
+              [class.border-danger]="needsEdit('beneficiaries')"
             ></textarea>
+            @if (needsEdit('beneficiaries')) {
+              <small class="text-danger d-block mt-1">
+                <i class="bi bi-arrow-counterclockwise"></i> {{ reviewNote('beneficiaries') }}
+              </small>
+            }
           </div>
           <div class="col-2">
             <div class="d-flex justify-content-between">
@@ -159,7 +190,13 @@
               id="projectAuthority"
               formControlName="supervisingAuthority"
               class="form-control"
+              [class.border-danger]="needsEdit('supervisingAuthority')"
             ></textarea>
+            @if (needsEdit('supervisingAuthority')) {
+              <small class="text-danger d-block mt-1">
+                <i class="bi bi-arrow-counterclockwise"></i> {{ reviewNote('supervisingAuthority') }}
+              </small>
+            }
           </div>
           <div class="col-2">
             <div class="d-flex justify-content-between">
@@ -181,7 +218,29 @@
               id="projectWeight"
               formControlName="weight"
               class="form-control"
+              [class.border-danger]="needsEdit('weight')"
             ></textarea>
+            @if (needsEdit('weight')) {
+              <small class="text-danger d-block mt-1">
+                <i class="bi bi-arrow-counterclockwise"></i> {{ reviewNote('weight') }}
+              </small>
+            }
+          </div>
+        </div>
+
+        <!-- Initiative -->
+        <div class="row mt-3">
+          <div class="col-12">
+            <label for="planInitiativeId" class="form-label">المبادرة المرتبطة</label>
+            <select
+              id="planInitiativeId"
+              class="form-select"
+              formControlName="planInitiativeId"
+            >
+              @for (initiative of initiatives; track initiative.id) {
+                <option [ngValue]="initiative.id">{{ initiative.name }}</option>
+              }
+            </select>
           </div>
         </div>
 
@@ -194,7 +253,13 @@
                 projectForm.get('startDate')?.invalid &&
                 projectForm.get('startDate')?.touched
               ) {
-                <small class="text-danger"> برجاء ادخال تاريخ البداية </small>
+                <small class="text-danger">
+                  @if (projectForm.get('startDate')?.hasError('beforeToday')) {
+                    لا يمكن أن يكون تاريخ البداية قبل تاريخ اليوم
+                  } @else {
+                    برجاء ادخال تاريخ البداية
+                  }
+                </small>
               }
             </div>
             <input
@@ -205,17 +270,32 @@
               "
               id="startDate"
               formControlName="startDate"
+              [min]="today"
               class="form-control"
+              [class.border-danger]="needsEdit('startDate')"
             />
+            @if (needsEdit('startDate')) {
+              <small class="text-danger d-block mt-1">
+                <i class="bi bi-arrow-counterclockwise"></i> {{ reviewNote('startDate') }}
+              </small>
+            }
           </div>
           <div class="col-6">
             <div class="d-flex justify-content-between">
               <label for="endDate" class="form-label">تاريخ النهاية</label>
               @if (
-                projectForm.get('endDate')?.invalid &&
+                (projectForm.get('endDate')?.invalid || projectForm.hasError('endBeforeStart')) &&
                 projectForm.get('endDate')?.touched
               ) {
-                <small class="text-danger"> برجاء ادخال تاريخ النهاية </small>
+                <small class="text-danger">
+                  @if (projectForm.get('endDate')?.hasError('beforeToday')) {
+                    لا يمكن أن يكون تاريخ النهاية قبل تاريخ اليوم
+                  } @else if (projectForm.hasError('endBeforeStart')) {
+                    لا يمكن أن يكون تاريخ النهاية قبل تاريخ البداية
+                  } @else {
+                    برجاء ادخال تاريخ النهاية
+                  }
+                </small>
               }
             </div>
             <input
@@ -226,8 +306,15 @@
               "
               id="endDate"
               formControlName="endDate"
+              [min]="projectForm.get('startDate')?.value || today"
               class="form-control"
+              [class.border-danger]="needsEdit('endDate')"
             />
+            @if (needsEdit('endDate')) {
+              <small class="text-danger d-block mt-1">
+                <i class="bi bi-arrow-counterclockwise"></i> {{ reviewNote('endDate') }}
+              </small>
+            }
           </div>
         </div>
 

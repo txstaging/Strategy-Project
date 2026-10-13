@@ -1,0 +1,168 @@
+.ps-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1050;
+}
+
+.ps-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(760px, 94vw);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 10px;
+  z-index: 1051;
+  overflow: hidden;
+}
+
+.ps-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ps-modal__head h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0e5a34;
+}
+
+.ps-modal__body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.ps-modal__foot {
+  display: flex;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.ps-chip {
+  font-size: 11.5px;
+  color: #0e5a34;
+  background: #ecfdf5;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.ps-selected {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #0e5a34;
+  border-radius: 8px;
+  background: #f0fdf4;
+}
+
+.ps-selected__name {
+  flex: 1;
+  color: #111827;
+}
+
+.ps-selected__pct {
+  font-weight: 700;
+  color: #0e5a34;
+  font-size: 18px;
+}
+
+.ps-selected__change {
+  border: none;
+  background: transparent;
+  color: #1d4ed8;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.ps-filter {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ps-filter select {
+  width: 140px;
+}
+
+/* Scrollable lists, so a long unit or user list cannot push the buttons off
+   the screen. */
+.ps-picker {
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.ps-picker--tall {
+  max-height: 260px;
+}
+
+.ps-picker__empty {
+  margin: 0;
+  padding: 8px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.ps-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: inherit;
+  border: none;
+  background: transparent;
+  padding: 7px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ps-option:hover {
+  background: #f9fafb;
+}
+
+.ps-option--on {
+  background: #ecfdf5;
+}
+
+.ps-option__name {
+  flex: 1;
+  color: #111827;
+}
+
+.ps-option small {
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+.ps-option__pct {
+  font-weight: 700;
+  color: #0e5a34;
+}
+
+.ps-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 2px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ps-row small {
+  color: #9ca3af;
+  font-size: 11px;
+}

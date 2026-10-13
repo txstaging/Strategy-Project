@@ -8,6 +8,11 @@ import {
 } from '../../../../Core/utilities/consts';
 import { AuthService } from '../../../auth/services/auth.service';
 import { InitiativesService } from '../../services/initiatives.service';
+import { InitiativesStatusService } from '../../services/initiatives-status.service';
+import {
+  blocksApproval,
+  canRoleActInStage,
+} from '../../../../Core/utilities/approval-ladder';
 import { ActionsAdminComponent } from '../../../../shared/components/app-admin-actions/app-admin-actions.component';
 import { StatusActionComponent } from '../../../../shared/components/status-action/status.component';
 
@@ -41,7 +46,8 @@ export class InitiativesItemViewModalComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private initiativesService: InitiativesService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private initiativesStatusService: InitiativesStatusService
   ) {
     this.isAllowToApprove = this.authService.allowInRoles([
       RolesEnums.UnitManager,
@@ -239,6 +245,31 @@ export class InitiativesItemViewModalComponent implements OnInit {
     this.selectedItemId = null;
     this.reasonComment = '';
     this.selectedItemType = 'item';
+  }
+
+  /**
+   * Whether the current manager may approve, reject or return an element at
+   * this status. Same ladder as the backend (Utils.CanRoleActInStage).
+   *
+   * This used to be "the status does not name my role", so once a rework sent
+   * the stage back to the unit manager, every element the region manager or
+   * high management had already approved offered its buttons again — and
+   * approving one wrote it back down to the unit manager, so the approvals
+   * really did start over.
+   */
+  canActOn(itemStatus: string | null | undefined): boolean {
+    if (this.isInitiativesApproved || !this.isAllowToApprove) return false;
+    return canRoleActInStage(
+      itemStatus,
+      this.initiativesStatusService.getStageStatus(),
+      this.authService.getUserRole()
+    );
+  }
+
+  // An element is done for this role once it is approved at this level or
+  // above; an approval earned higher up before a rework still counts.
+  private isElementDone(itemStatus: string | null | undefined): boolean {
+    return !blocksApproval(itemStatus, this.authService.getUserRole());
   }
 
   /**
@@ -538,21 +569,18 @@ export class InitiativesItemViewModalComponent implements OnInit {
     }
 
     // Check if initiative name has been acted upon
-    const nameActedUpon = this.isItemCompletelyActedUpon(
-      this.initiative.name?.status,
-      userRole
-    );
+    const nameActedUpon = this.isElementDone(this.initiative.name?.status);
 
     // Check if all KPIs have been acted upon
     const kpisActedUpon =
       this.initiative.initiativeKPIs?.every((kpi: any) =>
-        this.isItemCompletelyActedUpon(kpi.status, userRole)
+        this.isElementDone(kpi.status)
       ) ?? true; // If no KPIs, consider complete
 
     // Check if all items have been acted upon
     const itemsActedUpon =
       this.initiative.initiativeItem?.every((item: any) =>
-        this.isItemCompletelyActedUpon(item.status, userRole)
+        this.isElementDone(item.status)
       ) ?? true; // If no items, consider complete
 
     const allActedUpon = nameActedUpon && kpisActedUpon && itemsActedUpon;
@@ -576,10 +604,7 @@ export class InitiativesItemViewModalComponent implements OnInit {
     const pendingMessages: string[] = [];
 
     // Check initiative name
-    const nameActedUpon = this.isItemCompletelyActedUpon(
-      this.initiative.name?.status,
-      userRole
-    );
+    const nameActedUpon = this.isElementDone(this.initiative.name?.status);
     if (!nameActedUpon) {
       pendingMessages.push('اسم المبادرة');
     }
@@ -587,7 +612,7 @@ export class InitiativesItemViewModalComponent implements OnInit {
     // Check KPIs
     const pendingKPIs =
       this.initiative.initiativeKPIs?.filter(
-        (kpi: any) => !this.isItemCompletelyActedUpon(kpi.status, userRole)
+        (kpi: any) => !this.isElementDone(kpi.status)
       ) || [];
     if (pendingKPIs.length > 0) {
       if (pendingKPIs.length === 1) {
@@ -600,7 +625,7 @@ export class InitiativesItemViewModalComponent implements OnInit {
     // Check initiative items
     const pendingItems =
       this.initiative.initiativeItem?.filter(
-        (item: any) => !this.isItemCompletelyActedUpon(item.status, userRole)
+        (item: any) => !this.isElementDone(item.status)
       ) || [];
     if (pendingItems.length > 0) {
       if (pendingItems.length === 1) {

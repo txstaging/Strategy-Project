@@ -22,111 +22,64 @@ namespace Mod.Core.Entities
         public string Role { get; set; }
         public virtual Units? Unit { get; set; }
         public int? UnitId { get; set; }
+
+        // Set when a notification is addressed to one named person rather than to
+        // a whole role or unit, which is what a feedback request needs.
+        public int? UserId { get; set; }
     }
 
 
 
 
 
+    // Tells the client which screen a notification belongs to.
+    //
+    // The name here is matched against the route map in the Angular navbar, so
+    // it must stay in step with it. Goals, init and project used to carry names
+    // left over from a different product ("document-amendment-request",
+    // "external-documents-inventory", "goal-classification"), which matched no
+    // route, so clicking any objectives, initiatives, projects or reports
+    // notification silently did nothing.
+    //
+    // The value is persisted as an integer, so the numbers are pinned: changing
+    // one would change what every existing notification points at. Only the
+    // displayed name is safe to edit, which is why correcting the three names
+    // above also repairs every notification already in the database.
     public enum FormNameToReturnToFront
     {
         [Display(Name = "plans")]
-        plans,
+        plans = 0,
 
         [Display(Name = "analysis-stage")]
-        analysisstage,
+        analysisstage = 1,
 
         [Display(Name = "direction-stage")]
-        directionstage,
+        directionstage = 2,
 
-        [Display(Name = "document-amendment-request")]
-        Goals,
+        [Display(Name = "objectives")]
+        Goals = 3,
 
-        [Display(Name = "external-documents-inventory")]
-        init,
+        [Display(Name = "initiatives")]
+        init = 4,
 
-        [Display(Name = "goal-classification")]
-        project,
+        [Display(Name = "projects")]
+        project = 5,
 
-        [Display(Name = "internal-audit-check-list")]
-        InternalAuditCheckList,
+        [Display(Name = "reports")]
+        reports = 6,
 
-        [Display(Name = "Internal-auditor")]
-        InternalAuditorRecordForm,
+        // Opens the feedback request itself rather than a stage, because the
+        // recipient has to read the question and answer it.
+        [Display(Name = "feedback")]
+        feedback = 7,
 
-        [Display(Name = "internal-audit-program-model")]
-        InternalAuditProgramModel,
+        // Opens a shared progress figure (مشاركة نسبة الإنجاز).
+        [Display(Name = "progress")]
+        progress = 8,
 
-        [Display(Name = "internal-audit-report")]
-        InternalAuditReportForm,
-
-        [Display(Name = "Iso")]
-        Iso,
-
-        [Display(Name = "lessons-learned")]
-        LessonsLearnedModel,
-
-        [Display(Name = "main-list-of-documents")]
-        MainListOfDocuments,
-
-        [Display(Name = "model-the-resson-for-choosinga-goal")]
-        ModelTheReasonForChoosingaGoal,
-
-        [Display(Name = "monitoring-measurement/form/1")]
-        BeneficiarySatisfactionSurveyReport,
-
-        [Display(Name = "monitoring-measurement/form/2")]
-        CommunitySatisfactionSurveyReport,
-
-        [Display(Name = "monitoring-measurement/form/3")]
-        PartnerSatisfactionSurveyReport,
-
-        [Display(Name = "monitoring-measurement/form/4")]
-        SupplierSatisfactionSurveyReport,
-
-        [Display(Name = "monitoring-measurement/form/5")]
-        HRSatisfactionSurveyReport,
-
-        [Display(Name = "supporting-documents")]
-        h,
-
-        [Display(Name = "monthly-goal-tracking-report")]
-        MonthlyGoalTrackingReportTemplate,
-
-        [Display(Name = "non-conformity")]
-        NonConformityRegistrationForm,
-
-        [Display(Name = "operation-document-template")]
-        OperationsDocumentTemplate,
-
-        [Display(Name = "operations-inventory")]
-        OperationsInventoryForm,
-
-        [Display(Name = "paper-documents-distribution-list")]
-        PaperDocumentsDistributionList,
-
-        [Display(Name = "plan-and-goal")]
-        PlanAndGoalModel,
-
-        [Display(Name = "quality-policy")]
-        QualityPolicyModel,
-
-        [Display(Name = "inventory-records")]
-        RecordInventory,
-
-        [Display(Name = "work-indicators")]
-        RecordWorkIndicators,
-
-        [Display(Name = "canceled-documents")]
-        RegisterOfCancelledDocuments,
-
-        [Display(Name = "risks-opportunities")]
-        RisksAndThreatsForms,
-
-        [Display(Name = "senior-mangment-review")]
-        SeniorMagmentReviewModel,
-
-        [Display(Name = "table-of-models-for-inventorying")]
-        TableOfModelsForInventoryingContents
+        // The communication and risk plan sheet under the reports stage. Used as
+        // a feedback-request subject; it has no notification of its own.
+        [Display(Name = "communication")]
+        communication = 9,
     }
 }

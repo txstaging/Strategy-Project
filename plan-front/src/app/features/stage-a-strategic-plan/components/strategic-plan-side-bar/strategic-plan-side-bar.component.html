@@ -186,10 +186,46 @@
     <a
       routerLink="/plans/reports"
       routerLinkActive
-      [class.active]="router.url.includes('reports')"
+      [class.active]="router.url.includes('/plans/reports')"
     >
       <img src="/assets/v5-icon (4).png" alt="Reports Icon" />
       &nbsp;&nbsp;التقارير
+    </a>
+    <a
+      routerLink="/plans/communication"
+      routerLinkActive
+      [class.active]="router.url.includes('/plans/communication')"
+      title="خطة التواصل والمجازفات"
+    >
+      <i class="bi bi-diagram-3 sidebar-glyph"></i>
+      &nbsp;&nbsp;خطة التواصل والمجازفات
+    </a>
+    <a
+      routerLink="/plans/resources"
+      routerLinkActive
+      [class.active]="router.url.includes('/plans/resources')"
+      title="الموارد والميزانيات والعقود"
+    >
+      <i class="bi bi-cash-coin sidebar-glyph"></i>
+      &nbsp;&nbsp;الموارد والميزانيات والعقود
+    </a>
+    <a
+      routerLink="/plans/stakeholders"
+      routerLinkActive
+      [class.active]="router.url.includes('/plans/stakeholders')"
+      title="المعنيون بالمبادرات والمشاريع"
+    >
+      <i class="bi bi-people sidebar-glyph"></i>
+      &nbsp;&nbsp;المعنيون بالمبادرات والمشاريع
+    </a>
+    <a
+      routerLink="/plans/shared-projects"
+      routerLinkActive
+      [class.active]="router.url.includes('/plans/shared-projects')"
+      title="قائمة المشاريع المشتركة"
+    >
+      <i class="bi bi-diagram-2 sidebar-glyph"></i>
+      &nbsp;&nbsp;قائمة المشاريع المشتركة
     </a>
   </nav>
 </aside>

@@ -612,3 +612,15 @@ app-admin-actions button {
   padding: 4px 12px;
   min-width: 80px;
 }
+
+/* Explains why the send button will be refused, so the employee is told to edit
+   the returned item rather than left guessing why nothing happens. */
+.send-hint {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: #b45309;
+  background: #fffbeb;
+  border-right: 3px solid #f59e0b;
+  border-radius: 4px;
+  padding: 8px 12px;
+}

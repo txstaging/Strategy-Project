@@ -1,0 +1,279 @@
+.feedback-page {
+  padding: 24px 32px;
+}
+
+.feedback-page__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.feedback-page__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0e5a34;
+  margin: 0 0 4px;
+}
+
+.feedback-page__subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.feedback-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 16px;
+}
+
+.feedback-tab {
+  border: none;
+  background: transparent;
+  padding: 10px 18px;
+  font-size: 14px;
+  color: #6b7280;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.feedback-tab--active {
+  color: #0e5a34;
+  font-weight: 700;
+  border-bottom-color: #0e5a34;
+}
+
+.feedback-tab__badge {
+  display: inline-block;
+  min-width: 20px;
+  padding: 1px 6px;
+  margin-right: 6px;
+  border-radius: 10px;
+  background: #ecfdf5;
+  color: #0e5a34;
+  font-size: 11px;
+}
+
+.feedback-empty {
+  padding: 40px 0;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.feedback-list {
+  display: grid;
+  gap: 12px;
+}
+
+.feedback-card {
+  display: block;
+  width: 100%;
+  text-align: inherit;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.feedback-card:hover {
+  border-color: #0e5a34;
+  box-shadow: 0 2px 8px rgba(14, 90, 52, 0.08);
+}
+
+.feedback-card__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.feedback-card__subject {
+  font-size: 11.5px;
+  color: #0e5a34;
+  background: #ecfdf5;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.feedback-card__item {
+  font-size: 12.5px;
+  color: #374151;
+  font-weight: 600;
+}
+
+.feedback-card__state {
+  font-size: 11.5px;
+  color: #1d4ed8;
+  background: #eff6ff;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.feedback-card__state--closed {
+  color: #6b7280;
+  background: #f3f4f6;
+}
+
+.feedback-card__message {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #111827;
+  line-height: 1.6;
+}
+
+.feedback-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Composer */
+.feedback-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1050;
+}
+
+.feedback-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(960px, 94vw);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 10px;
+  z-index: 1051;
+  overflow: hidden;
+}
+
+.feedback-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.feedback-modal__head h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0e5a34;
+}
+
+.feedback-modal__body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.feedback-modal__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.feedback-modal__buttons {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Numbered step headings walk the sender through the form in order. */
+.feedback-step {
+  margin: 18px 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0e5a34;
+}
+
+.feedback-step:first-child {
+  margin-top: 0;
+}
+
+.feedback-help {
+  display: block;
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: #6b7280;
+}
+
+/* Count of ticked items on each list heading, so the sender can see their
+   selection without scrolling back through the list. */
+.feedback-count {
+  display: inline-block;
+  min-width: 20px;
+  padding: 1px 7px;
+  margin-right: 6px;
+  border-radius: 10px;
+  background: #0e5a34;
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+}
+
+.feedback-picker__row--on {
+  background: #ecfdf5;
+  border-radius: 4px;
+}
+
+/* The last thing read before sending: who is going to receive it. */
+.feedback-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #0e5a34;
+  font-weight: 600;
+}
+
+.feedback-summary--empty {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+/* Scrollable checkbox lists, so a long unit or user list cannot push the
+   modal buttons off screen. */
+.feedback-picker {
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.feedback-picker__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 2px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.feedback-picker__row small {
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+.feedback-picker__empty {
+  margin: 0;
+  padding: 8px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+

@@ -18,6 +18,11 @@ import {
 import { PlanProjectsService } from '../../services/plan-projects.service';
 import { InitiativesService } from '../../../stage-e-initiatives/services/initiatives.service';
 import { IGetAcceptableInitiativesResponse } from '../../interfaces/IGetAcceptableInitiativesResponse';
+import {
+  endNotBeforeStart,
+  notBeforeToday,
+  todayIso,
+} from '../../../../Core/utilities/date-rules';
 
 interface Goal {
   id: number;
@@ -62,6 +67,9 @@ export class ProjectAddModalComponent implements OnInit, OnChanges {
   loadingGoals = false;
   loadingInitiatives = false;
   submitting = false;
+
+  // Earliest date the date pickers offer.
+  readonly today = todayIso();
 
   // Weight validation
   selectedInitiativeWeight = 0;
@@ -108,9 +116,9 @@ export class ProjectAddModalComponent implements OnInit, OnChanges {
       supervisingAuthority: ['', [Validators.required]],
       weight: ['', [Validators.required, Validators.min(1)]],
       code: ['', [Validators.required]],
-      startDate: ['', [Validators.required]],
-      endDate: ['', [Validators.required]],
-    });
+      startDate: ['', [Validators.required, notBeforeToday()]],
+      endDate: ['', [Validators.required, notBeforeToday()]],
+    }, { validators: endNotBeforeStart() });
 
     // Watch for goal changes to load initiatives
     this.selectionForm.get('planGoalsId')?.valueChanges.subscribe((goalId) => {
@@ -399,6 +407,21 @@ export class ProjectAddModalComponent implements OnInit, OnChanges {
       this.projectsToAdd.length > 0 &&
       this.currentUsedWeight <= this.selectedInitiativeWeight &&
       !this.submitting
+    );
+  }
+
+  /**
+   * Initiatives of the chosen goal only. The list used to hold every approved
+   * initiative in the plan whatever goal was picked, so a project could be
+   * filed under an initiative of a different goal and the printed plan then
+   * grouped it under the wrong initiative. Older API builds do not send the
+   * goal, in which case the list is left as it was.
+   */
+  get initiativesForSelectedGoal(): IGetAcceptableInitiativesResponse[] {
+    const goalId = Number(this.selectionForm?.get('planGoalsId')?.value);
+    if (!goalId) return [];
+    return this.initiatives.filter(
+      (initiative) => initiative.goalId == null || initiative.goalId === goalId
     );
   }
 

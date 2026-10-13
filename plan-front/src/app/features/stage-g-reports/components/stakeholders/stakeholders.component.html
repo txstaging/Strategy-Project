@@ -1,0 +1,171 @@
+<div class="sh">
+  <div class="sh__head">
+    <div>
+      <h3 class="sh__title">المعنيون بالمبادرات والمشاريع</h3>
+      <p class="sh__subtitle">
+        شركاء التنفيذ والمسؤولون عن كل مبادرة، والجهة المشرفة والمستفيدون من كل مشروع، كما أُدخلت في بطاقاتها
+      </p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="sh-filters d-print-none">
+    <div class="sh-filter">
+      <label class="form-label mb-1">الوحدة</label>
+      <select class="form-select form-select-sm" [(ngModel)]="unitId" (ngModelChange)="load()">
+        <option [ngValue]="0">جميع الوحدات</option>
+        @for (u of units; track u.id) {
+          <option [ngValue]="u.id">{{ u.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="sh-filter">
+      <label class="form-label mb-1">الخطة</label>
+      <select class="form-select form-select-sm" [(ngModel)]="planId" (ngModelChange)="load()">
+        <option [ngValue]="0">جميع الخطط</option>
+        @for (p of plans; track p.id) {
+          <option [ngValue]="p.id">{{ p.name }}<ng-container *ngIf="p.unitName"> — {{ p.unitName }}</ng-container></option>
+        }
+      </select>
+    </div>
+
+    <div class="sh-filter sh-filter--grow">
+      <label class="form-label mb-1">بحث</label>
+      <input
+        class="form-control form-control-sm"
+        [(ngModel)]="search"
+        (keydown.enter)="load()"
+        placeholder="اسم مبادرة أو مشروع أو جهة أو شخص"
+      />
+    </div>
+
+    <div class="sh-filter sh-filter--actions">
+      <button type="button" class="btn btn-success btn-sm" (click)="load()">
+        <i class="bi bi-search ms-1"></i> تطبيق
+      </button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" *ngIf="hasFilter" (click)="clearFilters()">
+        <i class="bi bi-x-circle ms-1"></i> مسح
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="sh-tabs">
+    <button class="sh-tab" [class.sh-tab--active]="activeTab === 'initiatives'" (click)="activeTab = 'initiatives'">
+      المبادرات
+      <span class="sh-tab__badge" *ngIf="initiatives().length">{{ initiatives().length }}</span>
+    </button>
+    <button class="sh-tab" [class.sh-tab--active]="activeTab === 'projects'" (click)="activeTab = 'projects'">
+      المشاريع
+      <span class="sh-tab__badge" *ngIf="projects().length">{{ projects().length }}</span>
+    </button>
+    <span class="sh-tabs__summary" *ngIf="!loading()">
+      {{ activeTab === 'initiatives' ? partnerCount + ' شريك تنفيذ' : beneficiaryCount + ' مشروع له مستفيدون' }}
+    </span>
+  </div>
+
+  <div class="sh-sheet">
+    <!-- Initiatives -->
+    @if (activeTab === 'initiatives') {
+      <table class="sh-table">
+        <thead>
+          <tr>
+            <th style="width: 28%">المبادرة</th>
+            <th style="width: 22%">المسؤول عن المبادرة</th>
+            <th>شركاء التنفيذ</th>
+            <th style="width: 60px" class="d-print-none"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="4" class="sh-empty">جارٍ التحميل…</td></tr>
+          } @else if (initiatives().length === 0) {
+            <tr><td colspan="4" class="sh-empty">{{ hasFilter ? 'لا توجد مبادرات مطابقة للفلتر' : 'لا توجد مبادرات بعد' }}</td></tr>
+          }
+          @for (row of initiatives(); track row.initiativeId) {
+            <tr>
+              <td class="sh-name">
+                <strong>{{ row.initiativeName }}</strong>
+                <div class="sh-name__meta">
+                  <span *ngIf="row.unitName">{{ row.unitName }}</span>
+                  <span *ngIf="row.planName">{{ row.planName }}</span>
+                  <span *ngIf="row.goalName">الهدف: {{ row.goalName }}</span>
+                </div>
+              </td>
+              <td>
+                @for (a of row.adminsInCharge; track $index) {
+                  <span class="sh-chip sh-chip--admin"><i class="bi bi-person-badge"></i> {{ a }}</span>
+                }
+                <span *ngIf="row.adminsInCharge.length === 0" class="sh-none">لم يُحدد</span>
+              </td>
+              <td>
+                @for (p of row.partners; track $index) {
+                  <span class="sh-chip"><i class="bi bi-people"></i> {{ p }}</span>
+                }
+                <span *ngIf="row.partners.length === 0" class="sh-none">لا يوجد شركاء</span>
+              </td>
+              <td class="d-print-none sh-actions">
+                <button type="button" class="sh-btn" title="فتح بطاقة المبادرة" (click)="openInitiatives(row)">
+                  <i class="bi bi-box-arrow-up-left"></i>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
+    <!-- Projects -->
+    @if (activeTab === 'projects') {
+      <table class="sh-table">
+        <thead>
+          <tr>
+            <th style="width: 28%">المشروع</th>
+            <th style="width: 22%">الجهة المشرفة</th>
+            <th>المستفيدون</th>
+            <th style="width: 60px" class="d-print-none"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr><td colspan="4" class="sh-empty">جارٍ التحميل…</td></tr>
+          } @else if (projects().length === 0) {
+            <tr><td colspan="4" class="sh-empty">{{ hasFilter ? 'لا توجد مشاريع مطابقة للفلتر' : 'لا توجد مشاريع بعد' }}</td></tr>
+          }
+          @for (row of projects(); track row.projectId) {
+            <tr>
+              <td class="sh-name">
+                <strong>{{ row.projectName }}</strong>
+                <div class="sh-name__meta">
+                  <span *ngIf="row.code">الكود: {{ row.code }}</span>
+                  <span *ngIf="row.unitName">{{ row.unitName }}</span>
+                  <span *ngIf="row.planName">{{ row.planName }}</span>
+                  <span *ngIf="row.initiativeName">المبادرة: {{ row.initiativeName }}</span>
+                </div>
+              </td>
+              <td>
+                <span *ngIf="row.supervisingAuthority" class="sh-chip sh-chip--admin"><i class="bi bi-building"></i> {{ row.supervisingAuthority }}</span>
+                <span *ngIf="!row.supervisingAuthority" class="sh-none">لم تُحدد</span>
+              </td>
+              <td>
+                <span *ngIf="row.beneficiaries" class="sh-chip"><i class="bi bi-people"></i> {{ row.beneficiaries }}</span>
+                <span *ngIf="!row.beneficiaries" class="sh-none">لم يُحدد</span>
+              </td>
+              <td class="d-print-none sh-actions">
+                <button type="button" class="sh-btn" title="فتح بطاقة المشروع" (click)="openProjects(row)">
+                  <i class="bi bi-box-arrow-up-left"></i>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+  <p class="sh-foot d-print-none">
+    <i class="bi bi-info-circle"></i>
+    تُعدَّل هذه البيانات من بطاقة المبادرة أو المشروع نفسها. اضغط أيقونة الفتح بجانب أي سطر للانتقال إليها.
+  </p>
+</div>

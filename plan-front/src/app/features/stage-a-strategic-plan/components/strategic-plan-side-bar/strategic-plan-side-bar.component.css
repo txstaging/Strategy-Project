@@ -50,3 +50,11 @@
   pointer-events: none;
   color: #6c757d;
 }
+
+/* The two entries beside التقارير use an icon glyph instead of a PNG, sized
+   to sit on the same baseline as the image icons above them. */
+.sidebar-glyph {
+  font-size: 18px;
+  vertical-align: -2px;
+  color: #00a05a;
+}

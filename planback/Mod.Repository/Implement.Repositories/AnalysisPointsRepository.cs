@@ -19,6 +19,7 @@
         public async Task<AnalysisPoints> Delete(int id)
         {
             var result = await _context.AnalysisPoints.FindAsync(id);
+            if (result == null) return null;
             _context.AnalysisPoints.Remove(result);
             return result;
         }

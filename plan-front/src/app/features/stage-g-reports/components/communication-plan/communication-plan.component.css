@@ -1,0 +1,234 @@
+.cp {
+  /* Standalone page now, so it carries the same breathing room the other
+     plan screens have instead of relying on the reports header above it. */
+  padding: 24px 16px 32px;
+}
+
+.cp__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.cp__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0e5a34;
+  margin: 0 0 4px;
+}
+
+.cp__subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.cp__plan {
+  min-width: 280px;
+}
+
+/* ---- The sheet ---------------------------------------------------------- */
+
+.cp-sheet {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.cp-table th {
+  background: #0e5a34;
+  color: #fff;
+  font-weight: 600;
+  text-align: right;
+  padding: 10px 12px;
+  white-space: nowrap;
+}
+
+.cp-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+  color: #111827;
+}
+
+.cp-table tbody tr:hover {
+  background: #fafafa;
+}
+
+/* A row under edit is tinted so it is obvious which one is open. */
+.cp-row--editing td {
+  background: #f0fdf4;
+}
+
+.cp-row--editing .form-control,
+.cp-row--editing .form-select {
+  font-size: 13px;
+}
+
+.cp-empty {
+  text-align: center;
+  color: #9ca3af;
+  padding: 28px 12px !important;
+}
+
+.cp-chip {
+  font-size: 11.5px;
+  color: #0e5a34;
+  background: #ecfdf5;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.cp-actions {
+  white-space: nowrap;
+  text-align: center;
+}
+
+.cp-btn {
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  padding: 4px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cp-btn:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.cp-btn--ok {
+  color: #0e5a34;
+}
+
+.cp-btn--ok:hover {
+  background: #ecfdf5;
+}
+
+.cp-btn--danger:hover {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.cp-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.cp-sheet__foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-top: 1px solid #e5e7eb;
+  background: #fafafa;
+}
+
+.cp-count {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ---- Send for feedback -------------------------------------------------- */
+
+.cp-send {
+  margin-top: 24px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 18px 20px;
+}
+
+.cp-send__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0e5a34;
+  margin: 0 0 4px;
+}
+
+.cp-send__hint {
+  font-size: 12.5px;
+  color: #6b7280;
+  margin: 0 0 14px;
+}
+
+.cp-badge {
+  display: inline-block;
+  min-width: 20px;
+  padding: 1px 7px;
+  margin-right: 6px;
+  border-radius: 10px;
+  background: #0e5a34;
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+}
+
+.cp-picker {
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.cp-picker__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.cp-picker__row--on {
+  background: #ecfdf5;
+}
+
+.cp-picker__row small {
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+.cp-picker__empty {
+  margin: 0;
+  padding: 8px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.cp-send__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.cp-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #0e5a34;
+  font-weight: 600;
+}
+
+.cp-summary--empty {
+  color: #9ca3af;
+  font-weight: 400;
+}

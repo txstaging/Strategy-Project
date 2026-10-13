@@ -39,7 +39,7 @@
               <div class="col-md-6 mb-3">
                 <span class="fw-bold text-success">اسم المشروع:</span>
                 <p class="mt-1 p-2 bg-light rounded">{{ project?.name?.value || 'غير محدد' }}</p>
-                @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.name?.status)) {
+                @if (canActOn(project?.name?.status)) {
                   <div class="mt-2">
                     <app-admin-actions
                       [item]="project?.name?.id"
@@ -70,7 +70,7 @@
               <div class="col-md-6 mb-3">
                 <span class="fw-bold text-success">أولوية المشروع:</span>
                 <p class="mt-1 p-2 bg-light rounded">{{ project?.priority?.value || 'غير محدد' }}</p>
-                @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.priority?.status)) {
+                @if (canActOn(project?.priority?.status)) {
                   <div class="mt-2">
                     <app-admin-actions
                       [item]="project?.priority?.id"
@@ -95,7 +95,7 @@
               <div class="col-md-6 mb-3">
                 <span class="fw-bold text-success">مدة المشروع:</span>
                 <p class="mt-1 p-2 bg-light rounded">{{ project?.duration?.value || 'غير محدد' }}</p>
-                @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.duration?.status)) {
+                @if (canActOn(project?.duration?.status)) {
                   <div class="mt-2">
                     <app-admin-actions
                       [item]="project?.duration?.id"
@@ -120,7 +120,7 @@
               <div class="col-md-6 mb-3">
                 <span class="fw-bold text-success">المستفيدون:</span>
                 <p class="mt-1 p-2 bg-light rounded">{{ project?.beneficiaries?.value || 'غير محدد' }}</p>
-                @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.beneficiaries?.status)) {
+                @if (canActOn(project?.beneficiaries?.status)) {
                   <div class="mt-2">
                     <app-admin-actions
                       [item]="project?.beneficiaries?.id"
@@ -145,7 +145,7 @@
               <div class="col-md-6 mb-3">
                 <span class="fw-bold text-success">الجهة المشرفة:</span>
                 <p class="mt-1 p-2 bg-light rounded">{{ project?.supervisingAuthority?.value || 'غير محدد' }}</p>
-                @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.supervisingAuthority?.status)) {
+                @if (canActOn(project?.supervisingAuthority?.status)) {
                   <div class="mt-2">
                     <app-admin-actions
                       [item]="project?.supervisingAuthority?.id"
@@ -170,7 +170,7 @@
               <div class="col-md-6 mb-3">
                 <span class="fw-bold text-success">وزن المشروع:</span>
                 <p class="mt-1 p-2 bg-light rounded">{{ project?.weight?.value || 'غير محدد' }}</p>
-                @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.weight?.status)) {
+                @if (canActOn(project?.weight?.status)) {
                   <div class="mt-2">
                     <app-admin-actions
                       [item]="project?.weight?.id"
@@ -196,7 +196,7 @@
                 <span class="fw-bold text-success">تاريخ البداية:</span>
                 <p class="mt-1 p-2 bg-light rounded">{{ project?.startDateItem?.value || project?.startDate || 'غير محدد' }}</p>
                 @if (project?.startDateItem) {
-                  @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.startDateItem?.status)) {
+                  @if (canActOn(project?.startDateItem?.status)) {
                     <div class="mt-2">
                       <app-admin-actions
                         [item]="project?.startDateItem?.id"
@@ -222,7 +222,7 @@
                 <span class="fw-bold text-success">تاريخ النهاية:</span>
                 <p class="mt-1 p-2 bg-light rounded">{{ project?.endDateItem?.value || project?.endDate || 'غير محدد' }}</p>
                 @if (project?.endDateItem) {
-                  @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.endDateItem?.status)) {
+                  @if (canActOn(project?.endDateItem?.status)) {
                     <div class="mt-2">
                       <app-admin-actions
                         [item]="project?.endDateItem?.id"
@@ -288,7 +288,7 @@
               </h6>
               <p class="mb-2">الحالة الحالية: <span class="badge bg-secondary">{{ getStatusInArabic(project?.status) }}</span></p>
 
-              @if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.status) && areAllIndividualElementsActedUpon()) {
+              @if (canActOn(project?.status) && areAllIndividualElementsActedUpon()) {
                 <!-- Button for project overall status -->
                 <button
                   type="button"
@@ -298,7 +298,7 @@
                   <i class="bi bi-check-circle me-1"></i>
                   موافقة المشروع عموماً
                 </button>
-              } @else if (!isProjectsApproved && isAllowToApprove && !isActionAlreadyTakenByTheCurrentManager(project?.status) && !areAllIndividualElementsActedUpon()) {
+              } @else if (canActOn(project?.status) && !areAllIndividualElementsActedUpon()) {
                 <!-- Descriptive message about pending elements -->
                 <div class="alert alert-info d-flex align-items-center" style="margin-bottom: 0;">
                   <i class="bi bi-info-circle me-2"></i>
@@ -325,6 +325,18 @@
 
       <!-- Modal Footer -->
       <div class="modal-footer p-3" style="border-radius: 0 0 15px 15px;">
+        @if (hasOpenActionsForMe()) {
+          <div class="alert alert-warning py-2 px-3 mb-0 me-auto d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <small>
+              @if (areAllIndividualElementsActedUpon()) {
+                تم إنهاء إجراءات العناصر، بقيت الموافقة على المشروع عموماً. لن يتم إرسال المرحلة قبل إنهاء جميع الإجراءات في بطاقة المشروع.
+              } @else {
+                يجب إنهاء جميع الإجراءات في بطاقة المشروع، ولن يتم إرسال المرحلة قبل ذلك.
+              }
+            </small>
+          </div>
+        }
         <button type="button" class="btn btn-secondary" (click)="closeModal()">
           <i class="bi bi-x-circle me-1"></i>
           إغلاق

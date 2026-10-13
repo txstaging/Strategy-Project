@@ -1,4 +1,4 @@
-using Mod.Core.Enums;
+﻿using Mod.Core.Enums;
 using Mod.Core.Utils;
 
 namespace Mod.APIs.Helpers
@@ -47,6 +47,17 @@ namespace Mod.APIs.Helpers
 
                 NotificationAction.BroadcastPlan =>
                     $"تم إضافة الخطة الاستراتيجية ({planName})",
+
+                // The requester's own wording is carried separately, so these are
+                // the standing headline the recipient sees in the bell.
+                NotificationAction.FeedbackRequest =>
+                    $"مطلوب إبداء المرئيات على {moduleName} الخاص بالخطة ({planName})",
+
+                NotificationAction.FeedbackResponse =>
+                    $"تم استلام مرئيات على {moduleName} الخاص بوحدة {unitName}",
+
+                NotificationAction.StageProgress =>
+                    $"تم الانتقال إلى مرحلة {moduleName} في الخطة الاستراتيجية ({planName})",
 
                 _ => throw new ArgumentOutOfRangeException(nameof(action), action, null)
             };

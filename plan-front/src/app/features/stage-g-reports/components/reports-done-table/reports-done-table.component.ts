@@ -17,11 +17,13 @@ import { PageTitleService } from '../../../page-titles/services/page-title.servi
 import { environment } from '../../../../../environments/environment.dev';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { ProgressShareModalComponent } from '../../../progress-share/components/progress-share-modal/progress-share-modal.component';
+import { IProgressOption, ProgressScope } from '../../../progress-share/interfaces/IProgressShare';
 
 @Component({
   selector: 'app-reports-done-table',
   standalone: true,
-  imports: [CommonModule, FormsModule, ActionsAdminComponent, StatusActionComponent],
+  imports: [CommonModule, FormsModule, ActionsAdminComponent, StatusActionComponent, ProgressShareModalComponent],
   templateUrl: './reports-done-table.component.html',
   styleUrl: './reports-done-table.component.css',
 })
@@ -36,6 +38,44 @@ export class ReportsDoneTableComponent implements OnInit {
   private projectsService = inject(PlanProjectsService);
   private pageTitleService = inject(PageTitleService);
   titlesMap = signal<Record<string, string>>({});
+
+  // «مشاركة نسبة الإنجاز» — the row the user chose to share, or null when the
+  // dialog is closed. Set from the share button on a unit, initiative or
+  // project row; the dialog then only asks for recipients and a note.
+  shareTarget: IProgressOption | null = null;
+
+  shareUnit(unit: Unit, event: Event): void {
+    event.stopPropagation();
+    this.shareTarget = {
+      scope: ProgressScope.Unit,
+      scopeId: unit.unitId,
+      name: unit.unitName,
+      percentage: unit.unitPercentage ?? 0,
+      unitName: unit.unitName,
+    };
+  }
+
+  shareInitiative(unit: Unit, initiative: { initiativeId: number; initiativeName: string; initiativePercentage?: number | null }, event: Event): void {
+    event.stopPropagation();
+    this.shareTarget = {
+      scope: ProgressScope.Initiative,
+      scopeId: initiative.initiativeId,
+      name: initiative.initiativeName,
+      percentage: initiative.initiativePercentage ?? 0,
+      unitName: unit.unitName,
+    };
+  }
+
+  shareProject(unit: Unit, project: Project, event: Event): void {
+    event.stopPropagation();
+    this.shareTarget = {
+      scope: ProgressScope.Project,
+      scopeId: project.projectId,
+      name: project.projectName,
+      percentage: project.percentage ?? 0,
+      unitName: unit.unitName,
+    };
+  }
 
   reportsData: Unit[] = [];
   totalPercentage = 0;
@@ -301,7 +341,10 @@ export class ReportsDoneTableComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error updating project percentage:', error);
-          alert('حدث خطأ أثناء تحديث النسبة');
+          // Say why. The server's reason (e.g. the attachment could not be
+          // saved) used to be replaced by this generic sentence.
+          const reason = error?.error?.message;
+          alert(reason ? `حدث خطأ أثناء تحديث النسبة: ${reason}` : 'حدث خطأ أثناء تحديث النسبة');
         },
       });
   }

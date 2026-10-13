@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
 using Mod.APIs.Helpers;
 using Mod.Core.Entities;
 using Mod.Core.Enums;
@@ -97,6 +97,103 @@ namespace Mod.APIs.Services
             }
         }
 
+        // Explicit addressing, used by feedback requests and their answers.
+        //
+        // A unit addressee reaches everyone in that unit, employees and the unit
+        // manager alike, because they sit in different SignalR groups. A user
+        // addressee reaches exactly that person.
+        public async Task NotifyRecipientsAsync(
+            string message,
+            FormNameToReturnToFront formName,
+            int formId,
+            IEnumerable<int> unitIds,
+            IEnumerable<int> userIds)
+        {
+            try
+            {
+                var units = unitIds?.Distinct().ToList() ?? new List<int>();
+                var users = userIds?.Distinct().ToList() ?? new List<int>();
+
+                if (units.Count == 0 && users.Count == 0)
+                {
+                    _logger.LogWarning(
+                        "NotifyRecipientsAsync had no addressees: formName {FormName}, formId {FormId}",
+                        formName, formId);
+                    return;
+                }
+
+                var saved = new List<(Notification notification, List<string> groups)>();
+
+                foreach (var unitId in units)
+                {
+                    // Two rows per unit, because the notification query matches on
+                    // Role as well as UnitId, and a unit manager does not read the
+                    // employees' rows.
+                    foreach (var role in new[] { nameof(RoleEnum.UnitEmployee), nameof(RoleEnum.UnitManager) })
+                    {
+                        var notification = new Notification
+                        {
+                            Message = message,
+                            IsRead = false,
+                            FormId = formId,
+                            FormNameToReturnToFront = formName,
+                            NotificationRolesTargets = new List<NotificationRolesTarget>
+                            {
+                                new() { Role = role, UnitId = unitId }
+                            }
+                        };
+                        _context.Notification.Add(notification);
+                        saved.Add((notification, new List<string>
+                        {
+                            role == nameof(RoleEnum.UnitManager) ? $"Role_UnitManager_{unitId}" : $"Unit_{unitId}"
+                        }));
+                    }
+                }
+
+                foreach (var userId in users)
+                {
+                    var appUser = await _context.AppUsers.FirstOrDefaultAsync(u => u.Id == userId);
+                    var notification = new Notification
+                    {
+                        Message = message,
+                        IsRead = false,
+                        FormId = formId,
+                        FormNameToReturnToFront = formName,
+                        NotificationRolesTargets = new List<NotificationRolesTarget>
+                        {
+                            new() { Role = string.Empty, UserId = userId, UnitId = appUser?.UnitId }
+                        }
+                    };
+                    _context.Notification.Add(notification);
+                    saved.Add((notification, new List<string> { $"User_{userId}" }));
+                }
+
+                await _context.SaveChangesAsync();
+
+                var pushes = saved.SelectMany(entry => entry.groups.Select(group =>
+                {
+                    var dto = new
+                    {
+                        id = entry.notification.Id,
+                        message = entry.notification.Message,
+                        isRead = false,
+                        formNameToReturnToFront = entry.notification.FormNameToReturnToFront.GetDisplayName(),
+                        planId = entry.notification.FormId
+                    };
+                    return _hubContext.Clients.Group(group).SendAsync("ReceiveNotification", message, dto);
+                }));
+
+                await Task.WhenAll(pushes);
+            }
+            catch (Exception ex)
+            {
+                // Same rule as NotifyAsync: delivery must never break the caller.
+                _logger.LogError(ex,
+                    "NotifyRecipientsAsync failed: formName {FormName}, formId {FormId}",
+                    formName, formId);
+            }
+        }
+
         private (List<NotificationRolesTarget> targets, List<string> groups) ResolveRecipients(
             NotificationAction action, RoleEnum actingRole, Units? unit)
         {
@@ -140,6 +237,15 @@ namespace Mod.APIs.Services
 
                 case NotificationAction.FinalApprove:
                     AddFinalApproveTargets(targets, groups, unit!);
+                    break;
+
+                // «إشعارات بمدى التقدم في مراحل الاستراتيجية» — everyone working
+                // the plan hears that it has moved on to the next stage, which is
+                // separate information from the approval that caused the move.
+                case NotificationAction.StageProgress:
+                    AddFinalApproveTargets(targets, groups, unit!);
+                    targets.Add(new NotificationRolesTarget { Role = nameof(RoleEnum.HighManagement) });
+                    groups.Add($"Role_{RoleEnum.HighManagement}");
                     break;
 
                 case NotificationAction.Reject:

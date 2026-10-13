@@ -169,6 +169,22 @@ export const routes: Routes = [
                 (m) => m.REPORTS
               ),
           },
+          // feedback (طلب المرئيات)
+          {
+            path: '',
+            loadChildren: () =>
+              import('./features/feedback/feedback.route').then(
+                (m) => m.FEEDBACK
+              ),
+          },
+          // progress shares (مشاركة نسبة الإنجاز)
+          {
+            path: '',
+            loadChildren: () =>
+              import('./features/progress-share/progress-share.route').then(
+                (m) => m.PROGRESS_SHARE
+              ),
+          },
         ],
       },
     ],

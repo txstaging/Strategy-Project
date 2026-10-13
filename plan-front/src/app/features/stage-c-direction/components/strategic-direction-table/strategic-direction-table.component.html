@@ -799,7 +799,19 @@
 }
 
 <button  (click)="generatePDF()"   class="pdf btn btn-success">Export Form To PDF</button> 
-@if(isAdmin==false)
-{
-  <button  (click)="Approve()"   class="pdf btn btn-success">أرسال الى مدير الوحدة</button> 
+@if (canSendToManager) {
+  <button
+    type="button"
+    class="pdf btn btn-success"
+    [disabled]="isSending"
+    (click)="Approve()"
+  >
+    {{ isSending ? 'جارٍ الإرسال…' : 'أرسال الى مدير الوحدة' }}
+  </button>
+
+  <!-- Says why the button will be refused, instead of leaving the employee to
+       guess why nothing happens. -->
+  @if (directionStatusService.buttonDisabledReason(); as reason) {
+    <p class="send-hint">{{ reason }}</p>
+  }
 }

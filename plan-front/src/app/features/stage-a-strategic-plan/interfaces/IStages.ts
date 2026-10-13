@@ -4,6 +4,7 @@ export enum Stages {
   Goals = 'goalsStage',
   Initiatives = 'initiativesStage',
   Projects = 'projectsStage',
+  Reports = 'reportStage',
 }
 
 export enum StagesRouting {
@@ -12,6 +13,7 @@ export enum StagesRouting {
   Goals = 'objectives',
   Initiatives = 'initiatives',
   Projects = 'projects',
+  Reports = 'reports',
 }
 
 // Maps API stage names to our internal Stages enum
@@ -21,4 +23,5 @@ export enum StageApiNames {
   GoalsStage = 'GoalsStage',
   InitiativesStage = 'InitiativesStage',
   ProjectsStage = 'ProjectsStage',
+  ReportStage = 'ReportStage',
 }

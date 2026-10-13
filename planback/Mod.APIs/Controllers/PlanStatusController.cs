@@ -22,49 +22,19 @@ namespace Mod.APIs.Controllers
             {
                 return NotFound();
             }
-            var o = new PlanStatus();
-            if(plan.CurrentStage==StrategicPlanLevels.AnalysisStage)
+            // A stage is unlocked once the plan has reached it, so the flags are
+            // cumulative. This replaces five near-identical if blocks that also had
+            // no Reports flag, which is why the reports stage could never unlock.
+            var reached = (int)plan.CurrentStage;
+            var o = new PlanStatus
             {
-                o.AnalysisStage = true;
-                o.DirectionStage = false;
-                o.GoalsStage = false;
-                o.InitiativesStage = false;
-                o.ProjectsStage = false;
-
-
-            }
-            if(plan.CurrentStage == StrategicPlanLevels.DirectionStage)
-            {
-                o.AnalysisStage = true;
-                o.DirectionStage = true;
-                o.GoalsStage = false;
-                o.InitiativesStage = false;
-                o.ProjectsStage = false;
-            }
-            if (plan.CurrentStage == StrategicPlanLevels.GoalsStage)
-            {
-                o.AnalysisStage = true;
-                o.DirectionStage = true;
-                o.GoalsStage = true;
-                o.InitiativesStage = false;
-                o.ProjectsStage = false;
-            }
-            if (plan.CurrentStage == StrategicPlanLevels.InitiativesStage)
-            {
-                o.AnalysisStage = true;
-                o.DirectionStage = true;
-                o.GoalsStage = true;
-                o.InitiativesStage = true;
-                o.ProjectsStage = false;
-            }
-            if (plan.CurrentStage == StrategicPlanLevels.ProjectsStage)
-            {
-                o.AnalysisStage = true;
-                o.DirectionStage = true;
-                o.GoalsStage = true;
-                o.InitiativesStage = true;
-                o.ProjectsStage = true;
-            }
+                AnalysisStage = reached >= (int)StrategicPlanLevels.AnalysisStage,
+                DirectionStage = reached >= (int)StrategicPlanLevels.DirectionStage,
+                GoalsStage = reached >= (int)StrategicPlanLevels.GoalsStage,
+                InitiativesStage = reached >= (int)StrategicPlanLevels.InitiativesStage,
+                ProjectsStage = reached >= (int)StrategicPlanLevels.ProjectsStage,
+                ReportStage = reached >= (int)StrategicPlanLevels.ReportStage,
+            };
             return Ok(o);
         }
     }

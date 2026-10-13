@@ -8,5 +8,6 @@
         public bool GoalsStage { get; set; }
         public bool InitiativesStage { get; set; }
         public bool ProjectsStage { get; set; }
+        public bool ReportStage { get; set; }
     }
 }

@@ -9,6 +9,7 @@ import {
   ReturnedStatuses,
   RejectionStatuses,
   PendingStatuses,
+  DeletableStatuses,
   FinishedByRegionManager,
   FinishedByHighManagement,
 } from '../utilities/consts';
@@ -224,21 +225,24 @@ export class PermissionsService {
   }
 
   /**
-   * Check if the current user can delete an item
-   * Unit employees can delete any pending items
+   * Check if the current user can delete an item on a given stage.
+   *
+   * Two separate questions. Who may delete is the Delete permission granted in
+   * the admin matrix, so whatever the client configures takes effect. What may
+   * be deleted is the item's status: anything not yet finally approved.
+   *
+   * This used to be hardcoded to the unit employee and to pending items only,
+   * which meant the الحذف checkbox in the permission matrix did nothing and no
+   * manager could ever remove an item that was blocking a stage.
+   *
+   * @param module The stage module the item belongs to
    * @param item The item to check
    */
-  canDeleteItem(item: any): boolean {
-    const userRole = this.authService.getUserRole();
+  canDeleteItem(module: ModuleType, item: any): boolean {
+    if (!this.isAllowedToAccess(module, ['Delete'])) return false;
+    if (!item?.status) return false;
 
-    // Only unit employees can delete items
-    if (userRole !== RolesEnums.UnitEmployee) return false;
-
-    // Check if item is in pending status (only pending items can be deleted)
-    const isPending = PendingStatuses.includes(item.status);
-
-    // Unit employee can delete any pending item
-    return isPending;
+    return DeletableStatuses.includes(item.status);
   }
 
   /**

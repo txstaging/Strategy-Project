@@ -441,3 +441,10 @@ p {
   display: inline-block;
 }
 
+.notification-item__time {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-right: 8px;
+  display: inline-block;
+}
+

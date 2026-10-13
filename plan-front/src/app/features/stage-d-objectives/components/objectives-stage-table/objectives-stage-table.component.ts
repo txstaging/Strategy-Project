@@ -36,6 +36,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { PdfService } from '../../../../pdf.service';
 import { ApproveAllService } from '../../../../approve-all.service';
+import { PermissionsService } from '../../../../Core/Service/permissions.service';
 @Component({
   selector: 'app-objectives-stage-table',
   standalone: true,
@@ -55,6 +56,7 @@ import { ApproveAllService } from '../../../../approve-all.service';
   styleUrl: './objectives-stage-table.component.css',
 })
 export class ObjectivesStageTableComponent implements OnInit, OnDestroy {
+  private permissionsService = inject(PermissionsService);
   // Make enum available in template
   ApprovalStatusEnum = ApprovalStatusEnum;
 
@@ -533,46 +535,14 @@ export class ObjectivesStageTableComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Check if user can take action on a goal (goal-level approval)
-   * Updated workflow for goal-level approvals:
-   * - Unit Managers can approve goals in Pending status
-   * - Region Managers can approve goals approved (fully or partially) by Unit Manager
-   * - High Management can approve goals approved (fully or partially) by Region Manager
+   * Check if user can take action on a goal (goal-level approval).
+   * Uses the stage-aware ladder shared with the backend
+   * (ObjectivesStatusService.canActOn / Utils.CanRoleActInStage).
    * Note: Individual items within goals are handled separately in the details modal
    * @param status The status of the goal to check
    */
   canTakeAction(status: string): boolean {
-    const userRole = this.authService.getUserRole();
-
-    // Unit Managers can take action on pending goals
-    if (userRole === RolesEnums.UnitManager) {
-      // Unit Manager can take action on goals in Pending status
-      return status === ApprovalStatusEnum.Pending;
-    }
-
-    // Region Managers can take action on goals approved by Unit Manager
-    if (userRole === RolesEnums.RegionManager) {
-      // Region Manager can take action on:
-      // 1. Goals in Pending status (if Unit Manager hasn't acted yet)
-      // 2. Goals approved (fully or partially) by Unit Manager
-      return (
-        status === ApprovalStatusEnum.Pending ||
-        status === ApprovalStatusEnum.ApprovedByUnitManager ||
-        status === ApprovalStatusEnum.ApprovedByUnitManagerPartially
-      );
-    }
-
-    // High Management can take action on goals approved by Region Manager
-    if (userRole === RolesEnums.HighManagement) {
-      // High Management can take action on goals approved (fully or partially) by Region Manager
-      return (
-        status === ApprovalStatusEnum.ApprovedByRegionManager ||
-        status === ApprovalStatusEnum.ApprovedByRegionManagerPartially
-      );
-    }
-
-    // Unit Employees cannot take actions on goals (they only create)
-    return false;
+    return this.objectivesStatusService.canActOn(status);
   }
 
   /**
@@ -820,35 +790,13 @@ export class ObjectivesStageTableComponent implements OnInit, OnDestroy {
 
   /**
    * Check if user can take action on goal items (name, description, indicator)
-   * This is used in the details modal for individual item approvals
+   * This is used in the details modal for individual item approvals.
+   * Same ladder as the goal itself: an item already approved at this level or
+   * above needs nothing more from this role.
    * @param itemStatus The status of the specific item within a goal
    */
   canTakeActionOnGoalItem(itemStatus: string): boolean {
-    const userRole = this.authService.getUserRole();
-
-    // Unit Managers can take action on pending items
-    if (userRole === RolesEnums.UnitManager) {
-      return itemStatus === ApprovalStatusEnum.Pending;
-    }
-
-    // Region Managers can take action on items approved (fully or partially) by Unit Manager
-    if (userRole === RolesEnums.RegionManager) {
-      return (
-        itemStatus === ApprovalStatusEnum.Pending ||
-        itemStatus === ApprovalStatusEnum.ApprovedByUnitManager ||
-        itemStatus === ApprovalStatusEnum.ApprovedByUnitManagerPartially
-      );
-    }
-
-    // High Management can take action on items approved (fully or partially) by Region Manager
-    if (userRole === RolesEnums.HighManagement) {
-      return (
-        itemStatus === ApprovalStatusEnum.ApprovedByRegionManager ||
-        itemStatus === ApprovalStatusEnum.ApprovedByRegionManagerPartially
-      );
-    }
-
-    return false;
+    return this.objectivesStatusService.canActOn(itemStatus);
   }
 
   /**
@@ -876,8 +824,6 @@ export class ObjectivesStageTableComponent implements OnInit, OnDestroy {
       return cached.canApprove;
     }
 
-    const userRole = this.authService.getUserRole();
-
     // First check if user can take action on this goal
     if (!this.canTakeAction(goal.status)) {
       this.goalValidationCache.set(cacheKey, {
@@ -888,8 +834,11 @@ export class ObjectivesStageTableComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    // Check if all items within the goal have been acted upon by current role
-    const canApprove = this.areGoalItemsActedUponByRole(goal, userRole);
+    // Every item has to be approved at this role's level or above. An item
+    // approved higher up before the goal was reworked keeps that approval;
+    // requiring this role's own status on it is what stranded reworked goals
+    // as «غير مكتمل» for the unit manager.
+    const canApprove = this.objectivesStatusService.areGoalItemsApprovedByMe(goal);
     const message = canApprove
       ? null
       : 'يجب اتخاذ إجراء على جميع عناصر الهدف (الاسم، الوصف، المؤشر) قبل الموافقة على الهدف';
@@ -1021,8 +970,7 @@ export class ObjectivesStageTableComponent implements OnInit, OnDestroy {
   }
 
   canDeleteGoal(goal: any): boolean {
-    // Deletable under the same rule as edit (while not yet approved).
-    return this.canEditGoal(goal);
+    return this.permissionsService.canDeleteItem('Goals', goal);
   }
 
   /**

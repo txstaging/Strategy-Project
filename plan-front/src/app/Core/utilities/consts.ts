@@ -101,6 +101,17 @@ export const ReturnedStatuses = [
   ApprovalStatusEnum.ReturnedByHighManagement,
 ];
 
+// An item can still be removed from a stage while it has not been finally
+// approved: a draft, one waiting for review, or one sent back by any level.
+// This says nothing about *who* may remove it — that is the Delete permission
+// from the admin matrix, checked separately.
+export const DeletableStatuses = [
+  ApprovalStatusEnum.SavedAsDraft,
+  ...PendingStatuses,
+  ...ReturnedStatuses,
+  ...RejectionStatuses,
+];
+
 export const FinishedByRegionManager = [
   ApprovalStatusEnum.ApprovedByRegionManager,
   ApprovalStatusEnum.RejectedByRegionManager,

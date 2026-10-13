@@ -1,0 +1,251 @@
+.sp {
+  padding: 24px 16px 32px;
+}
+
+.sp__head {
+  margin-bottom: 16px;
+}
+
+.sp__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0e5a34;
+  margin: 0 0 4px;
+}
+
+.sp__subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ---- Filters ------------------------------------------------------------ */
+
+.sp-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.sp-filter {
+  min-width: 180px;
+}
+
+.sp-filter--grow {
+  flex: 1;
+  min-width: 220px;
+}
+
+.sp-filter--actions {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sp-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  font-size: 13px;
+  color: #374151;
+  padding: 0 4px 10px;
+}
+
+.sp-totals strong {
+  color: #0e5a34;
+}
+
+.sp-empty {
+  padding: 40px 12px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 14px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.sp-link {
+  border: none;
+  background: transparent;
+  color: #0e5a34;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+/* ---- One card per project ----------------------------------------------- */
+
+.sp-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.sp-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  background: #f0fdf4;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sp-card__name {
+  display: block;
+  font-size: 15px;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.sp-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 11.5px;
+  color: #6b7280;
+}
+
+.sp-card__count {
+  font-size: 12px;
+  color: #0e5a34;
+  background: #fff;
+  border: 1px solid #bbf7d0;
+  padding: 3px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.sp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.sp-table th {
+  background: #f9fafb;
+  color: #374151;
+  font-weight: 600;
+  text-align: right;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 12.5px;
+}
+
+.sp-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+  color: #111827;
+}
+
+.sp-table__empty {
+  text-align: center;
+  color: #9ca3af;
+  padding: 18px 12px !important;
+}
+
+.sp-row--editing td {
+  background: #f0fdf4;
+  vertical-align: top;
+}
+
+.sp-row--editing .form-control,
+.sp-row--editing .form-select {
+  font-size: 13px;
+}
+
+.sp-external {
+  display: block;
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.sp-notes {
+  display: block;
+  font-size: 11.5px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.sp-chip {
+  font-size: 11.5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.sp-chip--type {
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+/* Status colours read the same way as the rest of the app: grey for not
+   started, blue for in progress, green for done. */
+.sp-chip--planned {
+  color: #6b7280;
+  background: #f3f4f6;
+}
+
+.sp-chip--progress {
+  color: #b45309;
+  background: #fffbeb;
+}
+
+.sp-chip--done {
+  color: #0e5a34;
+  background: #ecfdf5;
+}
+
+.sp-actions {
+  white-space: nowrap;
+  text-align: center;
+}
+
+.sp-btn {
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  padding: 4px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sp-btn:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.sp-btn--ok {
+  color: #0e5a34;
+}
+
+.sp-btn--ok:hover {
+  background: #ecfdf5;
+}
+
+.sp-btn--danger:hover {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.sp-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.sp-card__foot {
+  padding: 8px 12px;
+  border-top: 1px solid #f3f4f6;
+  background: #fafafa;
+}

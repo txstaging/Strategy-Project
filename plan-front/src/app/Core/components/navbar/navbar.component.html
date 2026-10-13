@@ -89,7 +89,8 @@
                   <div class="notification-item__dot" *ngIf="!n.isRead"></div>
                   <div class="notification-item__content">
                     <p class="notification-item__message">{{ n.message }}</p>
-                    <span class="notification-item__form" *ngIf="n.formNameToReturnToFront">{{ n.formNameToReturnToFront }}</span>
+                    <span class="notification-item__form" *ngIf="stageLabel(n.formNameToReturnToFront)">{{ stageLabel(n.formNameToReturnToFront) }}</span>
+                    <span class="notification-item__time" *ngIf="n.createdAt">{{ relativeTime(n.createdAt) }}</span>
                   </div>
                   <svg class="notification-item__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path d="M14.71 6.71a1 1 0 0 0-1.42 1.42L17.17 12l-3.88 3.88a1 1 0 0 0 1.42 1.42l4.59-4.59a1 1 0 0 0 0-1.42l-4.59-4.58Z" fill="#9ca3af"/>
@@ -127,6 +128,26 @@
               style="color: #fff"
               routerLink="/awareness"
               >التوعية</a
+            >
+          </li>
+
+          <li class="nav-item" *ngIf="!showLoginButton">
+            <a
+              class="nav-link"
+              [class.active]="router.url.startsWith('/plans/feedback')"
+              style="color: #fff"
+              routerLink="/plans/feedback"
+              >المرئيات</a
+            >
+          </li>
+
+          <li class="nav-item" *ngIf="!showLoginButton">
+            <a
+              class="nav-link"
+              [class.active]="router.url.startsWith('/plans/progress')"
+              style="color: #fff"
+              routerLink="/plans/progress"
+              >نسبة الإنجاز</a
             >
           </li>
           

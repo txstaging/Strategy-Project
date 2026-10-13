@@ -1,0 +1,155 @@
+.fb-detail {
+  padding: 24px 32px;
+  max-width: 900px;
+}
+
+.fb-detail__back {
+  border: none;
+  background: transparent;
+  color: #0e5a34;
+  font-size: 13px;
+  padding: 0;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.fb-detail__empty {
+  padding: 24px 0;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.fb-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 18px 20px;
+}
+
+.fb-card__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.fb-card__item {
+  font-size: 13.5px;
+  color: #111827;
+}
+
+.fb-card__link {
+  border: none;
+  background: transparent;
+  color: #1d4ed8;
+  font-size: 12.5px;
+  cursor: pointer;
+  margin-right: auto;
+}
+
+.fb-chip {
+  font-size: 11.5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.fb-chip--subject {
+  color: #0e5a34;
+  background: #ecfdf5;
+}
+
+.fb-chip--open {
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.fb-chip--closed {
+  color: #6b7280;
+  background: #f3f4f6;
+}
+
+.fb-card__message {
+  margin: 0 0 12px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #111827;
+}
+
+.fb-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.fb-section {
+  margin: 26px 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0e5a34;
+}
+
+.fb-section small {
+  font-size: 12px;
+  font-weight: 400;
+  color: #6b7280;
+  margin-right: 8px;
+}
+
+.fb-recipients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fb-recipient {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  padding: 4px 10px;
+  border-radius: 14px;
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* Answered addressees stand out, so the requester can see at a glance who is
+   still outstanding. */
+.fb-recipient--done {
+  background: #ecfdf5;
+  color: #0e5a34;
+}
+
+.fb-responses {
+  display: grid;
+  gap: 10px;
+}
+
+.fb-response {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-right: 3px solid #0e5a34;
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+
+.fb-response__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.fb-response__head strong {
+  color: #111827;
+}
+
+.fb-response__body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #111827;
+}

@@ -18,6 +18,61 @@ import {
 import { PlanProjectsService } from '../../services/plan-projects.service';
 import { IGetProjectByIdResponse } from '../../interfaces/IGetProjectById';
 import { IUpdateProjectBody } from '../../interfaces/IUpdateProjectBody';
+import {
+  RejectionStatuses,
+  ReturnedStatuses,
+} from '../../../../Core/utilities/consts';
+import {
+  endNotBeforeStart,
+  notBeforeToday,
+  todayIso,
+} from '../../../../Core/utilities/date-rules';
+import { IGetAcceptableInitiativesResponse } from '../../interfaces/IGetAcceptableInitiativesResponse';
+
+// A date as the yyyy-MM-dd an <input type="date"> needs, or '' if unreadable.
+//
+// The API sends startDate/endDate through DateOnly.ToString(), whose shape
+// depends on the server's culture (30/09/2026, 9/30/2026, …). Handing that to
+// new Date() gave Invalid Date for day-first values, so the edit form opened
+// with both dates blank. Parsed by hand instead, and without new Date(), which
+// also shifted yyyy-MM-dd strings by a day in timezones west of UTC.
+function toIsoDate(raw: unknown): string {
+  if (raw === null || raw === undefined) return '';
+  const text = String(raw).trim();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const valid = (y: number, m: number, d: number) =>
+    y > 1900 && m >= 1 && m <= 12 && d >= 1 && d <= 31;
+
+  // yyyy-MM-dd or yyyy/MM/dd, optionally followed by a time.
+  let m = text.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+  if (m) {
+    const [y, mo, d] = [+m[1], +m[2], +m[3]];
+    return valid(y, mo, d) ? `${y}-${pad(mo)}-${pad(d)}` : '';
+  }
+
+  // dd/MM/yyyy or MM/dd/yyyy. Whichever part is over 12 must be the day;
+  // when both could be, month-first matches how new Date() read it before.
+  m = text.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);
+  if (m) {
+    const [a, b, y] = [+m[1], +m[2], +m[3]];
+    const [mo, d] = a > 12 ? [b, a] : [a, b];
+    return valid(y, mo, d) ? `${y}-${pad(mo)}-${pad(d)}` : '';
+  }
+
+  return '';
+}
+
+// Which approvable item in the project details backs each form control.
+const REVIEWED_FIELDS: Record<string, string> = {
+  name: 'name',
+  priority: 'priority',
+  duration: 'duration',
+  beneficiaries: 'beneficiaries',
+  supervisingAuthority: 'supervisingAuthority',
+  weight: 'weight',
+  startDate: 'startDateItem',
+  endDate: 'endDateItem',
+};
 
 @Component({
   selector: 'app-project-edit-modal',
@@ -35,6 +90,19 @@ export class ProjectEditModalComponent implements OnInit {
   private readonly planProjectsService = inject(PlanProjectsService);
 
   readonly submitting = signal(false);
+
+  // Earliest date the date pickers offer for a changed date.
+  readonly today = todayIso();
+
+  // The dates the project already had. Keeping them is allowed even after
+  // they have passed; changing them to a past date is not.
+  private originalStartDate: string | null = null;
+  private originalEndDate: string | null = null;
+
+  // Initiatives the project can be filed under. The edit form used to have no
+  // way to change the initiative, so a project added under the wrong one could
+  // only be deleted and added again.
+  initiatives: IGetAcceptableInitiativesResponse[] = [];
 
   readonly projectForm = new FormGroup({
     id: new FormControl<number>(0, [Validators.required]),
@@ -54,9 +122,15 @@ export class ProjectEditModalComponent implements OnInit {
     code: new FormControl<string>('', [Validators.required]),
     planInitiativeId: new FormControl<number>(0, [Validators.required]),
     planGoalsId: new FormControl<number>(0, [Validators.required]),
-    startDate: new FormControl<string>('', [Validators.required]),
-    endDate: new FormControl<string>('', [Validators.required]),
-  });
+    startDate: new FormControl<string>('', [
+      Validators.required,
+      notBeforeToday(() => this.originalStartDate),
+    ]),
+    endDate: new FormControl<string>('', [
+      Validators.required,
+      notBeforeToday(() => this.originalEndDate),
+    ]),
+  }, { validators: endNotBeforeStart() });
 
   ngOnInit() {
     if (this.projectDetails) {
@@ -86,28 +160,11 @@ export class ProjectEditModalComponent implements OnInit {
 
       // Helper function to format dates to yyyy-MM-dd format
       const formatDateForApi = (dateString: string): string => {
-        if (!dateString) return '';
-
-        try {
-          // Handle different possible input formats
-          const date = new Date(dateString);
-
-          // Check if date is valid
-          if (isNaN(date.getTime())) {
-            console.warn('Invalid date received:', dateString);
-            return '';
-          }
-
-          // Format as yyyy-MM-dd
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-
-          return `${year}-${month}-${day}`;
-        } catch (error) {
-          console.error('Error formatting date:', dateString, error);
-          return '';
+        const iso = toIsoDate(dateString);
+        if (dateString && !iso) {
+          console.warn('Invalid date received:', dateString);
         }
+        return iso;
       };
 
       this.projectForm.patchValue({
@@ -129,9 +186,20 @@ export class ProjectEditModalComponent implements OnInit {
           this.projectDetails.planGoalsId,
           this.projectDetails.planGoals
         ),
-        startDate: formatDateForApi(this.projectDetails.startDate),
-        endDate: formatDateForApi(this.projectDetails.endDate),
+        startDate:
+          toIsoDate((this.projectDetails as any).startDateItem?.value) ||
+          formatDateForApi(this.projectDetails.startDate),
+        endDate:
+          toIsoDate((this.projectDetails as any).endDateItem?.value) ||
+          formatDateForApi(this.projectDetails.endDate),
       });
+      this.originalStartDate = this.projectForm.value.startDate || null;
+      this.originalEndDate = this.projectForm.value.endDate || null;
+      // Re-run the date checks now that the original dates are known, so dates
+      // the project already had are not flagged as being in the past.
+      this.projectForm.get('startDate')?.updateValueAndValidity();
+      this.projectForm.get('endDate')?.updateValueAndValidity();
+      this.loadInitiatives();
     }
   }
 
@@ -139,34 +207,65 @@ export class ProjectEditModalComponent implements OnInit {
     this.closeModal.emit();
   }
 
+  private loadInitiatives(): void {
+    if (!this.planId) return;
+    this.planProjectsService.getAcceptableInitiative(this.planId).subscribe({
+      next: (list) => {
+        const initiatives = [...(list || [])];
+        // Keep the project's current initiative selectable even if it is not
+        // in the approved list, so opening the form never changes it silently.
+        const current = (this.projectDetails as any)?.planInitiative;
+        const currentId = Number(this.projectForm.value.planInitiativeId);
+        if (currentId && !initiatives.some((i) => i.id === currentId)) {
+          initiatives.unshift({
+            id: currentId,
+            name: current?.value ?? current?.name ?? 'المبادرة الحالية',
+            initiativeWeight: 0,
+          });
+        }
+        this.initiatives = initiatives;
+      },
+    });
+  }
+
+  /**
+   * Whether a manager rejected or returned this field. The employee used to get
+   * the edit form with nothing marking which fields had been refused, so they
+   * had to guess what to change.
+   */
+  needsEdit(control: string): boolean {
+    const status = this.reviewedItem(control)?.status;
+    return ReturnedStatuses.includes(status) || RejectionStatuses.includes(status);
+  }
+
+  // The note shown under a field that was sent back, with the manager's reason.
+  reviewNote(control: string): string {
+    const item = this.reviewedItem(control);
+    if (!item) return '';
+    const what = RejectionStatuses.includes(item.status)
+      ? 'تم رفض هذا العنصر'
+      : 'تمت إعادة هذا العنصر';
+    return item.comment
+      ? `${what} ويحتاج إلى تعديل: ${item.comment}`
+      : `${what} ويحتاج إلى تعديل`;
+  }
+
+  hasFieldsToEdit(): boolean {
+    return Object.keys(REVIEWED_FIELDS).some((control) => this.needsEdit(control));
+  }
+
+  private reviewedItem(control: string): any {
+    const key = REVIEWED_FIELDS[control];
+    return key ? (this.projectDetails as any)?.[key] : null;
+  }
+
   onSubmit() {
     if (this.projectForm.valid && !this.submitting()) {
       this.submitting.set(true);
 
       // Helper function to ensure dates are in yyyy-MM-dd format
-      const ensureDateFormat = (dateString: string): string => {
-        if (!dateString) return '';
-
-        try {
-          const date = new Date(dateString);
-          if (isNaN(date.getTime())) {
-            throw new Error('Invalid date');
-          }
-
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-
-          return `${year}-${month}-${day}`;
-        } catch (error) {
-          console.error(
-            'Error formatting date for submission:',
-            dateString,
-            error
-          );
-          return '';
-        }
-      };
+      const ensureDateFormat = (dateString: string): string =>
+        toIsoDate(dateString);
 
       const formValues = this.projectForm.value;
       const formData: IUpdateProjectBody = {
@@ -178,8 +277,12 @@ export class ProjectEditModalComponent implements OnInit {
         supervisingAuthority: formValues.supervisingAuthority!,
         weight: formValues.weight!,
         code: formValues.code!,
-        planInitiativeId: formValues.planInitiativeId!,
-        planGoalsId: formValues.planGoalsId!,
+        planInitiativeId: Number(formValues.planInitiativeId!),
+        // A project's goal is its initiative's goal (the server enforces this).
+        planGoalsId:
+          this.initiatives.find(
+            (i) => i.id === Number(formValues.planInitiativeId)
+          )?.goalId ?? formValues.planGoalsId!,
         startDate: ensureDateFormat(formValues.startDate!),
         endDate: ensureDateFormat(formValues.endDate!),
       };

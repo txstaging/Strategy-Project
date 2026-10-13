@@ -4,4 +4,5 @@ export interface IGetPlanStatus {
 	goalsStage: boolean;
 	initiativesStage: boolean;
 	projectsStage: boolean;
+	reportStage: boolean;
 }

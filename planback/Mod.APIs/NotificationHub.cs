@@ -61,6 +61,14 @@ public class NotificationHub : Hub
         // استخراج وحدة المستخدم
         var unitId = user?.Claims.FirstOrDefault(c => c.Type == "unitId")?.Value;
 
+        // A group of one, so a notification addressed to a named person (a
+        // feedback request, for example) can reach just them in real time.
+        var userId = user?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrEmpty(userId))
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{userId}");
+        }
+
         // الانضمام لمجموعات الأدوار
         foreach (var role in roles)
         {

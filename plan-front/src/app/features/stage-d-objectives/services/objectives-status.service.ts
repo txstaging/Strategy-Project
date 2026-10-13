@@ -20,110 +20,153 @@ export class ObjectivesStatusService {
   private objectivesList = signal<any[]>([]);
   private dataLoaded = signal(false);
 
-  // Computed signals for button visibility
-  canShowSubmitButton = computed(() => {
-    const userRole = this.authService.getUserRole();
-    const status = this.stageStatus();
-    const allActedUpon = this.allObjectivesActedUpon();
-
-    // Sequential workflow: Unit Manager → Region Manager → High Management
-    // Each role can only act when it's their turn in the workflow
-
-    if (userRole === RolesEnums.UnitManager) {
-      // Unit Manager can submit when stage is pending and all objectives acted upon
-      return status === ApprovalStatusEnum.Pending && allActedUpon;
+  // How far up the ladder a status has been approved: 1 unit manager,
+  // 2 region manager, 3 high management, 0 for anything not yet approved.
+  // Mirrors Utils.ApprovalRank on the backend.
+  approvalRank(status: string | null | undefined): number {
+    switch (status) {
+      case ApprovalStatusEnum.ApprovedByUnitManager:
+      case ApprovalStatusEnum.ApprovedByUnitManagerPartially:
+        return 1;
+      case ApprovalStatusEnum.ApprovedByRegionManager:
+      case ApprovalStatusEnum.ApprovedByRegionManagerPartially:
+        return 2;
+      case ApprovalStatusEnum.ApprovedByHighManagement:
+      case ApprovalStatusEnum.ApprovedByHighManagementPartially:
+        return 3;
+      default:
+        return 0;
     }
+  }
 
-    if (userRole === RolesEnums.RegionManager) {
-      // Region Manager can submit when stage is approved by Unit Manager and all objectives acted upon
-      return (
-        (status === ApprovalStatusEnum.ApprovedByUnitManager ||
-          status === ApprovalStatusEnum.ApprovedByUnitManagerPartially) &&
-        allActedUpon
-      );
+  roleRank(role: string | null | undefined): number {
+    switch (role) {
+      case RolesEnums.UnitManager:
+        return 1;
+      case RolesEnums.RegionManager:
+        return 2;
+      case RolesEnums.HighManagement:
+        return 3;
+      default:
+        return 0;
     }
+  }
 
-    if (userRole === RolesEnums.HighManagement) {
-      // High Management can submit when stage is approved by Region Manager and all objectives acted upon
-      return (
-        (status === ApprovalStatusEnum.ApprovedByRegionManager ||
-          status === ApprovalStatusEnum.ApprovedByRegionManagerPartially) &&
-        allActedUpon
-      );
+  private myRank(): number {
+    return this.roleRank(this.authService.getUserRole());
+  }
+
+  private isSentBack(status: string | null | undefined): boolean {
+    return (
+      RejectionStatuses.includes(status as ApprovalStatusEnum) ||
+      ReturnedStatuses.includes(status as ApprovalStatusEnum)
+    );
+  }
+
+  private isPartialOf(status: string | null | undefined, rank: number): boolean {
+    switch (rank) {
+      case 1:
+        return status === ApprovalStatusEnum.ApprovedByUnitManagerPartially;
+      case 2:
+        return status === ApprovalStatusEnum.ApprovedByRegionManagerPartially;
+      case 3:
+        return status === ApprovalStatusEnum.ApprovedByHighManagementPartially;
+      default:
+        return false;
     }
+  }
 
-    return false;
+  // Goals the employee has actually submitted. Drafts are not part of the round.
+  private submittedObjectives(): any[] {
+    return (this.objectivesList() || []).filter(
+      (o) => o && o.status !== ApprovalStatusEnum.SavedAsDraft
+    );
+  }
+
+  // The goal's own status followed by its three items.
+  private statusesOf(objective: any): (string | undefined)[] {
+    return [
+      objective?.status,
+      objective?.name?.status,
+      objective?.descripition?.status,
+      objective?.indicator?.status,
+    ];
+  }
+
+  // Whether the stage is currently waiting on the current role: the level
+  // below has pressed send, and this role has not sent it on yet.
+  isStageWithMe(): boolean {
+    const rank = this.myRank();
+    return rank > 0 && this.approvalRank(this.stageStatus()) === rank - 1;
+  }
+
+  // Whether the current role may approve, reject or return a goal or one of
+  // its items at the given status. Must match Utils.CanRoleActInStage.
+  //
+  // A goal whose item was returned and reworked goes back to the unit manager,
+  // but its other items keep the approvals they already earned higher up.
+  // Asking every item for the acting role's own status — as this used to — left
+  // those goals «غير مكتمل» for the unit manager for good, so the send button
+  // never came and nobody above could give the final approval.
+  canActOn(status: string | null | undefined): boolean {
+    if (!status || status === ApprovalStatusEnum.SavedAsDraft) return false;
+    // The details modal briefly writes placeholders such as 'Approved' right
+    // after a click, until the fresh data arrives; those are never actionable.
+    if (!Object.values(ApprovalStatusEnum).includes(status as ApprovalStatusEnum)) return false;
+    if (this.isSentBack(status)) return false;
+    if (this.approvalRank(status) >= this.myRank()) return false;
+    return this.isStageWithMe();
+  }
+
+  // Whether all three items of a goal are approved at the current role's level
+  // or above, which is what approving the goal itself requires.
+  areGoalItemsApprovedByMe(objective: any): boolean {
+    const rank = this.myRank();
+    if (rank === 0 || !objective) return false;
+    return [
+      objective.name?.status,
+      objective.descripition?.status,
+      objective.indicator?.status,
+    ].every((s) => this.approvalRank(s) >= rank);
+  }
+
+  // The send rule, shared with GoalsController.ApproveStage: nothing sent back,
+  // every submitted goal and item approved at this level or above, and
+  // something to hand on — either the stage has not reached this level yet, or
+  // this role has ticked goals that are still waiting to be sent.
+  private canSend = computed(() => {
+    const rank = this.myRank();
+    if (rank === 0) return false;
+
+    const statuses = this.submittedObjectives()
+      .flatMap((o) => this.statusesOf(o))
+      .filter((s) => !!s && s !== ApprovalStatusEnum.SavedAsDraft);
+    if (statuses.length === 0) return false;
+
+    if (statuses.some((s) => this.isSentBack(s))) return false;
+    if (statuses.some((s) => this.approvalRank(s) < rank)) return false;
+
+    return (
+      this.approvalRank(this.stageStatus()) < rank ||
+      statuses.some((s) => this.isPartialOf(s, rank))
+    );
   });
 
+  // First send at this level.
+  canShowSubmitButton = computed(() => {
+    return (
+      this.canSend() &&
+      this.approvalRank(this.stageStatus()) < this.myRank()
+    );
+  });
+
+  // The stage already went past this level but this role still has approved
+  // goals waiting to be sent on.
   canShowResubmitButton = computed(() => {
-    const userRole = this.authService.getUserRole();
-    const allActedUpon = this.allObjectivesActedUpon();
-    const canShowSubmit = this.canShowSubmitButton();
-    const stageStatus = this.stageStatus();
-
-    // Resubmit button appears when:
-    // 1. All objectives have been acted upon by current role (no pending work)
-    // 2. There are items approved by the CURRENT role ready for the next approval level
-    // 3. Submit button is NOT showing (buttons are mutually exclusive)
-    // 4. Stage is already approved by current role or beyond (key missing condition!)
-
-    // If submit button is showing, don't show resubmit button (mutually exclusive)
-    if (canShowSubmit) {
-      return false;
-    }
-
-    if (userRole === RolesEnums.UnitManager) {
-      // Only show resubmit button when stage is already approved by Unit Manager or beyond
-      if (
-        stageStatus !== ApprovalStatusEnum.ApprovedByUnitManager &&
-        stageStatus !== ApprovalStatusEnum.ApprovedByUnitManagerPartially &&
-        stageStatus !== ApprovalStatusEnum.ApprovedByRegionManager &&
-        stageStatus !== ApprovalStatusEnum.ApprovedByRegionManagerPartially &&
-        stageStatus !== ApprovalStatusEnum.ApprovedByHighManagement &&
-        stageStatus !== ApprovalStatusEnum.ApprovedByHighManagementPartially
-      ) {
-        return false;
-      }
-
-      // If stage is already fully approved, don't show resubmit button
-      if (
-        stageStatus === ApprovalStatusEnum.ApprovedByHighManagement ||
-        stageStatus === ApprovalStatusEnum.ApprovedByHighManagementPartially
-      ) {
-        return false;
-      }
-
-      // Unit Manager can resubmit when there are items THEY'VE approved (ready for Region Manager)
-      const hasItemsForRegionManager = this.hasItemsApprovedByUnitManager();
-      return allActedUpon && hasItemsForRegionManager;
-    }
-
-    if (userRole === RolesEnums.RegionManager) {
-      // Only show resubmit button when stage is already approved by Region Manager or beyond
-      if (
-        stageStatus !== ApprovalStatusEnum.ApprovedByRegionManager &&
-        stageStatus !== ApprovalStatusEnum.ApprovedByRegionManagerPartially &&
-        stageStatus !== ApprovalStatusEnum.ApprovedByHighManagement &&
-        stageStatus !== ApprovalStatusEnum.ApprovedByHighManagementPartially
-      ) {
-        return false;
-      }
-
-      // If stage is already fully approved, don't show resubmit button
-      if (
-        stageStatus === ApprovalStatusEnum.ApprovedByHighManagement ||
-        stageStatus === ApprovalStatusEnum.ApprovedByHighManagementPartially
-      ) {
-        return false;
-      }
-
-      // Region Manager can resubmit when there are items THEY'VE approved (ready for High Management)
-      const hasItemsForHighManagement = this.hasItemsApprovedByRegionManager();
-      return allActedUpon && hasItemsForHighManagement;
-    }
-
-    // High Management is the final level - no resubmit needed
-    return false;
+    return (
+      this.canSend() &&
+      this.approvalRank(this.stageStatus()) >= this.myRank()
+    );
   });
 
   // Public methods to update state
@@ -155,337 +198,49 @@ export class ObjectivesStatusService {
     return this.objectivesList();
   }
 
-  // Private helper methods
-  private allObjectivesActedUpon(): boolean {
-    const userRole = this.authService.getUserRole();
-    const objectives = this.objectivesList();
-
-    if (!objectives || objectives.length === 0) {
-      return false;
-    }
-
-    return objectives.every((objective) => {
-      // Hard guard: a rejected or returned goal (at any level) blocks the stage
-      // from being submitted until it is reworked and re-approved.
-      if (
-        RejectionStatuses.includes(objective.status) ||
-        ReturnedStatuses.includes(objective.status) ||
-        this.hasReturnedItems(objective)
-      ) {
-        return false;
-      }
-
-      // Only check goal-level actions, not individual items
-      // Stage approval depends only on parent goal decisions
-      const goalActedUpon = this.isGoalActedUponByRole(
-        objective.status,
-        userRole
-      );
-
-      return goalActedUpon;
-    });
-  }
-
-  private isGoalActedUponByRole(
-    goalStatus: string,
-    userRole: string | null
-  ): boolean {
-    if (!userRole) return false;
-
-    if (userRole === RolesEnums.UnitManager) {
-      // A goal counts as ready only when it has been APPROVED at this level or
-      // higher. Rejected/returned/pending goals block stage submission.
-      return (
-        goalStatus === ApprovalStatusEnum.ApprovedByUnitManager ||
-        goalStatus === ApprovalStatusEnum.ApprovedByUnitManagerPartially ||
-        goalStatus === ApprovalStatusEnum.ApprovedByRegionManager ||
-        goalStatus === ApprovalStatusEnum.ApprovedByRegionManagerPartially ||
-        goalStatus === ApprovalStatusEnum.ApprovedByHighManagement ||
-        goalStatus === ApprovalStatusEnum.ApprovedByHighManagementPartially
-      );
-    }
-
-    if (userRole === RolesEnums.RegionManager) {
-      // A goal counts as ready only when it has been APPROVED at this level or
-      // higher. Rejected/returned/pending goals block stage submission.
-      return (
-        goalStatus === ApprovalStatusEnum.ApprovedByRegionManager ||
-        goalStatus === ApprovalStatusEnum.ApprovedByRegionManagerPartially ||
-        goalStatus === ApprovalStatusEnum.ApprovedByHighManagement ||
-        goalStatus === ApprovalStatusEnum.ApprovedByHighManagementPartially
-      );
-    }
-
-    if (userRole === RolesEnums.HighManagement) {
-      // A goal counts as ready only when High Management has APPROVED it.
-      // Rejected/returned/pending goals block stage submission.
-      return (
-        goalStatus === ApprovalStatusEnum.ApprovedByHighManagement ||
-        goalStatus === ApprovalStatusEnum.ApprovedByHighManagementPartially
-      );
-    }
-
-    return false;
-  }
-
-  private areGoalItemsActedUponByRole(
-    goal: any,
-    userRole: string | null
-  ): boolean {
-    if (!userRole) return false;
-
-    const isItemActedUpon = (item: any): boolean => {
-      if (!item || !item.status) return false;
-
-      if (userRole === RolesEnums.UnitManager) {
-        return (
-          item.status === ApprovalStatusEnum.ApprovedByUnitManager ||
-          item.status === ApprovalStatusEnum.ApprovedByUnitManagerPartially ||
-          item.status === ApprovalStatusEnum.RejectedByUnitManager ||
-          item.status === ApprovalStatusEnum.ReturnedByUnitManager
-        );
-      }
-
-      if (userRole === RolesEnums.RegionManager) {
-        return (
-          item.status === ApprovalStatusEnum.ApprovedByRegionManager ||
-          item.status === ApprovalStatusEnum.ApprovedByRegionManagerPartially ||
-          item.status === ApprovalStatusEnum.RejectedByRegionManager ||
-          item.status === ApprovalStatusEnum.ReturnedByRegionManager
-        );
-      }
-
-      if (userRole === RolesEnums.HighManagement) {
-        return (
-          item.status === ApprovalStatusEnum.ApprovedByHighManagement ||
-          item.status ===
-            ApprovalStatusEnum.ApprovedByHighManagementPartially ||
-          item.status === ApprovalStatusEnum.RejectedByHighManagement ||
-          item.status === ApprovalStatusEnum.ReturnedByHighManagement
-        );
-      }
-
-      return false;
-    };
-
-    const nameActedUpon = isItemActedUpon(goal.name);
-    const descriptionActedUpon = isItemActedUpon(goal.descripition);
-    const indicatorActedUpon = isItemActedUpon(goal.indicator);
-
-    return nameActedUpon && descriptionActedUpon && indicatorActedUpon;
-  }
-
-  private hasReturnedItems(objective: any): boolean {
-    // Check if the objective itself is returned
-    if (ReturnedStatuses.includes(objective.status)) {
-      return true;
-    }
-
-    // If the goal itself has a final status (approved/rejected),
-    // then returned child items don't block stage approval
-    const goalHasFinalStatus = this.isGoalActedUponByRole(
-      objective.status,
-      this.authService.getUserRole()
-    );
-
-    if (goalHasFinalStatus) {
-      // Goal is approved/rejected - stage can proceed regardless of child item status
-      return false;
-    }
-
-    // Goal is still pending - check if any child items are returned
-    const nameReturned =
-      objective.name?.status &&
-      ReturnedStatuses.includes(objective.name.status);
-    const descriptionReturned =
-      objective.descripition?.status &&
-      ReturnedStatuses.includes(objective.descripition.status);
-    const indicatorReturned =
-      objective.indicator?.status &&
-      ReturnedStatuses.includes(objective.indicator.status);
-
-    return nameReturned || descriptionReturned || indicatorReturned;
-  }
-
-  private hasUnitManagerApprovedItems(): boolean {
-    const objectives = this.objectivesList();
-
-    return objectives.some((objective) => {
-      // Check if there are objectives with Unit Manager approval status
-      const goalApprovedByUnitManager =
-        objective.status === ApprovalStatusEnum.ApprovedByUnitManager ||
-        objective.status === ApprovalStatusEnum.ApprovedByUnitManagerPartially;
-
-      const nameApprovedByUnitManager =
-        objective.name?.status === ApprovalStatusEnum.ApprovedByUnitManager ||
-        objective.name?.status ===
-          ApprovalStatusEnum.ApprovedByUnitManagerPartially;
-
-      const descriptionApprovedByUnitManager =
-        objective.descripition?.status ===
-          ApprovalStatusEnum.ApprovedByUnitManager ||
-        objective.descripition?.status ===
-          ApprovalStatusEnum.ApprovedByUnitManagerPartially;
-
-      const indicatorApprovedByUnitManager =
-        objective.indicator?.status ===
-          ApprovalStatusEnum.ApprovedByUnitManager ||
-        objective.indicator?.status ===
-          ApprovalStatusEnum.ApprovedByUnitManagerPartially;
-
-      return (
-        goalApprovedByUnitManager ||
-        nameApprovedByUnitManager ||
-        descriptionApprovedByUnitManager ||
-        indicatorApprovedByUnitManager
-      );
-    });
-  }
-
-  private hasItemsApprovedByUnitManager(): boolean {
-    const objectives = this.objectivesList();
-
-    return objectives.some((objective) => {
-      // Check for goals approved by Unit Manager (ready for Region Manager)
-      return (
-        objective.status === ApprovalStatusEnum.ApprovedByUnitManager ||
-        objective.status === ApprovalStatusEnum.ApprovedByUnitManagerPartially
-      );
-    });
-  }
-
-  private hasItemsApprovedByRegionManager(): boolean {
-    const objectives = this.objectivesList();
-
-    return objectives.some((objective) => {
-      // Check for goals approved by Region Manager (ready for High Management)
-      return (
-        objective.status === ApprovalStatusEnum.ApprovedByRegionManager ||
-        objective.status === ApprovalStatusEnum.ApprovedByRegionManagerPartially
-      );
-    });
-  }
-
-  // Method to get button disabled reason
+  // Why the send button is not on screen. Follows canSend step by step so the
+  // two can never disagree.
   getButtonDisabledReason(): string | null {
-    const objectives = this.objectivesList();
+    const objectives = this.submittedObjectives();
+
+    if (this.stageStatus() === ApprovalStatusEnum.ApprovedByHighManagement) {
+      return 'تم اعتماد مرحلة الأهداف بالكامل';
+    }
 
     if (!objectives || objectives.length === 0) {
       return 'لا توجد أهداف للموافقة عليها';
     }
 
-    // Check if user can act on this stage
-    const canActOnStage = this.canActOnCurrentStage();
-
-    if (!canActOnStage) {
+    const rank = this.myRank();
+    if (rank === 0) {
       return this.getStageWaitingMessage();
     }
 
-    // Check for returned items first
-    const hasReturnedItems = objectives.some((objective) =>
-      this.hasReturnedItems(objective)
-    );
-    if (hasReturnedItems) {
+    if (objectives.some((o) => this.statusesOf(o).some((s) => this.isSentBack(s)))) {
       return 'يوجد أهداف مُرجعة، يجب معالجتها قبل إرسال المرحلة';
     }
 
-    // Check if all objectives have been acted upon
-    const allActedUpon = this.allObjectivesActedUpon();
-
-    if (!allActedUpon) {
-      // More specific message about what's blocking
-      const userRole = this.authService.getUserRole();
-      const pendingGoals = this.getPendingItemsDetails(userRole);
-      if (pendingGoals.length > 0) {
-        return `يجب اتخاذ إجراء على الأهداف التالية: ${pendingGoals.join('، ')}`;
-      }
-      return 'يجب اتخاذ إجراء على جميع الأهداف قبل الموافقة على المرحلة';
-    }
-
-    return null; // No disabled reason, button should be enabled
-  }
-
-  private getPendingItemsDetails(userRole: string | null): string[] {
-    const objectives = this.objectivesList();
-    const pendingGoals: string[] = [];
-
-    objectives.forEach((objective, index) => {
-      // Skip if this objective has returned items
-      if (this.hasReturnedItems(objective)) {
-        return;
-      }
-
-      // Check if the goal itself has been acted upon
-      const goalActedUpon = this.isGoalActedUponByRole(
-        objective.status,
-        userRole
+    const behind: string[] = [];
+    this.objectivesList().forEach((objective, index) => {
+      if (!objective || objective.status === ApprovalStatusEnum.SavedAsDraft) return;
+      const isBehind = this.statusesOf(objective).some(
+        (s) => !!s && s !== ApprovalStatusEnum.SavedAsDraft && this.approvalRank(s) < rank
       );
-
-      if (!goalActedUpon) {
-        // Goal is pending - add it to the list
-        pendingGoals.push(`الهدف ${index + 1}`);
-      }
+      if (isBehind) behind.push(`الهدف ${index + 1}`);
     });
 
-    return pendingGoals;
-  }
-
-  private isItemActedUponByRole(item: any, userRole: string | null): boolean {
-    if (!item || !item.status || !userRole) return false;
-
-    if (userRole === RolesEnums.UnitManager) {
-      return (
-        item.status === ApprovalStatusEnum.ApprovedByUnitManager ||
-        item.status === ApprovalStatusEnum.ApprovedByUnitManagerPartially ||
-        item.status === ApprovalStatusEnum.RejectedByUnitManager ||
-        item.status === ApprovalStatusEnum.ReturnedByUnitManager
-      );
+    if (behind.length > 0) {
+      if (this.isStageWithMe()) {
+        return `يجب اتخاذ إجراء على الأهداف التالية: ${behind.join('، ')}`;
+      }
+      return this.getStageWaitingMessage();
     }
 
-    if (userRole === RolesEnums.RegionManager) {
-      return (
-        item.status === ApprovalStatusEnum.ApprovedByRegionManager ||
-        item.status === ApprovalStatusEnum.ApprovedByRegionManagerPartially ||
-        item.status === ApprovalStatusEnum.RejectedByRegionManager ||
-        item.status === ApprovalStatusEnum.ReturnedByRegionManager
-      );
+    if (this.canSend()) {
+      return null;
     }
 
-    if (userRole === RolesEnums.HighManagement) {
-      return (
-        item.status === ApprovalStatusEnum.ApprovedByHighManagement ||
-        item.status === ApprovalStatusEnum.ApprovedByHighManagementPartially ||
-        item.status === ApprovalStatusEnum.RejectedByHighManagement ||
-        item.status === ApprovalStatusEnum.ReturnedByHighManagement
-      );
-    }
-
-    return false;
-  }
-
-  private canActOnCurrentStage(): boolean {
-    const userRole = this.authService.getUserRole();
-    const status = this.stageStatus();
-
-    if (userRole === RolesEnums.UnitManager) {
-      return status === ApprovalStatusEnum.Pending;
-    }
-
-    if (userRole === RolesEnums.RegionManager) {
-      return (
-        status === ApprovalStatusEnum.ApprovedByUnitManager ||
-        status === ApprovalStatusEnum.ApprovedByUnitManagerPartially
-      );
-    }
-
-    if (userRole === RolesEnums.HighManagement) {
-      return (
-        status === ApprovalStatusEnum.ApprovedByRegionManager ||
-        status === ApprovalStatusEnum.ApprovedByRegionManagerPartially
-      );
-    }
-
-    return false;
+    return this.getStageWaitingMessage();
   }
 
   private getStageWaitingMessage(): string {

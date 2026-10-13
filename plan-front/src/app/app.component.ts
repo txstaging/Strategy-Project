@@ -32,10 +32,12 @@ export class AppComponent implements OnInit {
       this.authService.getUserInfo().subscribe((res: any) => {
         const userData = res.data;
         this.authService.currentUser.next(userData);
-        this.signalRService.startConnection();
-        console.log('SignalR Connected');
       });
     }
+
+    // Connect once. This used to also run inside the getUserInfo callback
+    // above, so an authenticated cold start opened two hubs and every
+    // notification arrived twice.
     this.signalRService.startConnection();
   }
 }

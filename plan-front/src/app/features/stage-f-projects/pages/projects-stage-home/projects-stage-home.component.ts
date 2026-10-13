@@ -34,6 +34,14 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { ApproveAllService } from '../../../../approve-all.service';
 import { PageTitleService } from '../../../page-titles/services/page-title.service';
+import { PermissionsService } from '../../../../Core/Service/permissions.service';
+import {
+  approvalRank,
+  canRoleActInStage,
+  isPartialOf,
+  isSentBack,
+  roleRank,
+} from '../../../../Core/utilities/approval-ladder';
 
 @Component({
   selector: 'app-projects-stage-home',
@@ -52,6 +60,7 @@ import { PageTitleService } from '../../../page-titles/services/page-title.servi
   styleUrl: './projects-stage-home.component.css',
 })
 export class ProjectsStageHomeComponent implements OnInit {
+  private permissionsService = inject(PermissionsService);
   // Make enum available in template
   ApprovalStatusEnum = ApprovalStatusEnum;
 
@@ -641,120 +650,39 @@ export class ProjectsStageHomeComponent implements OnInit {
   }
 
   /**
-   * Calculate whether the submission button should be visible
+   * Calculate whether the submission button should be visible.
+   *
+   * The send rule shared with GoalsController/ProjectController
+   * (ApproveProjectStage): nothing sent back, every submitted project approved
+   * at this role's level or above, and something to hand on — the stage has not
+   * reached this level yet, or this role has approved projects still waiting to
+   * be sent.
+   *
+   * This used to require every project to carry this role's own status, so a
+   * project the region manager had already approved kept the unit manager's
+   * send button hidden for good, and it looked only at the project rows — the
+   * button appeared while a field inside a card was still returned, and the
+   * server then refused the send.
    */
   calculateSubmissionButtonVisibility(): boolean {
     const userRole = this.authService.getUserRole();
-    const projectsList = this.projects();
-    const currentStageStatus = this.planProjectStatus();
+    const myRank = roleRank(userRole);
+    if (myRank === 0) return false;
 
-    if (projectsList.length === 0) {
+    const submitted = this.projects().filter(
+      (project) => project.status !== ApprovalStatusEnum.SavedAsDraft
+    );
+    if (submitted.length === 0) return false;
+
+    if (submitted.some((project) => isSentBack(project.status))) return false;
+    if (submitted.some((project) => approvalRank(project.status) < myRank)) {
       return false;
     }
 
-    if (userRole === RolesEnums.UnitManager) {
-      // Unit Manager can submit only if:
-      // 1. There are projects
-      // 2. All projects have been approved by unit manager (not pending)
-      // 3. Stage hasn't been submitted yet by unit manager
-
-      // If stage is already approved by unit manager or beyond, hide button
-      if (
-        currentStageStatus === ApprovalStatusEnum.ApprovedByUnitManager ||
-        currentStageStatus ===
-          ApprovalStatusEnum.ApprovedByUnitManagerPartially ||
-        currentStageStatus === ApprovalStatusEnum.ApprovedByRegionManager ||
-        currentStageStatus ===
-          ApprovalStatusEnum.ApprovedByRegionManagerPartially ||
-        currentStageStatus === ApprovalStatusEnum.ApprovedByHighManagement ||
-        currentStageStatus ===
-          ApprovalStatusEnum.ApprovedByHighManagementPartially
-      ) {
-        return false;
-      }
-
-      // Check if all projects are approved by unit manager
-      const allProjectsApprovedByUnitManager = projectsList.every(
-        (project) =>
-          project.status === ApprovalStatusEnum.ApprovedByUnitManager ||
-          project.status === ApprovalStatusEnum.ApprovedByUnitManagerPartially
-      );
-
-      return allProjectsApprovedByUnitManager;
-    }
-
-    if (userRole === RolesEnums.RegionManager) {
-      // Region Manager can submit only if:
-      // 1. There are projects
-      // 2. All projects have been approved by region manager
-      // 3. Stage hasn't been submitted yet by region manager
-
-      // If stage is already approved by region manager or beyond, hide button
-      if (
-        currentStageStatus === ApprovalStatusEnum.ApprovedByRegionManager ||
-        currentStageStatus ===
-          ApprovalStatusEnum.ApprovedByRegionManagerPartially ||
-        currentStageStatus === ApprovalStatusEnum.ApprovedByHighManagement ||
-        currentStageStatus ===
-          ApprovalStatusEnum.ApprovedByHighManagementPartially
-      ) {
-        return false;
-      }
-
-      // Only show if stage is approved by unit manager and waiting for region manager
-      if (
-        currentStageStatus !== ApprovalStatusEnum.ApprovedByUnitManager &&
-        currentStageStatus !== ApprovalStatusEnum.ApprovedByUnitManagerPartially
-      ) {
-        return false;
-      }
-
-      // Check if all projects are approved by region manager
-      const allProjectsApprovedByRegionManager = projectsList.every(
-        (project) =>
-          project.status === ApprovalStatusEnum.ApprovedByRegionManager ||
-          project.status === ApprovalStatusEnum.ApprovedByRegionManagerPartially
-      );
-
-      return allProjectsApprovedByRegionManager;
-    }
-
-    if (userRole === RolesEnums.HighManagement) {
-      // High Management can submit only if:
-      // 1. There are projects
-      // 2. All projects have been approved by high management
-      // 3. Stage hasn't been submitted yet by high management
-
-      // If stage is already approved by high management, hide button
-      if (
-        currentStageStatus === ApprovalStatusEnum.ApprovedByHighManagement ||
-        currentStageStatus ===
-          ApprovalStatusEnum.ApprovedByHighManagementPartially
-      ) {
-        return false;
-      }
-
-      // Only show if stage is approved by region manager and waiting for high management
-      if (
-        currentStageStatus !== ApprovalStatusEnum.ApprovedByRegionManager &&
-        currentStageStatus !==
-          ApprovalStatusEnum.ApprovedByRegionManagerPartially
-      ) {
-        return false;
-      }
-
-      // Check if all projects are approved by high management
-      const allProjectsApprovedByHighManagement = projectsList.every(
-        (project) =>
-          project.status === ApprovalStatusEnum.ApprovedByHighManagement ||
-          project.status ===
-            ApprovalStatusEnum.ApprovedByHighManagementPartially
-      );
-
-      return allProjectsApprovedByHighManagement;
-    }
-
-    return false;
+    return (
+      approvalRank(this.planProjectStatus()) < myRank ||
+      submitted.some((project) => isPartialOf(project.status, userRole))
+    );
   }
 
   closeSuccessPopup() {
@@ -837,8 +765,7 @@ export class ProjectsStageHomeComponent implements OnInit {
   }
 
   canDeleteProject(project: any): boolean {
-    // Deletable under the same rule as edit (while not yet approved).
-    return this.canEditProject(project);
+    return this.permissionsService.canDeleteItem('Projects', project);
   }
 
   /**
@@ -913,36 +840,13 @@ export class ProjectsStageHomeComponent implements OnInit {
   needsCurrentUserAction(project: any): boolean {
     if (!project || !project.status) return false;
 
-    const userRole = this.authService.getUserRole();
-    const projectStatus = project.status;
-
-    // Unit Manager needs to act on pending projects
-    if (
-      userRole === RolesEnums.UnitManager &&
-      projectStatus === ApprovalStatusEnum.Pending
-    ) {
-      return true;
-    }
-
-    // Region Manager needs to act on projects approved by unit manager
-    if (
-      userRole === RolesEnums.RegionManager &&
-      (projectStatus === ApprovalStatusEnum.ApprovedByUnitManager ||
-        projectStatus === ApprovalStatusEnum.ApprovedByUnitManagerPartially)
-    ) {
-      return true;
-    }
-
-    // High Management needs to act on projects approved by region manager
-    if (
-      userRole === RolesEnums.HighManagement &&
-      (projectStatus === ApprovalStatusEnum.ApprovedByRegionManager ||
-        projectStatus === ApprovalStatusEnum.ApprovedByRegionManagerPartially)
-    ) {
-      return true;
-    }
-
-    return false;
+    // Same ladder as the project card: something below this role's level while
+    // the stage is with this role.
+    return canRoleActInStage(
+      project.status,
+      this.planProjectStatus(),
+      this.authService.getUserRole()
+    );
   }
 
   /**

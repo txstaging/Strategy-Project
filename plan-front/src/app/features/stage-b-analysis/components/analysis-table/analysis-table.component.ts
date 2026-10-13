@@ -33,6 +33,7 @@ import { PlanStatusService } from '../../services/PlanStatus.service';
 import { AnalysisFormComponent } from '../analysis-form/analysis-form.component';
 import { AnalysisStatusService } from '../../services/analysis-status.service';
 import { SavePopupComponent } from "../../../../save-popup/save-popup.component";
+import { PermissionsService } from '../../../../Core/Service/permissions.service';
 @Component({
   selector: 'app-analysis-table',
   standalone: true,
@@ -49,6 +50,7 @@ import { SavePopupComponent } from "../../../../save-popup/save-popup.component"
   styleUrl: './analysis-table.component.css',
 })
 export class AnalysisTableComponent implements OnInit, OnDestroy {
+  private permissionsService = inject(PermissionsService);
   @Input() columns: {
     key: string;
     label: string;
@@ -530,23 +532,12 @@ export class AnalysisTableComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Check if user can delete an analysis item
-   * Unit employees can delete any pending items
-   * @param item Analysis item to check
+   * Whether the current user can delete an analysis item.
+   * Who may delete comes from the Delete permission; what may be deleted comes
+   * from the item's status. See PermissionsService.canDeleteItem.
    */
   canDeleteItem(item: any): boolean {
-    const userRole = this.authService.getUserRole();
-
-    // Only unit employees can delete items
-    if (userRole !== RolesEnums.UnitEmployee) return false;
-
-    // Deletable while the item is not yet approved at any level (same rule as edit).
-    const isDraft = item.status === ApprovalStatusEnum.SavedAsDraft;
-    const isPending = PendingStatuses.includes(item.status);
-    const isReturned = ReturnedStatuses.includes(item.status);
-    const isRejected = RejectionStatuses.includes(item.status);
-
-    return isDraft || isPending || isReturned || isRejected;
+    return this.permissionsService.canDeleteItem('Analysis', item);
   }
 
   canTakeAction(item: any): boolean {

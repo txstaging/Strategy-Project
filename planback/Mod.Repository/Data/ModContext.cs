@@ -40,6 +40,14 @@
         public DbSet<Awareness> Awareness { get; set; }
         public DbSet<Notification> Notification { get; set; }
         public DbSet<PageTitle> PageTitles { get; set; }
+        public DbSet<FeedbackRequest> FeedbackRequests { get; set; }
+        public DbSet<FeedbackRequestRecipient> FeedbackRequestRecipients { get; set; }
+        public DbSet<FeedbackResponse> FeedbackResponses { get; set; }
+        public DbSet<ProgressShare> ProgressShares { get; set; }
+        public DbSet<ProgressShareRecipient> ProgressShareRecipients { get; set; }
+        public DbSet<CommunicationPlanEntry> CommunicationPlanEntries { get; set; }
+        public DbSet<ProjectAllocation> ProjectAllocations { get; set; }
+        public DbSet<SharedProjectParticipant> SharedProjectParticipants { get; set; }
         #endregion
 
         #region Methods

@@ -33,12 +33,27 @@ namespace Mod.APIs.Controllers
             var goals = await _context.PlanGoals.Where(i => i.PlanId == PlanId).ToListAsync();
             var currentUser = await _currentUser.GetCurrentUserAsync();
             var unit = await _context.Units.FirstOrDefaultAsync(i => i.Id == currentUser.UnitId);
+            var submittedAny = false;
             foreach (var goal in goals)
             {
                 if (goal.Status == ApprovalStatus.SavedAsDraft)
                 {
                     goal.Status = ApprovalStatus.Pending;
                     _context.PlanGoals.Update(goal);
+                    submittedAny = true;
+                }
+            }
+
+            // New goals start with the unit manager, so the stage has to as well.
+            // Left where it was — with the region manager, say — the new goal sat
+            // below a stage that had already gone past the one role able to
+            // review it. Same rule as the direction stage's Convert.
+            if (submittedAny)
+            {
+                var plan = await _context.Plans.FirstOrDefaultAsync(p => p.Id == PlanId);
+                if (plan?.PlanGoalsStepId != null)
+                {
+                    ReopenStage(await _context.PlanGoalsStep.FirstOrDefaultAsync(s => s.Id == plan.PlanGoalsStepId));
                 }
             }
             await _context.SaveChangesAsync();
@@ -158,7 +173,11 @@ namespace Mod.APIs.Controllers
             PlanGoal.Indicator.Value = obj.Indicator;
 
            _context.PlanGoals.Update(PlanGoal);
-            _context.SaveChangesAsync();
+            // Must be awaited: the DbContext is scoped to the request and is disposed
+            // when the action returns, so a fire-and-forget save races with disposal
+            // and the edit can be silently lost. This is the path an employee uses to
+            // fix a returned goal, so a lost save left the stage blocked for good.
+            await _context.SaveChangesAsync();
 
             return new APIsGenralResponseDto<AddGoalDto>("Sucsses", obj);
 
@@ -212,20 +231,83 @@ namespace Mod.APIs.Controllers
         {
             var goal = await _context.PlanGoals.FindAsync(id);
             if (goal == null) return NotFound(new APIsGenralResponseDto<AddGoalDto>("Not Found", null));
+            // Enforced server-side as well as in the UI, so it cannot be bypassed by
+            // calling the API directly.
+            if (!Utils.IsDeletable(goal.Status))
+            {
+                return BadRequest(new APIsGenralResponseDto<AddGoalDto>("لا يمكن حذف هدف تمت الموافقة عليه", null));
+            }
             _context.PlanGoals.Remove(goal);
             await _context.SaveChangesAsync();
             return Ok(new APIsGenralResponseDto<AddGoalDto>("Deleted Successfully", null));
         }
+        // Put the stage back with the unit manager because something in it has to
+        // be reviewed from the bottom again. A finally approved stage is left
+        // alone, since the plan has already moved on to the initiatives.
+        private void ReopenStage(PlanGoalsStep? step)
+        {
+            if (step == null) return;
+            if (step.Status == ApprovalStatus.Pending || step.Status == ApprovalStatus.ApprovedByHighManagement) return;
+
+            step.Status = ApprovalStatus.Pending;
+            _context.PlanGoalsStep.Update(step);
+        }
+
+        // The goals stage status of a plan, read the same way GetGoalStageStatus
+        // hands it to the frontend, so both sides judge the ladder from one value.
+        private async Task<ApprovalStatus?> GetStageStatusForPlan(int planId)
+        {
+            var stepId = await _context.Plans.Where(p => p.Id == planId).Select(p => p.PlanGoalsStepId).FirstOrDefaultAsync();
+            if (stepId == null) return null;
+
+            return await _context.PlanGoalsStep.Where(s => s.Id == stepId).Select(s => (ApprovalStatus?)s.Status).FirstOrDefaultAsync();
+        }
+
+        // Addresses a notification to the PLAN's unit, so an action taken by
+        // region or high management still reaches the employees who own the work.
+        private async Task NotifyOnGoals(int? planId, NotificationAction action, AppUser user, RoleEnum actingRole)
+        {
+            if (planId == null) return;
+
+            var plan = await _context.Plans.FirstOrDefaultAsync(i => i.Id == planId);
+            if (plan == null) return;
+
+            var unit = await _context.Units.FirstOrDefaultAsync(i => i.Id == plan.UnitId)
+                       ?? await _context.Units.FirstOrDefaultAsync(i => i.Id == user.UnitId);
+
+            await _notification.NotifyAsync(action, ModulesNamesOnArabic.Objectives, unit, FormNameToReturnToFront.Goals, plan.Id, actingRole);
+        }
+
         [Authorize(Policy = "Goals.Approve")]
         [HttpPost("ApproveGoal/{id}")]
         public async Task<IActionResult> ApproveGoal(int id)
         {
             var user = await _currentUser.GetCurrentUserAsync();
-            var goal = await _context.PlanGoals.FindAsync(id);
+            var goal = await _context.PlanGoals.Where(g => g.Id == id).Include(g => g.Name).Include(g => g.Descripition).Include(g => g.Indicator).FirstOrDefaultAsync();
             if (goal == null) return NotFound(new APIsGenralResponseDto<AddGoalDto>("Not Found", null));
-            goal.Status = Utils.GetApprovalStatus(ActionEnum.Approve, Enum.Parse<RoleEnum>(user!.Role!)); ;
+            var actingRole = Enum.Parse<RoleEnum>(user!.Role!);
+
+            // Respect the ladder, and only approve a goal once each of its items
+            // has been approved at this level or above. An item approved higher up
+            // before the goal was reworked keeps that approval and counts as done.
+            var stageStatus = await GetStageStatusForPlan(goal.PlanId);
+            if (!Utils.CanRoleActInStage(goal.Status, stageStatus, actingRole))
+            {
+                return BadRequest(new { message = "لا يمكنك اتخاذ إجراء على هذا الهدف في حالته الحالية" });
+            }
+            var itemStatuses = new[] { goal.Name?.Status, goal.Descripition?.Status, goal.Indicator?.Status };
+            if (itemStatuses.Any(s => Utils.ApprovalRank(s) < Utils.RoleRank(actingRole)))
+            {
+                return BadRequest(new { message = "يجب اتخاذ إجراء على جميع عناصر الهدف (الاسم، الوصف، المؤشر) قبل الموافقة على الهدف" });
+            }
+
+            goal.Status = Utils.GetApprovalStatus(ActionEnum.Approve, actingRole);
             _context.PlanGoals.Update(goal);
             await _context.SaveChangesAsync();
+
+            // Approving used to notify nobody, so an employee heard back only
+            // when their work was refused, never when it was accepted.
+            await NotifyOnGoals(goal.PlanId, NotificationAction.Approve, user, actingRole);
             return Ok(new APIsGenralResponseDto<AddGoalDto>("Approved Successfully", null));
         }
         [Authorize(Policy = "Goals.Approve")]
@@ -234,11 +316,27 @@ namespace Mod.APIs.Controllers
         {
             var user = await _currentUser.GetCurrentUserAsync();
             var goal = await _context.GoalItems.FindAsync(id);
-           
+
             if (goal == null) return NotFound(new APIsGenralResponseDto<AddGoalDto>("Not Found", null));
-            goal.Status = Utils.GetApprovalStatus(ActionEnum.Approve, Enum.Parse<RoleEnum>(user!.Role!)); ;
+            var actingRole = Enum.Parse<RoleEnum>(user!.Role!);
+
+            // A GoalItem is reached from its parent goal, which holds the keys.
+            var ownerPlanId = await _context.PlanGoals
+                .Where(g => g.NameId == goal.Id || g.DescripitionId == goal.Id || g.IndicatorId == goal.Id)
+                .Select(g => (int?)g.PlanId)
+                .FirstOrDefaultAsync();
+
+            var stageStatus = ownerPlanId == null ? null : await GetStageStatusForPlan(ownerPlanId.Value);
+            if (!Utils.CanRoleActInStage(goal.Status, stageStatus, actingRole))
+            {
+                return BadRequest(new { message = "لا يمكنك اتخاذ إجراء على هذا العنصر في حالته الحالية" });
+            }
+
+            goal.Status = Utils.GetApprovalStatus(ActionEnum.Approve, actingRole);
             _context.GoalItems.Update(goal);
             await _context.SaveChangesAsync();
+
+            await NotifyOnGoals(ownerPlanId, NotificationAction.Approve, user, actingRole);
             return Ok(new APIsGenralResponseDto<AddGoalDto>("Approved Successfully", null));
         }
         [Authorize(Policy = "Goals.Reject")]
@@ -249,6 +347,10 @@ namespace Mod.APIs.Controllers
             var goalItem = await _context.GoalItems.FindAsync(GoalItemId);
             var goal = await _context.PlanGoals.FindAsync(GoalId);
             if (goal == null) return NotFound(new APIsGenralResponseDto<AddGoalDto>("Not Found", null));
+            if (goalItem != null && !Utils.CanRoleActInStage(goalItem.Status, await GetStageStatusForPlan(goal.PlanId), Enum.Parse<RoleEnum>(user!.Role!)))
+            {
+                return BadRequest(new { message = "لا يمكنك اتخاذ إجراء على هذا العنصر في حالته الحالية" });
+            }
             goal.Status = Utils.GetApprovalStatus(ActionEnum.Reject, Enum.Parse<RoleEnum>(user!.Role!));
             goal.Comment = comment.Comments;
             if (goalItem == null) return NotFound(new APIsGenralResponseDto<AddGoalDto>("Not Found", null));
@@ -273,6 +375,10 @@ namespace Mod.APIs.Controllers
             var goalItem = await _context.GoalItems.FindAsync(GoalItemId);
             var goal = await _context.PlanGoals.Where(i=>i.Id==GoalId).Include(i=>i.planGoalsStep).FirstOrDefaultAsync(i=>i.Id==GoalId);
             if (goal == null) return NotFound(new APIsGenralResponseDto<AddGoalDto>("Not Found", null));
+            if (goalItem != null && !Utils.CanRoleActInStage(goalItem.Status, await GetStageStatusForPlan(goal.PlanId), Enum.Parse<RoleEnum>(user!.Role!)))
+            {
+                return BadRequest(new { message = "لا يمكنك اتخاذ إجراء على هذا العنصر في حالته الحالية" });
+            }
             goal.Status = Utils.GetApprovalStatus(ActionEnum.Return, Enum.Parse<RoleEnum>(user!.Role!));
             goal.Comment = comment.Comments;
 
@@ -314,17 +420,48 @@ namespace Mod.APIs.Controllers
             var unit = await _context.Units.FirstOrDefaultAsync(i => i.Id == plan.UnitId)
                        ?? await _context.Units.Where(i => i.Id == user.UnitId).FirstOrDefaultAsync();
             var actingRole = Enum.Parse<RoleEnum>(user!.Role!);
+            if (Utils.RoleRank(actingRole) == 0)
+            {
+                return BadRequest(new { message = "لا تملك صلاحية اعتماد المرحلة" });
+            }
+
             var goalStatuses = new List<ApprovalStatus?>();
-            foreach (var g in plan.PlanGoalsStep.Goals)
+            // A goal the employee has not submitted yet is not part of this round.
+            // Its items are created Pending, so counting them would block every
+            // manager's send while the managers cannot even see the draft.
+            foreach (var g in plan.PlanGoalsStep.Goals.Where(g => g.Status != ApprovalStatus.SavedAsDraft))
             {
                 goalStatuses.Add(g.Status);
-                goalStatuses.Add(g.Name.Status);
-                goalStatuses.Add(g.Indicator.Status);
-                goalStatuses.Add(g.Descripition.Status);
+                goalStatuses.Add(g.Name?.Status);
+                goalStatuses.Add(g.Indicator?.Status);
+                goalStatuses.Add(g.Descripition?.Status);
+            }
+            if (goalStatuses.Count == 0)
+            {
+                return BadRequest(new { message = "لا توجد أهداف مرسلة لاعتمادها" });
             }
             if (goalStatuses.Any(s => Utils.IsRejectedOrReturned(s)))
             {
                 return BadRequest(new { message = "لا يمكن اعتماد المرحلة لوجود عناصر مرفوضة أو مُرجعة أو لم يتم اتخاذ إجراء عليها بعد" });
+            }
+
+            // Every goal and item has to be approved at this level or above before
+            // the stage moves on — the same send rule as the direction stage.
+            // Items approved further up before a rework keep that approval.
+            var notYetHandled = goalStatuses.Count(s => Utils.BlocksStageApproval(s, actingRole));
+            if (notYetHandled > 0)
+            {
+                return BadRequest(new
+                {
+                    message = $"يوجد {notYetHandled} عنصر لم يتم اتخاذ إجراء عليه بعد، يرجى مراجعة جميع الأهداف وعناصرها قبل الإرسال"
+                });
+            }
+
+            // A second press on a stage already sent would rewrite its status and
+            // pull it back down a level.
+            if (!Utils.HasSomethingToSend(plan.PlanGoalsStep.Status, goalStatuses, actingRole))
+            {
+                return BadRequest(new { message = "تم إرسال المرحلة مسبقاً ولا توجد أهداف جديدة بانتظار الإرسال" });
             }
             foreach (var item in plan.PlanGoalsStep.Goals)
             {
@@ -399,7 +536,8 @@ namespace Mod.APIs.Controllers
                 }
 
             }
-            if(user.Role==RoleEnum.HighManagement.ToString())
+            // Never pull a plan that is already further on back to initiatives.
+            if (user.Role == RoleEnum.HighManagement.ToString() && plan.CurrentStage < StrategicPlanLevels.InitiativesStage)
             {
                 plan.CurrentStage = StrategicPlanLevels.InitiativesStage;
                 _context.Plans.Update(plan);
@@ -409,6 +547,14 @@ namespace Mod.APIs.Controllers
             await _context.SaveChangesAsync();
             var notifAction = actingRole == RoleEnum.HighManagement ? NotificationAction.FinalApprove : NotificationAction.Approve;
             await _notification.NotifyAsync(notifAction, ModulesNamesOnArabic.Objectives, unit, FormNameToReturnToFront.Goals, plan.Id, actingRole);
+
+            // «إشعارات بمدى التقدم» — tell everyone the plan has entered the next
+            // stage. Separate from the approval above, which only says the current
+            // stage was accepted.
+            if (actingRole == RoleEnum.HighManagement)
+            {
+                await _notification.NotifyAsync(NotificationAction.StageProgress, ModulesNamesOnArabic.Init, unit, FormNameToReturnToFront.init, plan.Id, actingRole, plan.Name);
+            }
 
 
             return Ok(new { message = "ok" });

@@ -1,4 +1,5 @@
-﻿using Mod.Core;
+﻿using Mod.Core.Utils;
+using Mod.Core;
 
 namespace Mod.Service.Services.Implementation.AnalysisPointsService
 {
@@ -189,12 +190,21 @@ namespace Mod.Service.Services.Implementation.AnalysisPointsService
         public async Task<APIsGenralResponseDto<AddAnalysisPointsDto>> Delete(int id, int PlanID)
         {
             var analysisPoint = await _unitOfWork.AnalysisPoints.GetById(id);
-            var analysisPointAfterMap = _mapper.Map<AddAnalysisPointsDto>(analysisPoint);
+            // The null check has to come before the mapping, otherwise a missing id
+            // throws inside AutoMapper and never reaches the "Record not found" branch.
             if (analysisPoint == null)
             {
-                
                 return new APIsGenralResponseDto<AddAnalysisPointsDto>("Record not found", null);
             }
+
+            // Enforced server-side as well as in the UI, so it cannot be bypassed by
+            // calling the API directly.
+            if (!Utils.IsDeletable(analysisPoint.Status))
+            {
+                return new APIsGenralResponseDto<AddAnalysisPointsDto>("لا يمكن حذف عنصر تمت الموافقة عليه", null);
+            }
+
+            var analysisPointAfterMap = _mapper.Map<AddAnalysisPointsDto>(analysisPoint);
             await _unitOfWork.AnalysisPoints.Delete(id);
             await _unitOfWork.SaveChangesAsync();
             return new APIsGenralResponseDto<AddAnalysisPointsDto>("Deleted successfully", _mapper.Map<AddAnalysisPointsDto>(analysisPointAfterMap));

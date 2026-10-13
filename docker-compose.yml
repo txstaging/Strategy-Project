@@ -1,0 +1,73 @@
+# Usage (on the VPS):
+#   cp .env.example .env   # then edit the values
+#   docker compose up -d --build
+
+name: strategy-plan
+
+x-api-env: &api-env
+  ASPNETCORE_ENVIRONMENT: Production
+  ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=${POSTGRES_DB:-Mod};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD}"
+  Jwt__Key: ${JWT_KEY:?set JWT_KEY in .env}
+  Jwt__Issuer: ${PUBLIC_URL:-http://localhost}
+  Jwt__Audience: ${PUBLIC_URL:-http://localhost}
+  Jwt__days: ${JWT_DAYS:-7}
+  BaseApiUrl: ${PUBLIC_URL:-http://localhost}
+
+services:
+  db:
+    # Match the major version of the source database (the backup came from PostgreSQL 18)
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-Mod}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      # PostgreSQL 18+ images keep data under /var/lib/postgresql/<version>, so mount the parent
+      - db-data:/var/lib/postgresql
+    # Uncomment to reach the database from the VPS itself (e.g. for backups / pgAdmin over SSH tunnel)
+    # ports:
+    #   - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Applies EF Core migrations, then exits
+  migrate:
+    build:
+      context: ./planback
+      target: migrator
+    environment: *api-env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: ./planback
+      target: api
+    restart: unless-stopped
+    environment: *api-env
+    volumes:
+      - uploads:/app/wwwroot/Uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: ./plan-front
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-80}:80"
+    depends_on:
+      - api
+
+volumes:
+  db-data:
+  uploads:

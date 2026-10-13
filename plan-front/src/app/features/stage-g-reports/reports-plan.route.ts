@@ -34,4 +34,35 @@ export const REPORTS: Route[] = [
       },
     ],
   },
+  // Two screens that sit beside التقارير in the side menu rather than inside
+  // it. They live in this feature folder because they belong to the reports
+  // stage, but each has its own page.
+  {
+    path: 'communication',
+    loadComponent: () =>
+      import(
+        './components/communication-plan/communication-plan.component'
+      ).then((m) => m.CommunicationPlanComponent),
+  },
+  {
+    path: 'resources',
+    loadComponent: () =>
+      import(
+        './components/project-allocations/project-allocations.component'
+      ).then((m) => m.ProjectAllocationsComponent),
+  },
+  {
+    path: 'stakeholders',
+    loadComponent: () =>
+      import('./components/stakeholders/stakeholders.component').then(
+        (m) => m.StakeholdersComponent
+      ),
+  },
+  {
+    path: 'shared-projects',
+    loadComponent: () =>
+      import('./components/shared-projects/shared-projects.component').then(
+        (m) => m.SharedProjectsComponent
+      ),
+  },
 ];

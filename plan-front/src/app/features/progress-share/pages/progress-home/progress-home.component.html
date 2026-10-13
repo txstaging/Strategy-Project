@@ -1,0 +1,56 @@
+<div class="pg-page">
+  <div class="pg-page__head">
+    <div>
+      <h2 class="pg-page__title">مشاركات نسبة الإنجاز</h2>
+      <p class="pg-page__subtitle">
+        إرسال نسبة إنجاز المشاريع والمبادرات وما تم إنجازه من الوحدات إلى مستخدمين محددين
+      </p>
+    </div>
+    <button class="btn btn-success" (click)="showModal = true">
+      <i class="bi bi-send ms-1"></i> مشاركة جديدة
+    </button>
+  </div>
+
+  <div class="pg-tabs">
+    <button class="pg-tab" [class.pg-tab--active]="activeTab === 'inbox'" (click)="activeTab = 'inbox'">
+      واردة إليّ
+      <span class="pg-tab__badge" *ngIf="inbox().length">{{ inbox().length }}</span>
+    </button>
+    <button class="pg-tab" [class.pg-tab--active]="activeTab === 'sent'" (click)="activeTab = 'sent'">
+      مشاركاتي
+      <span class="pg-tab__badge" *ngIf="sent().length">{{ sent().length }}</span>
+    </button>
+  </div>
+
+  @if (loading()) {
+    <p class="pg-empty">جارٍ التحميل…</p>
+  } @else if (visibleList.length === 0) {
+    <p class="pg-empty">
+      {{ activeTab === 'inbox' ? 'لم تصلك أي مشاركة بعد' : 'لم تشارك أي نسبة إنجاز بعد' }}
+    </p>
+  } @else {
+    <div class="pg-list">
+      @for (s of visibleList; track s.id) {
+        <button type="button" class="pg-card" (click)="open(s)">
+          <div class="pg-card__pct">{{ s.percentage | number: '1.0-2' }}%</div>
+          <div class="pg-card__body">
+            <div class="pg-card__top">
+              <span class="pg-chip">{{ scopeLabel(s.scope) }}</span>
+              <strong>{{ s.scopeName }}</strong>
+            </div>
+            <p class="pg-card__note" *ngIf="s.note">{{ s.note }}</p>
+            <div class="pg-card__meta">
+              <span *ngIf="activeTab === 'inbox' && s.sentByName">من: {{ s.sentByName }}</span>
+              <span *ngIf="activeTab === 'sent'">إلى {{ s.recipients.length }} مستلم</span>
+              <span *ngIf="s.createdAt">{{ s.createdAt | date: 'yyyy-MM-dd' }}</span>
+            </div>
+          </div>
+        </button>
+      }
+    </div>
+  }
+</div>
+
+@if (showModal) {
+  <app-progress-share-modal (closed)="showModal = false" (shared)="onShared()"></app-progress-share-modal>
+}

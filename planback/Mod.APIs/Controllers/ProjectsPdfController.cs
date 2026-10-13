@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using System.Globalization;
 
 namespace Mod.APIs.Controllers
 {
@@ -70,8 +71,13 @@ namespace Mod.APIs.Controllers
                         // ===== Header =====
                         page.Header().ContentFromRightToLeft().Row(row =>
                         {
+                            // The logo needs a height of its own. FitHeight inside a
+                            // width-only slot has nothing to fit to, so QuestPDF
+                            // threw "conflicting size constraints" and every export
+                            // of the projects page returned 500 wherever the logo
+                            // file exists.
                             if (logoBytes != null)
-                                row.ConstantItem(45).Image(logoBytes, ImageScaling.FitHeight);
+                                row.ConstantItem(45).Height(45).Image(logoBytes, ImageScaling.FitArea);
 
                             row.RelativeItem()
                                 .AlignMiddle()
@@ -97,17 +103,17 @@ namespace Mod.APIs.Controllers
                                     cardRow.ConstantItem(4).Background(PrimaryColor);
                                     cardRow.RelativeItem().Padding(18).Column(c =>
                                     {
-                                        Title(c, project.Name.Value);
+                                        Title(c, project.Name?.Value ?? "-");
                                         Field(c, "رمز المشروع", project.Code);
-                                        Field(c, "أولوية المشروع", project.Priority.Value);
-                                        Field(c, "وزن المشروع", project.Weight.Value);
-                                        Field(c, "مدة المشروع", project.Duration.Value);
-                                        Field(c, "تاريخ البداية", project.StartDate.ToString());
-                                        Field(c, "تاريخ النهاية", project.EndDate.ToString());
-                                        Field(c, "المستفيدون", project.Beneficiaries.Value);
-                                        Field(c, "الجهة المشرفة", project.SupervisingAuthority.Value);
-                                        Field(c, "الهدف المرتبط", project.Goals.Name.Value);
-                                        Field(c, "المبادرة المرتبطة", project.Initiative.Name.Value);
+                                        Field(c, "أولوية المشروع", project.Priority?.Value);
+                                        Field(c, "وزن المشروع", project.Weight?.Value);
+                                        Field(c, "مدة المشروع", project.Duration?.Value);
+                                        Field(c, "تاريخ البداية", project.StartDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
+                                        Field(c, "تاريخ النهاية", project.EndDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
+                                        Field(c, "المستفيدون", project.Beneficiaries?.Value);
+                                        Field(c, "الجهة المشرفة", project.SupervisingAuthority?.Value);
+                                        Field(c, "الهدف المرتبط", project.Goals?.Name?.Value);
+                                        Field(c, "المبادرة المرتبطة", project.Initiative?.Name?.Value);
                                     });
                                 });
                         });

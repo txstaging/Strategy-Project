@@ -15,6 +15,7 @@ export class StagesNavigationService {
     Stages.Goals,
     Stages.Initiatives,
     Stages.Projects,
+    Stages.Reports,
   ];
 
   // Stage button text mapping (Arabic)
@@ -24,6 +25,7 @@ export class StagesNavigationService {
     [Stages.Goals]: 'الي الأهداف',
     [Stages.Initiatives]: 'الي المبادرات',
     [Stages.Projects]: 'الي المشاريع',
+    [Stages.Reports]: 'الي التقارير',
   };
 
   // Map from API stage names to our internal Stages enum
@@ -33,6 +35,7 @@ export class StagesNavigationService {
     [StageApiNames.GoalsStage]: Stages.Goals,
     [StageApiNames.InitiativesStage]: Stages.Initiatives,
     [StageApiNames.ProjectsStage]: Stages.Projects,
+    [StageApiNames.ReportStage]: Stages.Reports,
   };
 
   // Get the appropriate route for a stage
@@ -43,6 +46,7 @@ export class StagesNavigationService {
       [Stages.Goals]: StagesRouting.Goals,
       [Stages.Initiatives]: StagesRouting.Initiatives,
       [Stages.Projects]: StagesRouting.Projects,
+      [Stages.Reports]: StagesRouting.Reports,
     };
 
     return routeMap[stage];
@@ -68,17 +72,19 @@ export class StagesNavigationService {
       return mappedStage;
     }
 
-    // Fallback to the previous approach for backward compatibility
-    if (planStatus.analysisStage) {
-      return Stages.Analysis;
-    } else if (planStatus.directionStage) {
-      return Stages.Direction;
-    } else if (planStatus.goalsStage) {
-      return Stages.Goals;
-    } else if (planStatus.initiativesStage) {
-      return Stages.Initiatives;
+    // Fallback for responses that carry only the boolean flags. The flags are
+    // cumulative, so the furthest stage reached is the last one still true —
+    // checking them in forward order always answered Analysis.
+    if (planStatus.reportStage) {
+      return Stages.Reports;
     } else if (planStatus.projectsStage) {
       return Stages.Projects;
+    } else if (planStatus.initiativesStage) {
+      return Stages.Initiatives;
+    } else if (planStatus.goalsStage) {
+      return Stages.Goals;
+    } else if (planStatus.directionStage) {
+      return Stages.Direction;
     }
 
     // Default to analysis if no stage is active
@@ -88,6 +94,14 @@ export class StagesNavigationService {
   // Navigate to a specific stage
   navigateToStage(planId: string, stage: Stages): void {
     const route = this.getStageRoute(stage);
+
+    // Reports is the one stage that is not scoped to a plan in the URL: it lives
+    // at /plans/reports rather than /plans/:planId/reports.
+    if (stage === Stages.Reports) {
+      this.router.navigate(['/plans', route]);
+      return;
+    }
+
     this.router.navigate(['/plans', planId, route]);
   }
 
@@ -113,6 +127,7 @@ export class StagesNavigationService {
       [Stages.Goals]: (status) => status.goalsStage,
       [Stages.Initiatives]: (status) => status.initiativesStage,
       [Stages.Projects]: (status) => status.projectsStage,
+      [Stages.Reports]: (status) => status.reportStage,
     };
 
     return availabilityMap[stage](planStatus);

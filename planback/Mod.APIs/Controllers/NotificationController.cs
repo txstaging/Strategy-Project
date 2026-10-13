@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -39,7 +39,8 @@ namespace Mod.APIs.Controllers
                     n.Message,
                     n.IsRead,
                     n.FormNameToReturnToFront,
-                    planId = n.FormId
+                    planId = n.FormId,
+                    n.CreatedAt
                 }).ToListAsync())
                 .Select(n => new NotificationItemDto
                 {
@@ -47,7 +48,8 @@ namespace Mod.APIs.Controllers
                     Message = n.Message,
                     IsRead = n.IsRead,
                     FormNameToReturnToFront = n.FormNameToReturnToFront.GetDisplayName(),
-                    planId = n.planId
+                    planId = n.planId,
+                    CreatedAt = n.CreatedAt
                 }).ToList();
 
             var notificationsDto = new NotificationDto
@@ -111,17 +113,28 @@ namespace Mod.APIs.Controllers
         {
             var role = user.Role;
             var unitId = user.UnitId;
+            var userId = user.Id;
 
             IQueryable<Notification> query = _context.Notification
                 .Where(n => n.IsDeleted != true);
 
             if (role == nameof(RoleEnum.UnitEmployee) || role == nameof(RoleEnum.UnitManager))
             {
-                query = query.Where(i => i.NotificationRolesTargets.Any(n => n.Role == role && (n.UnitId == unitId || n.UnitId == null)));
+                // Rows addressed to this person by name count too, which is how a
+                // feedback request reaches someone who was picked individually.
+                query = query.Where(i => i.NotificationRolesTargets.Any(n =>
+                    n.UserId == userId
+                    || (n.Role == role && (n.UnitId == unitId || n.UnitId == null))));
             }
-            else if (role == nameof(RoleEnum.RegionManager) || role == nameof(RoleEnum.HighManagement))
+            else
             {
-                query = query.Where(i => i.NotificationRolesTargets.Any(n => n.Role == role));
+                // Everyone else, Admin included, sees only what was addressed to
+                // their role. Admin used to match no branch at all, so the query
+                // came back unfiltered: an admin saw every notification in the
+                // system, and mark-all-read then marked all of them read for
+                // every other user as well.
+                query = query.Where(i => i.NotificationRolesTargets.Any(n =>
+                    n.UserId == userId || n.Role == role));
             }
 
             return query;
@@ -135,11 +148,12 @@ namespace Mod.APIs.Controllers
             if (role == nameof(RoleEnum.UnitEmployee) || role == nameof(RoleEnum.UnitManager))
             {
                 return notification.NotificationRolesTargets
-                    .Any(nrt => nrt.Role == role && (nrt.UnitId == unitId || nrt.UnitId == null));
+                    .Any(nrt => nrt.UserId == user.Id
+                             || (nrt.Role == role && (nrt.UnitId == unitId || nrt.UnitId == null)));
             }
 
             return notification.NotificationRolesTargets
-                .Any(nrt => nrt.Role == role);
+                .Any(nrt => nrt.UserId == user.Id || nrt.Role == role);
         }
 
         public class NotificationDto
@@ -155,6 +169,9 @@ namespace Mod.APIs.Controllers
             public bool IsRead { get; set; }
             public string FormNameToReturnToFront { get; set; }
             public int? planId { get; set; }
+            // The list had no timestamp at all, so notifications could not be
+            // ordered or dated on screen.
+            public DateTime? CreatedAt { get; set; }
         }
     }
 }

@@ -110,9 +110,6 @@ namespace Mod.APIs
 				});
 
 			var app = builder.Build();
-           
-           app.MapHub<NotificationHub>("/notificationHub");
-
 
             app.UseCors("AllowSpecificOrigins");
 			app.UseStaticFiles();
@@ -155,6 +152,12 @@ namespace Mod.APIs
 			});
 
 			app.MapControllers();
+
+            // Mapped after CORS and authentication, not before them. Mapping the
+            // hub first meant the browser's preflight on /notificationHub/negotiate
+            // was answered without the CORS headers, so the handshake failed from
+            // any origin other than the API's own.
+            app.MapHub<NotificationHub>("/notificationHub");
 
 			app.Run();
 		}
