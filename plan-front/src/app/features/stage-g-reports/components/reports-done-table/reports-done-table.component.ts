@@ -14,7 +14,7 @@ import { RolesEnums } from '../../../../Core/utilities/consts';
 import { ActionsAdminComponent } from '../../../../shared/components/app-admin-actions/app-admin-actions.component';
 import { StatusActionComponent } from '../../../../shared/components/status-action/status.component';
 import { PageTitleService } from '../../../page-titles/services/page-title.service';
-import { environment } from '../../../../../environments/environment.dev';
+import { environment } from '../../../../../environments/environment';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { ProgressShareModalComponent } from '../../../progress-share/components/progress-share-modal/progress-share-modal.component';
